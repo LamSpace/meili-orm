@@ -23,7 +23,7 @@
 
 ## 5. 回调四件套（计划 Task 8）
 
-- [ ] 5.1 `event/` 四接口 + `MeiliEntityCallbacks`；【前置回改】`registeredCount()` 纳入本任务契约（spec `core-entity-callbacks` 可观测 Requirement）；泛型不可解析拒绝注册、注册序链式、父类匹配；Javadoc 声明线程模型（注册期/触发期）；commit `feat(core): 四件套实体回调与泛型注册表`
+- [x] 5.1 `event/` 四接口 + `MeiliEntityCallbacks`；【前置回改】`registeredCount()` 纳入本任务契约（spec `core-entity-callbacks` 可观测 Requirement）；泛型不可解析拒绝注册、注册序链式、父类匹配；Javadoc 声明线程模型（注册期/触发期）；commit `feat(core): 四件套实体回调与泛型注册表`
 
 ## 6. 网关 + 写读删 Operations（计划 Task 9）
 
