@@ -10,7 +10,7 @@
 
 ## 2. 序列化器（计划 Task 5）
 
-- [ ] 2.1 `MeiliDocumentSerializer`（仅 write/read 两方法，spec `core-document-serialization` SPI Requirement）+ `Jackson2DocumentSerializer`（introspector 取名与 `MeiliNames.docName` 同规则；base.copy() 不污染原 mapper）；红→绿按计划 Step 1–4；commit `feat(core): MeiliDocumentSerializer 接口与 Jackson2 实现（@MeiliField.name 序列化一致性）`
+- [x] 2.1 `MeiliDocumentSerializer`（仅 write/read 两方法，spec `core-document-serialization` SPI Requirement）+ `Jackson2DocumentSerializer`（introspector 取名与 `MeiliNames.docName` 同规则；base.copy() 不污染原 mapper）；红→绿按计划 Step 1–4；commit `feat(core): MeiliDocumentSerializer 接口与 Jackson2 实现（@MeiliField.name 序列化一致性）`
 
 ## 3. 查询 IR + 强类型结果（计划 Task 6）
 
