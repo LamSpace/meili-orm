@@ -3,15 +3,73 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>io.github.lamspace</groupId>
     <artifactId>meili-orm</artifactId>
     <version>1.0-SNAPSHOT</version>
-
+    <packaging>pom</packaging>
+    <name>meili-orm</name>
+    <description>MeiliSearch Spring Boot Starter：注解映射 + settings 投影 + 模板 Operations（Boot 3.5.x / 4.x 双兼容）。</description>
+    <modules>
+        <module>meili-orm-core</module>
+        <module>meili-orm-spring-boot-autoconfigure</module>
+        <module>spring-boot-starter-meili-orm</module>
+    </modules>
     <properties>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>17</maven.compiler.release>
+        <meilisearch-java.version>0.21.0</meilisearch-java.version>
+        <okhttp.version>5.3.2</okhttp.version>
+        <gson.version>2.13.2</gson.version>
+        <jackson2.version>2.21.2</jackson2.version>
+        <spring-boot.version>3.5.16</spring-boot.version><!-- 编译基线=最低支持代 -->
+        <meili-server.version>v1.49.0</meili-server.version>
     </properties>
-
+    <dependencyManagement>
+        <dependencies>
+            <!-- 显式钉版优先于 BOM：与 SDK 0.21.0 传递依赖对齐。
+                 okhttp 5.x 的 Maven 构件是多平台空壳，JVM 类在 okhttp-jvm（docs/spikes.md M0.2 冒烟实证），
+                 两者同时钉版并由 core 显式引入 okhttp-jvm。 -->
+            <dependency><groupId>com.squareup.okhttp3</groupId><artifactId>okhttp</artifactId><version>${okhttp.version}</version></dependency>
+            <dependency><groupId>com.squareup.okhttp3</groupId><artifactId>okhttp-jvm</artifactId><version>${okhttp.version}</version></dependency>
+            <dependency><groupId>com.squareup.okhttp3</groupId><artifactId>logging-interceptor</artifactId><version>${okhttp.version}</version></dependency>
+            <dependency><groupId>com.google.code.gson</groupId><artifactId>gson</artifactId><version>${gson.version}</version></dependency>
+            <dependency><groupId>com.fasterxml.jackson</groupId><artifactId>jackson-bom</artifactId><version>${jackson2.version}</version><type>pom</type><scope>import</scope></dependency>
+            <dependency><groupId>com.meilisearch.sdk</groupId><artifactId>meilisearch-java</artifactId><version>${meilisearch-java.version}</version></dependency>
+            <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-dependencies</artifactId><version>${spring-boot.version}</version><type>pom</type><scope>import</scope></dependency>
+            <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-core</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-core</artifactId><version>${project.version}</version><type>test-jar</type></dependency>
+            <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-spring-boot-autoconfigure</artifactId><version>${project.version}</version></dependency>
+        </dependencies>
+    </dependencyManagement>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>3.5.2</version></plugin>
+                <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><version>3.5.2</version></plugin>
+                <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.4.2</version></plugin>
+                <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId><version>3.11.2</version></plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <!-- 私有能力 Javadoc 门禁（CLAUDE.md §5）：show=private 使缺注释以 doclint warning 呈现，
+                 failOnWarnings 将"缺失即红"落为构建事实（探测实证见 docs/spikes.md 预检节）。 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <show>private</show>
+                    <failOnWarnings>true</failOnWarnings>
+                    <failOnError>true</failOnError>
+                    <doclint>missing</doclint>
+                    <release>${maven.compiler.release}</release>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals><goal>jar</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

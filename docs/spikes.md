@@ -1,0 +1,54 @@
+# Spike 结论记录
+
+M0 地基与风险清零的实证档案：Step 0 预检、M0.2 裸连通冒烟、spikeA、spikeB。
+每节含验证内容 / 环境 / 结果 / 对设计的影响。执行变更：openspec `m0-foundation-risk-clearance`。
+
+## Step 0 预检 —— SDK 0.21.0 签名实测（javap）
+
+环境：`/home/lam/repo/com/meilisearch/sdk/meilisearch-java/0.21.0/meilisearch-java-0.21.0.jar`，JDK 25 `javap -cp`。
+
+| 成员 | 实测签名 |
+|---|---|
+| Config 构造 | `Config(String)` / `Config(String,String)` / `Config(String,String,JsonHandler)` / `Config(String,String,JsonHandler,String[])`；另有 `setJsonHandler(JsonHandler)` |
+| JsonHandler 接口 | `String encode(Object)`；`<T> T decode(Object, Class<T>, Class<?>...)`（均 throws MeilisearchException） |
+| GsonJsonHandler / JacksonJsonHandler | 均 `implements JsonHandler`；`JacksonJsonHandler()` 与 `JacksonJsonHandler(ObjectMapper)` 两构造 |
+| TaskInfo | `int getTaskUid()`；`TaskStatus getStatus()`；`String getIndexUid()`；`String getType()`；`Date getEnqueuedAt()` |
+| Task | `int getUid()`；`TaskStatus getStatus()`；`String getType()`；`String getDuration()`；`TaskError getError()` |
+| TaskStatus | 枚举 `ENQUEUED/PROCESSING/SUCCEEDED/FAILED/CANCELED` |
+| Client | `TaskInfo createIndex(String)` / `createIndex(String,String)`；`TaskInfo deleteIndex(String)`；`Index index(String)`；`void waitForTask(int)`；`Task getTask(int)`；`Results<Task> getTasks(...)` |
+| Index | `TaskInfo addDocuments(String)` / `updateDocuments(String)`（重载带 primaryKey/offset）；`String getRawDocument(String)`；`<T> T getDocument(String, Class<T>)`；`String rawSearch(String)` / `String rawSearch(SearchRequest)`；`Searchable search(SearchRequest)`；`Settings getSettings()`；`TaskInfo updateSettings(Settings)` 及各子设置三件套（含 granular `FilterableAttributesConfig[]`）；`void waitForTask(int)` / `waitForTask(int,int,int)`（uid, timeoutMs, intervalMs） |
+| Settings | `set/getFilterableAttributes(String[])`、`set/getSearchableAttributes(String[])`、`set/getSortableAttributes(String[])`、`set/getDisplayedAttributes(String[])`、`set/getRankingRules(String[])`（fluent，返回 Settings） |
+| SearchRequest | `public SearchRequest(String q)`；`String[] getFilter()`；`String[][] getFilterArray()`；`String[] getSort()` |
+
+**对计划文本的修正（依计划"以 javap 实测为准"条款）**：
+- ① `taskUid` 是 **`int`** 而非 `String`：spike/M1 网关一律 `int`（`awaitTask(int)`、`getTask(int)`）。设计文档 §5.3 的 `String createIndex(...)/awaitTask(String)` 签名在 M1 落地时须按此回改。
+- ② raw 读通道 = `Index.getRawDocument(String):String`（及 `getRawDocuments()`），**不存在** `getDocument(String):String`；计划 Task 3 片段 `(String) index.getDocument(...)` 替换为 `getRawDocument(...)`。
+- ③ `client.waitForTask(uid)` 返回 void（轮询至终态）；取终态对象用 `getTask(int)`。计划 Task 2 片段 `Task done = client.waitForTask(...)` 修正为先 wait 后 get。
+
+## M0.2 裸连通冒烟（Docker v1.49.0 + SDK 直连建删索引）
+
+环境：本机 Docker，`docker run -d --name meili-m0-smoke -p 7700:7700 -e MEILI_MASTER_KEY=masterKey-test-123456 -e MEILI_ENV=development getmeili/meilisearch:v1.49.0`（镜像本地已有，未拉取）；`curl /health` → `{"status":"available"}`。
+
+冒烟程序：临时工程仅依赖 meilisearch-java 0.21.0，`Client.createIndex("m0_smoke","id")` → `waitForTask` → `getTask` → `deleteIndex` → `waitForTask`。实际输出：
+
+```text
+createIndex uid=0 status=enqueued
+create final=succeeded
+delete uid=1 final=succeeded
+```
+
+结论：**冒烟通过**。容器就绪、master key 鉴权、建/删索引、任务终态轮询全链可用。`TaskInfo.getStatus()` 的 `toString()` 输出为小写服务端字面量（`enqueued`/`succeeded`），断言一律用枚举常量比较（`isEqualTo(TaskStatus.SUCCEEDED)`），勿比较字符串。临时容器已清理。
+
+### 冒烟暴露的构建事实：okhttp-jvm 空壳问题（非计划假设）
+
+`com.squareup.okhttp3:okhttp:5.3.2` 的 Maven jar 是 **0 类的多平台元数据空壳（767 字节）**，其 pom 不声明 `okhttp-jvm` 依赖（`published-with-gradle-metadata`，指望 Gradle 解析）；Maven 消费者运行时抛 `NoClassDefFoundError: okhttp3/MediaType`。首轮冒烟即因此失败，加入显式依赖 `com.squareup.okhttp3:okhttp-jvm:5.3.2` 后通过。
+
+**处置（已落实到构建）**：根 pom `dependencyManagement` 同时钉 okhttp 与 okhttp-jvm 5.3.2；`meili-orm-core` 显式依赖 `okhttp-jvm`（compile/runtime 可见，保证经 starter 传递到用户 classpath）。设计文档 §2.3"OkHttp 5.3.2 api 作用域传递（连带 okio）"据此在 M0 收口回写中修正。
+
+## spikeA 结论
+
+（待记录）
+
+## spikeB 结论
+
+（待记录）

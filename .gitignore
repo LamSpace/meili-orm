@@ -1,5 +1,7 @@
 target/
 !.mvn/wrapper/maven-wrapper.jar
+# 机器专属 Maven settings 兜底，本机生效、不进版本库（见 docs/spikes.md 与 CLAUDE.md -s 约定）
+.mvn/maven.config
 !**/src/main/**/target/
 !**/src/test/**/target/
 .kotlin

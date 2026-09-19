@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>io.github.lamspace</groupId><artifactId>meili-orm</artifactId><version>1.0-SNAPSHOT</version></parent>
+    <artifactId>meili-orm-spring-boot-autoconfigure</artifactId>
+    <name>meili-orm-spring-boot-autoconfigure</name>
+    <description>meili-orm Spring Boot 自动配置：客户端与数据两级装配、索引自动初始化与 settings 同步。同一 jar 兼容 Boot 3.5.x 与 4.x。</description>
+    <dependencies>
+        <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-core</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-autoconfigure</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot</artifactId></dependency>
+        <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.assertj</groupId><artifactId>assertj-core</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-test</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-testcontainers</artifactId><scope>test</scope></dependency>
+    </dependencies>
+    <build><plugins>
+        <!-- javadoc 引擎约束：doclet 无法文档化"仅 package-info、零类型"的模块（无 public 类即报错）。
+             本模块首个真实主源码类落地时删除此 skip，令聚合层门禁即刻生效。 -->
+        <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId>
+            <configuration><skip>true</skip></configuration></plugin>
+    </plugins></build>
+</project>
