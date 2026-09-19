@@ -19,7 +19,7 @@
 
 ## 4. Settings 投影（计划 Task 7）
 
-- [ ] 4.1 `ProjectedSettings`/`MeiliSettingsProjection`（纯函数、透传白名单与深合并、未知键 fail-fast 含文件名）；golden 三件（books-settings/passthrough/unknown-key）按 D-M1-7 固定键序逐字节锁定；spec `core-settings-projection` 四 Requirement 全覆盖；commit `feat(core): Settings 投影（角色数组、透传合并、golden 文件锁定）`
+- [x] 4.1 `ProjectedSettings`/`MeiliSettingsProjection`（纯函数、透传白名单与深合并、未知键 fail-fast 含文件名）；golden 三件（books-settings/passthrough/unknown-key）按 D-M1-7 固定键序逐字节锁定；spec `core-settings-projection` 四 Requirement 全覆盖；commit `feat(core): Settings 投影（角色数组、透传合并、golden 文件锁定）`
 
 ## 5. 回调四件套（计划 Task 8）
 

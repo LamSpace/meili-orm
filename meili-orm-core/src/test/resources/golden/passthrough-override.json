@@ -1,0 +1,4 @@
+{
+  "searchableAttributes": ["custom_field"],
+  "faceting": {"maxValuesPerFacet": 100}
+}

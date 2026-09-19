@@ -1,0 +1,6 @@
+{
+  "searchableAttributes" : [ "book_title", "overview" ],
+  "filterableAttributes" : [ "author.city", "genre", "price" ],
+  "sortableAttributes" : [ "price" ],
+  "displayedAttributes" : [ "synopsis" ]
+}
