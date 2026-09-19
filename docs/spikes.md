@@ -39,6 +39,10 @@ delete uid=1 final=succeeded
 
 结论：**冒烟通过**。容器就绪、master key 鉴权、建/删索引、任务终态轮询全链可用。`TaskInfo.getStatus()` 的 `toString()` 输出为小写服务端字面量（`enqueued`/`succeeded`），断言一律用枚举常量比较（`isEqualTo(TaskStatus.SUCCEEDED)`），勿比较字符串。临时容器已清理。
 
+### 本机 IT 硬前置补充（实测发现）
+
+Docker CLI 走 Docker Desktop context（`~/.docker/desktop/docker.sock`），Testcontainers 亦可达；但 **Docker Hub 直连超时**（`registry-1.docker.io` context deadline exceeded），而 Testcontainers 需要 sidecar 镜像 `testcontainers/ryuk:0.12.0`（TC 1.21.4，本地原无 → 首跑容器启动以 `ContainerFetchException` 失败于 2 分钟拉取超时）。处置：经 `docker.m.daocloud.io/testcontainers/ryuk:0.12.0` 拉取并重打 tag 为本地 `testcontainers/ryuk:0.12.0`（镜像存在即不再拉取）。该前置为本机环境事实（与 maven.config 同性质），若换机需重做；另一可选路线是 `~/.testcontainers.properties` 置 `ryuk.disabled=true`（代价：容器回收靠手动）。
+
 ### 冒烟暴露的构建事实：okhttp-jvm 空壳问题（非计划假设）
 
 `com.squareup.okhttp3:okhttp:5.3.2` 的 Maven jar 是 **0 类的多平台元数据空壳（767 字节）**，其 pom 不声明 `okhttp-jvm` 依赖（`published-with-gradle-metadata`，指望 Gradle 解析）；Maven 消费者运行时抛 `NoClassDefFoundError: okhttp3/MediaType`。首轮冒烟即因此失败，加入显式依赖 `com.squareup.okhttp3:okhttp-jvm:5.3.2` 后通过。
@@ -47,7 +51,15 @@ delete uid=1 final=succeeded
 
 ## spikeA 结论
 
-（待记录）
+**环境**：meilisearch-java 0.21.0 × 服务端 v1.49.0（Testcontainers 真容器）× JDK 25。哨兵：`meili-orm-core/src/test/.../spike/SpikeAJsonHandlerIT`（三臂，收紧后 3/3 绿）。
+
+**观察与锁定**：
+
+1. **对照组（默认 GsonJsonHandler）**：addDocuments→TaskInfo、getTask→Task、getSettings→Settings、getDocument→Map、getKeys→Results<Key> 全解析正常；`getDocument(id, Map.class)` 中 `9007199254740993` 解为 **`java.lang.Double`**（精度缺陷暴露，判权移交 spikeB）。
+2. **实验组（JacksonJsonHandler）**：任务写读环节（addDocuments/waitForTask/getTask）**通过**；`updateSettings` **请求侧炸**——`Settings.encode` 把 Java 双视图字段 `filterableAttributesConfig` 一并序列化进 PATCH 体，服务端 400：`Unknown field \`filterableAttributesConfig\`（APIError.code=bad_request）`；纯读 `getSettings` 通过。
+3. **探针组（计数委托 Gson）**：`decodeTargets = [TaskInfo, Task, Settings, Map, Results<Key>]`，`encodeCalls≥1`——**全部 typed 读环节经由可插拔 JsonHandler**，替换面即全读链。
+
+**结论（写死，M2 装配依此执行）**：**「装配 Client 一律保持默认 GsonJsonHandler（`Config(url, key)` 二参构造）；实体读写主路径不依赖任何 JsonHandler，读路径唯一契约 = raw 字符串 API（`getRawDocument(String)` / `rawSearch(SearchRequest)` → 自有序列化器，spikeB 保证）」**。即使实验组部分环节通过，raw 通道仍是单一事实源——降低与 SDK 内部 Gson 注解（`@SerializedName`/双视图抑制）的隐式耦合；升级 SDK 时该哨兵变红即触发重新实证。
 
 ## spikeB 结论
 
