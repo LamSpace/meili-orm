@@ -133,7 +133,10 @@ public final class MeiliPersistentEntity {
         MeiliPersistentProperty idProperty = properties.stream()
                 .filter(MeiliPersistentProperty::isId).findFirst().orElseThrow();
         Method idReadMethod = resolveAccessor(type, idField.getName());
-        if (idReadMethod == null) {
+        if (idReadMethod != null) {
+            // public accessor on a package-private host class stays inaccessible otherwise
+            idReadMethod.setAccessible(true);
+        } else {
             idField.setAccessible(true);
         }
 

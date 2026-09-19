@@ -27,9 +27,9 @@
 
 ## 6. 网关 + 写读删 Operations（计划 Task 9）
 
-- [ ] 6.1 计划 Step 1 的 SDK 探测**已完成**，直接采用结论：`count` 无 SDK 方法 → 走网关 HTTP helper `GET /indexes/{uid}/documents/count`；raw 方法名 = `getRawDocument(String)`；`waitForTask(int,int,int)`；连接参数取 `client.getConfig().getHostUrl()/getApiKey()`（D-M1-2）
-- [ ] 6.2 【裁决覆盖】`SdkMeiliRawGateway` 双通道：文档读写/搜索/任务/索引增删走 SDK raw API；count、`POST /documents/fetch`（含 sort）、`GET/PATCH /indexes/{uid}/settings` 走包私有 OkHttp HTTP helper；`getSettings` 返回服务端真实 JSON 原文（spec `core-operations` 网关 Requirement），settings 不再经 typed `Settings` 重序列化；两通道异常经同一 `MeiliErrors.translate`
-- [ ] 6.3 【修正】taskUid 全链路 `int`：网关签名 `int updateDocuments(...)`、`awaitTask(int, Duration)`、`MeiliTask.getUid(): int`；`MeiliSearchOperations` 写读段按计划签名但 uid 类型替换；Mockito 网关测试 + 错误翻译测试按计划 Step 2 落地（含"空主键不触网/批量单请求/wait-task 阻塞"断言）；commit `feat(core): SdkMeiliRawGateway 双通道与写读删 Operations（task 全 int、异常统一出口）`
+- [x] 6.1 计划 Step 1 的 SDK 探测**已完成**，直接采用结论：`count` 无 SDK 方法 → 走网关 HTTP helper `GET /indexes/{uid}/documents/count`；raw 方法名 = `getRawDocument(String)`；`waitForTask(int,int,int)`；连接参数取 `client.getConfig().getHostUrl()/getApiKey()`（D-M1-2）
+- [x] 6.2 【裁决覆盖】`SdkMeiliRawGateway` 双通道：文档读写/搜索/任务/索引增删走 SDK raw API；count、`POST /documents/fetch`（含 sort）、`GET/PATCH /indexes/{uid}/settings` 走包私有 OkHttp HTTP helper；`getSettings` 返回服务端真实 JSON 原文（spec `core-operations` 网关 Requirement），settings 不再经 typed `Settings` 重序列化；两通道异常经同一 `MeiliErrors.translate`
+- [x] 6.3 【修正】taskUid 全链路 `int`：网关签名 `int updateDocuments(...)`、`awaitTask(int, Duration)`、`MeiliTask.getUid(): int`；`MeiliSearchOperations` 写读段按计划签名但 uid 类型替换；Mockito 网关测试 + 错误翻译测试按计划 Step 2 落地（含"空主键不触网/批量单请求/wait-task 阻塞"断言）；commit `feat(core): SdkMeiliRawGateway 双通道与写读删 Operations（task 全 int、异常统一出口）`
 
 ## 7. 搜索/索引 Operations（计划 Task 10）
 
