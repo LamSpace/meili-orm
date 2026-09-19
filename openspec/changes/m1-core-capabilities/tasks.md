@@ -37,9 +37,9 @@
 
 ## 8. M1 出口（计划 Task 11 + 收口）
 
-- [ ] 8.1 `MeiliCoreIT` 真机全链路（计划 Step 1 场景 + 新增两条：`findAll` filter+sort 真机反查（v1.49 fetch 语义验证，不符则按 design 风险条目收窄并回写 spec）、404→`MeiliIndexAccessException.getMeiliCode()` 与空 Optional 各一次）
-- [ ] 8.2 `PublicApiLeakageGuardTest`：反射扫描 core 非 internal 包公开成员签名，出现 `com.meilisearch.sdk.*` 即红（D-M1-3）；故意加一个泄漏签名验证守卫能红、再删除
-- [ ] 8.3 全量验证：`mvn -s /home/lam/repo/settings.xml -q clean verify`（单测 + 双哨兵 IT + MeiliCoreIT + javadoc + 守卫全绿）；`bash scripts/check-source-citations.sh` 零命中
+- [x] 8.1 `MeiliCoreIT` 真机全链路（计划 Step 1 场景 + 新增两条：`findAll` filter+sort 真机反查（v1.49 fetch 语义验证，不符则按 design 风险条目收窄并回写 spec）、404→`MeiliIndexAccessException.getMeiliCode()` 与空 Optional 各一次）
+- [x] 8.2 `PublicApiLeakageGuardTest`：反射扫描 core 非 internal 包公开成员签名，出现 `com.meilisearch.sdk.*` 即红（D-M1-3）；故意加一个泄漏签名验证守卫能红、再删除
+- [x] 8.3 全量验证：`mvn -s /home/lam/repo/settings.xml -q clean verify`（单测 + 双哨兵 IT + MeiliCoreIT + javadoc + 守卫全绿）；`bash scripts/check-source-citations.sh` 零命中
 - [ ] 8.4 出口审查材料：生成 core 公开 API 签名清单（javadoc 输出或反射 dump）供用户目检一次
 - [ ] 8.5 回写：设计文档 §5.3 签名（int taskUid、createIndex 返回 int、count 直连事实）；实施计划文档 M1（Task 4–11）复选框收口；commit `test(core): M1 真机全链路 IT、零泄漏守卫与出口回写`
 - [ ] 8.6 `openspec validate m1-core-capabilities` 通过后归档 change（delta specs 同步主 specs，沿用 M0 归档流程）

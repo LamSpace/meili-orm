@@ -139,9 +139,10 @@ public final class SdkMeiliRawGateway implements MeiliRawGateway {
 
     @Override
     public long count(String indexUid) {
-        String response = execute("GET",
-                new String[]{"indexes", indexUid, "documents", "count"}, null, null);
-        return readTree(response, indexUid).path("count").asLong();
+        // documents/count 路由在本服务端代际不可用（实测被 documents/{id} 捕获为
+        // document_not_found）；stats 是等价的整型事实源
+        String response = execute("GET", new String[]{"indexes", indexUid, "stats"}, null, null);
+        return readTree(response, indexUid).path("numberOfDocuments").asLong();
     }
 
     @Override
