@@ -63,4 +63,24 @@ Docker CLI 走 Docker Desktop context（`~/.docker/desktop/docker.sock`），Tes
 
 ## spikeB 结论
 
-（待记录）
+**环境**：同 spikeA。哨兵：`meili-orm-core/src/test/.../spike/SpikeBRawJacksonPrecisionIT`（1/1 绿，收紧一次到位）。
+
+**实测结果**（实体 `record Book(Long id, String title, long views, Author author, List<String> tags)`，主键/视图字段取 `9007199254740993` > 2^53）：
+
+1. **坏通道事实锁定**：`index.getDocument(id, Map.class)`（Gson 内部 Map 通道）把 `id` 解为 `java.lang.Double` 且值失真（`longValue()=9007199254740992 ≠ 原值`）——断言以锁定失真形态常驻，"Long 主键精度问题"在 typed 便捷 API 上是必然，非偶发。
+2. **主路径无损**：`index.getRawDocument("9007199254740993")` 返回原始 JSON 字符串 → 裸 Jackson `readValue(json, Book.class)`，`id`/`views` 逐位相等，中文（`三体`/`刘慈欣`/`北京`）、嵌套对象、字符串数组全部无损。
+3. **搜索路径无损**：`index.rawSearch(new SearchRequest("三体"))` → `readTree(...).path("hits").get(0)` → `treeToValue(node, Book.class)`，同款逐位相等。
+
+**结论（M1 实现契约，写死）**：实体读写唯一通道 = **raw JSON 字符串 ↔ 自有序列化器**；服务端数值经文本中转，Jackson 按目标类型解析，Long 精度问题在架构上消失（不经任何 `Number→Double` 环节）。
+
+**M1 引用签名锚点**（javap + 实跑双确认）：
+
+```text
+Index.getRawDocument(String): String          Index.getRawDocuments(): String
+Index.rawSearch(SearchRequest): String        Index.rawSearch(String): String
+Index.addDocuments(String): TaskInfo          Index.updateDocuments(String): TaskInfo
+TaskInfo.getTaskUid(): int（全链路 int，非 String）
+Client.waitForTask(int) / Index.waitForTask(int,int,int): void（uid, timeoutMs, intervalMs）
+Client.getTask(int): Task                    Task.getStatus(): TaskStatus（比较用枚举常量）
+SearchRequest public 构造：SearchRequest(String q)；getFilter(): String[]；getSort(): String[]
+```
