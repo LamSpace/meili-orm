@@ -14,8 +14,8 @@
 
 ## 3. 查询 IR + 强类型结果（计划 Task 6）
 
-- [ ] 3.1 `MeiliQuery`/`DocumentsFetchQuery`/`MatchingStrategy`/`MeiliSearchResult` + `internal/SdkQueryTranslator`；【前置回改】builder 含 `filterAdd(String)`（AND 累积）；【修正】分页互斥/raw 白名单/双 filter 混设三类拒绝均抛 `MeiliOrmException` 且消息合规；SDK 覆盖面已 javap 实证（vector/hybrid/distinct/locales 全有 setter），`raw()` 白名单 = SearchRequest 既有 setter 键名表
-- [ ] 3.2 验证：`-Dtest=SdkQueryTranslatorTest,MeiliSearchResultTest` 绿 + 全模块 test 绿；commit `feat(core): 查询 IR、SDK 翻译与强类型搜索结果（Long 无损信封解析）`
+- [x] 3.1 `MeiliQuery`/`DocumentsFetchQuery`/`MatchingStrategy`/`MeiliSearchResult` + `internal/SdkQueryTranslator`；【前置回改】builder 含 `filterAdd(String)`（AND 累积）；【修正】分页互斥/raw 白名单/双 filter 混设三类拒绝均抛 `MeiliOrmException` 且消息合规；SDK 覆盖面已 javap 实证（vector/hybrid/distinct/locales 全有 setter），`raw()` 白名单 = SearchRequest 既有 setter 键名表
+- [x] 3.2 验证：`-Dtest=SdkQueryTranslatorTest,MeiliSearchResultTest` 绿 + 全模块 test 绿；commit `feat(core): 查询 IR、SDK 翻译与强类型搜索结果（Long 无损信封解析）`
 
 ## 4. Settings 投影（计划 Task 7）
 
