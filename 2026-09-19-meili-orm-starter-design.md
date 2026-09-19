@@ -93,7 +93,7 @@ Boot 3→4 的演进事实（决定我们兼容策略）：
 | Maven | 3.9.16，**所有命令必须 `-s /home/lam/repo/settings.xml`，禁止使用默认配置** |
 | 本地仓库 | `/home/lam/repo`（已缓存 Boot 4.0.3 / spring-data-commons 4.0.3 / spring-data-elasticsearch 6.0.3 / elasticsearch-java 9.2.5；**无 Boot 3.x 产物**，it-boot3 首跑需联网拉取） |
 | MeiliSearch | Docker 镜像 `getmeili/meilisearch:v1.49.0`，当前**无运行容器**（7700 未监听） |
-| 现状 | 空骨架：根 `pom.xml`（`io.github.lamspace:meili-orm:1.0-SNAPSHOT`，当前 source/target=25，M0 改为 `maven.compiler.release=17`）、空 `src/`、OpenSpec 已初始化（未使用）、**非 git 仓库** |
+| 现状（M0 落地后更新） | 聚合多模块骨架已建（core / autoconfigure / starter，`maven.compiler.release=17`、依赖钉版）；OpenSpec 已启用；git 仓库已建立并推送 `github.com/LamSpace/meili-orm`（master） |
 
 ---
 
@@ -155,12 +155,12 @@ meili.* 属性 / MeiliConnectionDetails bean
 
 ### 3.4 SDK 硬约束与应对（风险前置）
 
-| 约束 | 应对 |
+| 约束 | 应对（M0 收口后全部为已实证陈述，详见 docs/spikes.md） |
 |---|---|
-| `Config` 内部自建 OkHttpClient，超时/连接池不可注入 | v1 接受默认值并写进文档「限制清单」；向 SDK 提 feature request/PR |
-| 自定义 JsonHandler 后，SDK 内部模型（Settings/TaskInfo 等依赖 Gson typeAdapter）是否仍正确解析——未知 | **M0 spikeA 实证**；若不兼容，回退方案：Config 保留 GsonJsonHandler，文档/搜索路径全部走 raw 字符串 + 自有序列化（读写主链路本就不依赖 JsonHandler，回退代价低） |
-| OkHttp5/okio 作为 api 传递依赖进入用户 classpath | 根 pom `dependencyManagement` 钉版本与 Boot BOM 对齐，文档说明 exclusion 方法 |
-| 全工程无 git 仓库 | 待决策 D1（见 §9） |
+| `Config` 内部自建 OkHttpClient，超时/连接池不可注入 | v1 接受默认值并写进文档「限制清单」；向 SDK 提 feature request/PR。（M0 复核 0.21.0：构造面确无 OkHttpClient 注入口） |
+| 自定义 JsonHandler 后，SDK 内部模型是否仍正确解析 | **spikeA 已定案（不兼容）**：五类 typed 读环节全部经过 JsonHandler，且 `JacksonJsonHandler` 的 `Settings.encode` 泄漏 Java 双视图字段 `filterableAttributesConfig` 致服务端 400。处置：装配 Client 一律保持默认 GsonJsonHandler；实体读写主路径全走 raw 字符串 API（`getRawDocument`/`rawSearch`），raw 为唯一契约；原"回退方案"转正，哨兵 `SpikeAJsonHandlerIT` 常驻防升级漂移 |
+| OkHttp5/okio 作为传递依赖进入用户 classpath | **M0 实测修正**：`okhttp:5.3.2` 的 Maven 构件是多平台元数据空壳（0 个类），JVM 类在 `okhttp-jvm`——core 显式依赖 `okhttp-jvm`，根 pom 钉 okhttp/okhttp-jvm 5.3.2、gson 2.13.2、jackson 2.21.2（jackson-bom 先于 Boot BOM 声明取得覆盖）；文档说明 exclusion 方法 |
+| ~~全工程无 git 仓库~~ | **已落地**：仓库已 init 并推送 `git@github.com:LamSpace/meili-orm.git`（master），D1 决策实施 |
 
 ---
 
@@ -411,7 +411,7 @@ M0 spike 输出要求：spikeA（JsonHandler 注入兼容性）、spikeB（raw�
 
 | # | 决策 | 建议 |
 |---|---|---|
-| D1 | 当前目录**非 git 仓库**：是否 `git init` 并把本设计文档作为首个提交？ | 建议是（M0.6） |
+| D1 | 当前目录**非 git 仓库**：是否 `git init` 并把本设计文档作为首个提交？ | **已实施**：git init 完成，首提交含本文档，远程 `github.com/LamSpace/meili-orm`（master） |
 | D2 | 坐标/命名：groupId `io.github.lamspace`、包根 `io.github.lamspace.meili`、starter 名 `spring-boot-starter-meili-orm` | 如无异议即定稿 |
 | D3 | v1 排除项（§1.2 表：SpEL 动态索引名、@Version、响应式等）确认 | 建议确认 |
 | D4 | 文档语言：正文中文，API javadoc 英文 | 建议是 |

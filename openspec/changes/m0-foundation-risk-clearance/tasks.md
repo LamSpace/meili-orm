@@ -25,18 +25,18 @@
 - [x] 3.2 运行 `mvn -s /home/lam/repo/settings.xml -q -pl meili-orm-core verify -Dit.test=SpikeAJsonHandlerIT`，逐条捕获两组实际通过/失败点（模型、字段、异常原文），本任务不修 SDK 问题
 - [x] 3.3 收紧断言：实验组若红改 `assertThatThrownBy` 锁定不兼容行为，两组终态全绿
 - [x] 3.4 `docs/spikes.md` 追加「spikeA 结论」（≤1 页），结论行写死：M2 装配 Client 保持默认 GsonJsonHandler，实体读路径走 raw 字符串 API
-- [ ] 3.5 commit（计划 Task 2 Step 4 文案）
+- [x] 3.5 commit（计划 Task 2 Step 4 文案）
 
 ## 4. spikeB —— raw→Jackson Long 精度实证（对应计划 Task 3，按 D-2 两遍式）
 
-- [ ] 4.1 写 `SpikeBRawJacksonPrecisionIT`：①对照断言 Gson Map 通道 `id` 变 Double（若 SDK 实测行为不符则如实放宽并记录）；②主路径 raw 字符串→Jackson，`9007199254740993L` 逐位无损；③rawSearch hits 节点 `treeToValue` 同款断言；`.let()` 伪代码行按真实 API 替换
-- [ ] 4.2 运行 `-Dit.test=SpikeBRawJacksonPrecisionIT` 至绿（主路径 ②③ 必须绿）
-- [ ] 4.3 `docs/spikes.md` 追加「spikeB 结论」：raw→Jackson 通道 Long/中文/嵌套无损证据 + `rawSearch`/`getDocument(String)` 确切签名记录（M1 引用锚点）
-- [ ] 4.4 commit（计划 Task 3 Step 3 文案）
+- [x] 4.1 写 `SpikeBRawJacksonPrecisionIT`：①对照断言 Gson Map 通道 `id` 变 Double（若 SDK 实测行为不符则如实放宽并记录）；②主路径 raw 字符串→Jackson，`9007199254740993L` 逐位无损；③rawSearch hits 节点 `treeToValue` 同款断言；`.let()` 伪代码行按真实 API 替换
+- [x] 4.2 运行 `-Dit.test=SpikeBRawJacksonPrecisionIT` 至绿（主路径 ②③ 必须绿）
+- [x] 4.3 `docs/spikes.md` 追加「spikeB 结论」：raw→Jackson 通道 Long/中文/嵌套无损证据 + `rawSearch`/`getDocument(String)` 确切签名记录（M1 引用锚点）
+- [x] 4.4 commit（计划 Task 3 Step 3 文案）
 
 ## 5. M0 出口核对与闭环
 
-- [ ] 5.1 全量回归：`mvn -s /home/lam/repo/settings.xml -q clean verify` 绿（含两哨兵 IT 随 failsafe 执行）；`bash scripts/check-source-citations.sh` 与 `--selftest` 零退出
-- [ ] 5.2 回写设计文档：§3.4 风险表四行全部变为"实证后处置"确定陈述（超时=接受并记录/JsonHandler=spikeA 定案/okhttp 传递=已钉版/无 git=已落地）；§2.4"非 git 仓库"与 D1 状态修正为已推送 origin；对应 3 份 spec 场景逐项打勾
+- [x] 5.1 全量回归：`mvn -s /home/lam/repo/settings.xml -q clean verify` 绿（含两哨兵 IT 随 failsafe 执行）；`bash scripts/check-source-citations.sh` 与 `--selftest` 零退出
+- [x] 5.2 回写设计文档：§3.4 风险表四行全部变为"实证后处置"确定陈述（超时=接受并记录/JsonHandler=spikeA 定案/okhttp 传递=已钉版/无 git=已落地）；§2.4"非 git 仓库"与 D1 状态修正为已推送 origin；对应 3 份 spec 场景逐项打勾
 - [ ] 5.3 `git push` origin master（首推已建立跟踪，此处推 M0 增量）；确认远程分支状态并在收口汇报中记录
-- [ ] 5.4 commit（docs 回写，"docs: M0 风险表实证回写与冒烟/哨兵结论固化"类文案）
+- [x] 5.4 commit（docs 回写，"docs: M0 风险表实证回写与冒烟/哨兵结论固化"类文案）
