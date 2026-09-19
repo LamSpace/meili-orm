@@ -276,7 +276,7 @@ public interface MeiliSearchOperations {
     <T> List<T> findAll(Class<T> type, DocumentsFetchQuery query); // filter/fields/sort（POST /documents/fetch）
     <T> void deleteById(Object id, Class<T> type);
     <T> void deleteAll(Class<T> type);
-    <T> long count(Class<T> type);                     // 走 /documents/count（SDK 未暴露则 core 直连该端点）
+    <T> long count(Class<T> type);                     // core 直连 /indexes/{uid}/stats 取 numberOfDocuments（实测 documents/count 路由在该服务端代际被 documents/{id} 捕获，不可用）
 
     // ── SearchOperations ───────────────────────────────
     <T> MeiliSearchResult<T> search(String q, Class<T> type);
@@ -285,10 +285,10 @@ public interface MeiliSearchOperations {
 
     // ── IndexOperations / Tasks ────────────────────────
     <T> boolean indexExists(Class<T> type);
-    <T> String createIndex(Class<T> type);             // 含 settings 投影推送，返回 taskUid
+    <T> int createIndex(Class<T> type);              // 含 settings 投影推送，返回最后一步 taskUid（int）
     <T> void deleteIndex(Class<T> type);
-    void awaitTask(String taskUid);                    // 阻塞至终态，超时抛 MeiliTaskTimeoutException
-    MeiliTask getTask(String taskUid);                 // core 自有不可变视图（uid/status/type/error/时间戳）
+    void awaitTask(int taskUid);                       // 阻塞至终态，超时抛 MeiliTaskTimeoutException（taskUid 全链路 int，SDK TaskInfo.getTaskUid 即 int）
+    MeiliTask getTask(int taskUid);                    // core 自有不可变视图（uid/status/type/indexUid/error）
 }
 ```
 
