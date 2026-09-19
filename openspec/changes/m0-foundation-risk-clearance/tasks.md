@@ -38,5 +38,5 @@
 
 - [x] 5.1 全量回归：`mvn -s /home/lam/repo/settings.xml -q clean verify` 绿（含两哨兵 IT 随 failsafe 执行）；`bash scripts/check-source-citations.sh` 与 `--selftest` 零退出
 - [x] 5.2 回写设计文档：§3.4 风险表四行全部变为"实证后处置"确定陈述（超时=接受并记录/JsonHandler=spikeA 定案/okhttp 传递=已钉版/无 git=已落地）；§2.4"非 git 仓库"与 D1 状态修正为已推送 origin；对应 3 份 spec 场景逐项打勾
-- [ ] 5.3 `git push` origin master（首推已建立跟踪，此处推 M0 增量）；确认远程分支状态并在收口汇报中记录
+- [x] 5.3 `git push` origin master（首推已建立跟踪，此处推 M0 增量）；确认远程分支状态并在收口汇报中记录
 - [x] 5.4 commit（docs 回写，"docs: M0 风险表实证回写与冒烟/哨兵结论固化"类文案）
