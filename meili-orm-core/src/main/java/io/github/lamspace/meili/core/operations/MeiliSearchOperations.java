@@ -3,6 +3,9 @@ package io.github.lamspace.meili.core.operations;
 import io.github.lamspace.meili.core.exception.MeiliIndexAccessException;
 import io.github.lamspace.meili.core.exception.MeiliTaskTimeoutException;
 import io.github.lamspace.meili.core.query.DocumentsFetchQuery;
+import io.github.lamspace.meili.core.query.MeiliQuery;
+import io.github.lamspace.meili.core.query.MeiliSearchResult;
+import io.github.lamspace.meili.core.settings.ProjectedSettings;
 import io.github.lamspace.meili.core.task.MeiliTask;
 import java.util.List;
 import java.util.Optional;
@@ -106,4 +109,85 @@ public interface MeiliSearchOperations {
      * @return immutable core view of the task
      */
     MeiliTask getTask(int taskUid);
+
+    /**
+     * Runs a full-text search against the entity's index.
+     *
+     * @param q    query text
+     * @param type entity class (supplies the index and hit type)
+     * @param <T>  entity type
+     * @return typed result; hits ran through the read callback chain
+     */
+    <T> MeiliSearchResult<T> search(String q, Class<T> type);
+
+    /**
+     * Runs one IR query against the entity's index.
+     *
+     * @param query fully staged IR query
+     * @param type  entity class
+     * @param <T>   entity type
+     * @return typed result; hits ran through the read callback chain
+     */
+    <T> MeiliSearchResult<T> search(MeiliQuery query, Class<T> type);
+
+    /**
+     * Runs several queries against one entity type <em>serially</em>: this is a
+     * convenience loop, not the server-side multi-search — no cross-query atomicity or
+     * merged ranking, and the first failing query aborts the batch.
+     *
+     * @param queries fully staged IR queries
+     * @param type    entity class
+     * @param <T>     entity type
+     * @return one result per query, in submission order
+     */
+    <T> List<MeiliSearchResult<T>> multiSearch(List<MeiliQuery> queries, Class<T> type);
+
+    /**
+     * Reports whether the entity's index exists.
+     *
+     * @param type entity class
+     * @param <T>  entity type
+     * @return {@code true} when present
+     */
+    <T> boolean indexExists(Class<T> type);
+
+    /**
+     * Creates the entity's index with its declared primary key and, when the entity
+     * declares any settings projection, pushes that projection too.
+     *
+     * @param type entity class
+     * @param <T>  entity type
+     * @return task uid of the last step executed (settings push when performed, otherwise
+     *         the index creation)
+     */
+    <T> int createIndex(Class<T> type);
+
+    /**
+     * Deletes the entity's index entirely.
+     *
+     * @param type entity class
+     * @param <T>  entity type
+     */
+    <T> void deleteIndex(Class<T> type);
+
+    /**
+     * Pushes the entity's settings projection onto an existing index.
+     *
+     * @param type entity class
+     * @param <T>  entity type
+     * @return task uid of the settings update
+     * @throws io.github.lamspace.meili.core.exception.MeiliOrmException when the entity
+     *         declares no projection at all (nothing to push)
+     */
+    <T> int applySettings(Class<T> type);
+
+    /**
+     * Exposes the entity's computed settings projection (what {@link #createIndex(Class)}
+     * and {@link #applySettings(Class)} would send).
+     *
+     * @param type entity class
+     * @param <T>  entity type
+     * @return the projection; {@link ProjectedSettings#hasAny()} reports emptiness
+     */
+    <T> ProjectedSettings projectedSettings(Class<T> type);
 }

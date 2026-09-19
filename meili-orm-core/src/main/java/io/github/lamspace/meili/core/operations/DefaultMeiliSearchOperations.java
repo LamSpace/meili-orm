@@ -6,7 +6,11 @@ import io.github.lamspace.meili.core.internal.MeiliRawGateway;
 import io.github.lamspace.meili.core.mapping.MeiliMappingContext;
 import io.github.lamspace.meili.core.mapping.MeiliPersistentEntity;
 import io.github.lamspace.meili.core.query.DocumentsFetchQuery;
+import io.github.lamspace.meili.core.query.MeiliQuery;
+import io.github.lamspace.meili.core.query.MeiliSearchResult;
 import io.github.lamspace.meili.core.serialize.MeiliDocumentSerializer;
+import io.github.lamspace.meili.core.settings.MeiliSettingsProjection;
+import io.github.lamspace.meili.core.settings.ProjectedSettings;
 import io.github.lamspace.meili.core.task.MeiliTask;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -48,6 +52,8 @@ public final class DefaultMeiliSearchOperations implements MeiliSearchOperations
     private final boolean waitTask;
     /** Wait budget for blocking awaits. */
     private final Duration waitTimeout;
+    /** Stateless projector used by the index-lifecycle segment. */
+    private final MeiliSettingsProjection projection = new MeiliSettingsProjection();
 
     /**
      * Wires one operations facade.
@@ -179,6 +185,93 @@ public final class DefaultMeiliSearchOperations implements MeiliSearchOperations
     @Override
     public MeiliTask getTask(int taskUid) {
         return gateway.getTask(taskUid);
+    }
+
+    @Override
+    public <T> MeiliSearchResult<T> search(String q, Class<T> type) {
+        return search(MeiliQuery.query(q), type);
+    }
+
+    @Override
+    public <T> MeiliSearchResult<T> search(MeiliQuery query, Class<T> type) {
+        MeiliPersistentEntity meta = context.getEntity(type);
+        String index = meta.getIndexName();
+        String raw = gateway.rawSearch(index, query);
+        // hits ride the same read chain as document fetches: wrap the serializer so the
+        // envelope parser needs no callback knowledge of its own
+        return MeiliSearchResult.from(raw, type, readChainSerializer(index));
+    }
+
+    @Override
+    public <T> List<MeiliSearchResult<T>> multiSearch(List<MeiliQuery> queries, Class<T> type) {
+        List<MeiliSearchResult<T>> out = new ArrayList<>(queries.size());
+        for (MeiliQuery query : queries) {
+            out.add(search(query, type));
+        }
+        return out;
+    }
+
+    @Override
+    public <T> boolean indexExists(Class<T> type) {
+        return gateway.indexExists(context.getEntity(type).getIndexName());
+    }
+
+    @Override
+    public <T> int createIndex(Class<T> type) {
+        MeiliPersistentEntity meta = context.getEntity(type);
+        int taskUid = gateway.createIndex(meta.getIndexName(), meta.getIdProperty().getJsonPath());
+        ProjectedSettings settings = projection.project(meta);
+        if (settings.hasAny()) {
+            taskUid = gateway.updateSettings(meta.getIndexName(), settings.toJson());
+        }
+        return taskUid;
+    }
+
+    @Override
+    public <T> void deleteIndex(Class<T> type) {
+        int taskUid = gateway.deleteIndex(context.getEntity(type).getIndexName());
+        if (waitTask) {
+            gateway.awaitTask(taskUid, waitTimeout);
+        }
+    }
+
+    @Override
+    public <T> int applySettings(Class<T> type) {
+        MeiliPersistentEntity meta = context.getEntity(type);
+        ProjectedSettings settings = projection.project(meta);
+        if (!settings.hasAny()) {
+            throw new MeiliOrmException("实体未声明任何 settings 投影，无需推送: "
+                    + meta.getType().getName());
+        }
+        return gateway.updateSettings(meta.getIndexName(), settings.toJson());
+    }
+
+    @Override
+    public <T> ProjectedSettings projectedSettings(Class<T> type) {
+        return projection.project(context.getEntity(type));
+    }
+
+    /**
+     * Adapts the configured serializer so each {@code read} is wrapped by the read-side
+     * callback chain for one index — the exact chain {@link #readDocument} applies.
+     *
+     * @param index source index uid
+     * @return a delegating serializer view, not shared beyond one call
+     */
+    private MeiliDocumentSerializer readChainSerializer(String index) {
+        return new MeiliDocumentSerializer() {
+            @Override
+            public String write(Object document) {
+                return serializer.write(document);
+            }
+
+            @Override
+            public <T> T read(String json, Class<T> target) {
+                String loaded = callbacks.onAfterLoad(json, target, index);
+                T entity = serializer.read(loaded, target);
+                return callbacks.onAfterConvert(entity, index);
+            }
+        };
     }
 
     /**

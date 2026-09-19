@@ -33,7 +33,7 @@
 
 ## 7. 搜索/索引 Operations（计划 Task 10）
 
-- [ ] 7.1 追加 search/multiSearch/indexExists/createIndex/deleteIndex/applySettings/projectedSettings；`createIndex/applySettings` 返回 `int`；multiSearch 串行 + 非原子 Javadoc（D-M1-5）；createIndex 主键名取元模型、投影非空才推 settings（含"无角色 never updateSettings"断言）；commit `feat(core): 搜索/索引 Operations 与 settings 推送`
+- [x] 7.1 追加 search/multiSearch/indexExists/createIndex/deleteIndex/applySettings/projectedSettings；`createIndex/applySettings` 返回 `int`；multiSearch 串行 + 非原子 Javadoc（D-M1-5）；createIndex 主键名取元模型、投影非空才推 settings（含"无角色 never updateSettings"断言）；commit `feat(core): 搜索/索引 Operations 与 settings 推送`
 
 ## 8. M1 出口（计划 Task 11 + 收口）
 
