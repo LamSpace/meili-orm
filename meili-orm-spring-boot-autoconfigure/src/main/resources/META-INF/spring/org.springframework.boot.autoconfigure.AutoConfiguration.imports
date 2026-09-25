@@ -1,2 +1,3 @@
 io.github.lamspace.meili.autoconfigure.MeiliClientAutoConfiguration
 io.github.lamspace.meili.autoconfigure.MeiliDataAutoConfiguration
+io.github.lamspace.meili.autoconfigure.MeiliInitializationAutoConfiguration
