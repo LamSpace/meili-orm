@@ -52,6 +52,14 @@ M1 已冻结 `meili-orm-core` 公开 API（映射元模型、raw 通道网关、
 
 **决定**：属性提示经 `spring-boot-configuration-processor`（optional 依赖）生成 + `additional-spring-configuration-metadata.json` 补枚举 hints；`MeiliStarterMetadataTest` 逐行 `Class.forName` imports、核对生成元数据在册——两者都放 autoconfigure 测试侧（starter 模块无源码，不宜建 test）。
 
+### D-H：`Config` 作为 bean 暴露（实施期定案）
+
+core 网关构造器实际形态为 `SdkMeiliRawGateway(Client, Config)`——它需要同一份 url/key 走 helper HTTP 通道。故客户端 AC 的链修正为 `ConnectionDetails → Config(+Customizer) → Client` 三段，`Config` 一并成 bean 供数据层复用，保证 Client 与网关读到的连接事实同源。用户仅替换 `Client` 时须同时提供匹配的 `Config`（类级 Javadoc 已注明该义务）。
+
+### D-I：configuration-processor 显式挂 processor path（实施期定案）
+
+JDK 23+ 的 javac 默认禁用 classpath 注解处理，`spring-boot-configuration-processor` 虽在编译类路径上也不会运行——`spring-configuration-metadata.json` 会静默不生成。以 maven-compiler-plugin 的 `annotationProcessorPaths` 显式声明（版本随 `spring-boot.version`），构建事实而非默认行为兜底。
+
 ## Risks / Trade-offs
 
 - [Boot 3.5.16 编译期 API 在 4.0.3 搬家] → 只允许引用两代稳定底座（`@ConditionalOn*`/`@ConfigurationProperties`/`ObjectProvider`/`AutoConfigurationPackages`/`SmartInitializingSingleton`）；出口冒烟强制 Boot 4.0.3 真实启动提前探测；M3 双矩阵为最终护栏。
