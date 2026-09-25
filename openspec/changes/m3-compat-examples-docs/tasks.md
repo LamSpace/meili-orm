@@ -31,5 +31,5 @@
 
 ## 5. M3 出口核对（跨组集成检查）
 
-- [ ] 5.1 全 reactor `mvn -s /home/lam/repo/settings.xml -q clean verify` 绿（core/autoconfigure/starter/jackson3/双矩阵/examples 全部模块）+ `bash scripts/check-source-citations.sh --selftest` 与无参运行均绿；验证：BUILD SUCCESS 输出留档
-- [ ] 5.2 对照设计文档 §8 M3 出口标准与本 change 5 份 spec delta 逐项打勾（两 demo 真机留痕、矩阵双绿含 Boot3.5.16 首拉验证、jackson3 接管与 Boot3 无感、文档评审过），结论以出口核对 commit 记录（含 `git log --oneline` 与本任务组号对照）；验证：commit 存在且 `git status` 干净、无未跟踪残留
+- [x] 5.1 全 reactor `mvn -s /home/lam/repo/settings.xml -q clean verify` 绿（core/autoconfigure/starter/jackson3/双矩阵/examples 全部模块）+ `bash scripts/check-source-citations.sh --selftest` 与无参运行均绿；验证：BUILD SUCCESS 输出留档
+- [x] 5.2 对照设计文档 §8 M3 出口标准与本 change 5 份 spec delta 逐项打勾（两 demo 真机留痕、矩阵双绿含 Boot3.5.16 首拉验证、jackson3 接管与 Boot3 无感、文档评审过），结论以出口核对 commit 记录（含 `git log --oneline` 与本任务组号对照）；验证：commit 存在且 `git status` 干净、无未跟踪残留
