@@ -1,0 +1,4 @@
+{
+  "rankingRules": ["words", "typo", "proximity", "attribute", "sort"],
+  "stopWords": ["的"]
+}

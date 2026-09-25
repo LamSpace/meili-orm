@@ -1,0 +1,8 @@
+# 演示配置：同步写（wait-task）+ 启动 settings 同步（漂移只告警不动手）。
+meili:
+  url: http://localhost:7700
+  api-key: demoMasterKey-0123456789
+  wait-task: true
+  index:
+    auto-init: sync-settings
+    on-settings-drift: warn

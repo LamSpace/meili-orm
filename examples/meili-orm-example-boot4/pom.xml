@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>io.github.lamspace</groupId><artifactId>meili-orm-examples</artifactId><version>1.0-SNAPSHOT</version></parent>
+    <artifactId>meili-orm-example-boot4</artifactId>
+    <name>meili-orm-example-boot4</name>
+    <description>Boot 4.0.3 演示启动壳：仅启动类与配置，业务全部复用 example-common（同一份字节码换代运行）。</description>
+    <properties>
+        <spring-boot.app.version>4.0.3</spring-boot.app.version>
+    </properties>
+    <dependencyManagement>
+        <dependencies>
+            <!-- 子模块首位 import 覆盖继承的 3.5.16 基线：本壳 classpath 恒为 Boot 4.0.3 代。 -->
+            <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-dependencies</artifactId><version>${spring-boot.app.version}</version><type>pom</type><scope>import</scope></dependency>
+        </dependencies>
+    </dependencyManagement>
+    <dependencies>
+        <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-example-common</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
+    </dependencies>
+    <build><plugins>
+        <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            <version>${spring-boot.app.version}</version>
+        </plugin>
+    </plugins></build>
+</project>
