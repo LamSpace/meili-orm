@@ -13,6 +13,7 @@
         <module>meili-orm-core</module>
         <module>meili-orm-spring-boot-autoconfigure</module>
         <module>spring-boot-starter-meili-orm</module>
+        <module>it</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

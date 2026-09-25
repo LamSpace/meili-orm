@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>io.github.lamspace</groupId><artifactId>meili-orm</artifactId><version>1.0-SNAPSHOT</version></parent>
+    <artifactId>meili-orm-it</artifactId>
+    <packaging>pom</packaging>
+    <name>meili-orm-it</name>
+    <description>兼容矩阵聚合：按 Spring Boot 代际钉版独立编译运行的集成测试模块，不产出发布物。</description>
+    <modules>
+        <module>meili-orm-it-boot3</module>
+        <module>meili-orm-it-boot4</module>
+        <module>meili-orm-it-boot4-jackson3</module>
+    </modules>
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <!-- Boot 4.0 BOM 不再管理 org.testcontainers；矩阵三代统一钉与 core test-jar
+             编译基线同版本的 TC，杜绝代际间容器 API 漂移。 -->
+        <testcontainers.version>1.21.4</testcontainers.version>
+    </properties>
+    <build>
+        <plugins>
+            <!-- 矩阵模块无 src/main：javadoc 门禁不适用，显式关闭以免空源报错。 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration><skip>true</skip></configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
