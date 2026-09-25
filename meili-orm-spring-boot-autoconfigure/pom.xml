@@ -22,6 +22,12 @@
         <dependency><groupId>org.testcontainers</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
     </dependencies>
     <build><plugins>
+        <!-- JDK 23+ 默认禁用 classpath 注解处理；configuration-processor 必须显式挂到 processor path，
+             否则 spring-configuration-metadata.json 不会生成、IDE 属性提示静默缺失。 -->
+        <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>
+            <configuration><annotationProcessorPaths>
+                <path><groupId>org.springframework.boot</groupId><artifactId>spring-boot-configuration-processor</artifactId><version>${spring-boot.version}</version></path>
+            </annotationProcessorPaths></configuration></plugin>
         <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId>
             <executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions></plugin>
     </plugins></build>

@@ -1,0 +1,46 @@
+{
+  "groups": [
+    {
+      "name": "meili.index",
+      "type": "io.github.lamspace.meili.autoconfigure.MeiliProperties$Index",
+      "description": "Startup-time index initialization and settings-sync policy."
+    }
+  ],
+  "properties": [
+    {
+      "name": "meili.url",
+      "type": "java.lang.String",
+      "description": "MeiliSearch service base URL, including scheme. Connect and read timeouts are intentionally not configurable (the official SDK client builds its HTTP transport internally)."
+    },
+    {
+      "name": "meili.api-key",
+      "type": "java.lang.String",
+      "description": "API key (master or derived); empty means unauthenticated. Keep it out of version control - inject via environment or config server."
+    }
+  ],
+  "hints": [
+    {
+      "name": "meili.url",
+      "values": [
+        { "value": "http://localhost:7700", "description": "Local single-node development server." },
+        { "value": "https://example.com", "description": "TLS-terminated deployed server." }
+      ]
+    },
+    {
+      "name": "meili.index.auto-init",
+      "values": [
+        { "value": "none", "description": "No index interaction at startup; the server must already be provisioned." },
+        { "value": "create-if-missing", "description": "Create missing indexes with full settings push; existing indexes are only diffed and reported." },
+        { "value": "sync-settings", "description": "Diff projected settings against existing indexes and apply the on-settings-drift strategy." }
+      ]
+    },
+    {
+      "name": "meili.index.on-settings-drift",
+      "values": [
+        { "value": "warn", "description": "Log the drifted keys; change nothing." },
+        { "value": "apply", "description": "Push the projected settings (filterable/sortable drift triggers a server-side full rebuild)." },
+        { "value": "fail", "description": "Fail startup with a mapping exception without writing anything." }
+      ]
+    }
+  ]
+}
