@@ -11,15 +11,11 @@
         <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-core</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-autoconfigure</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-configuration-processor</artifactId><optional>true</optional></dependency>
         <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.assertj</groupId><artifactId>assertj-core</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-test</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-testcontainers</artifactId><scope>test</scope></dependency>
     </dependencies>
-    <build><plugins>
-        <!-- javadoc 引擎约束：doclet 无法文档化"仅 package-info、零类型"的模块（无 public 类即报错）。
-             本模块首个真实主源码类落地时删除此 skip，令聚合层门禁即刻生效。 -->
-        <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId>
-            <configuration><skip>true</skip></configuration></plugin>
-    </plugins></build>
 </project>
