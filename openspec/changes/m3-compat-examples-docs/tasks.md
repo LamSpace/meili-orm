@@ -24,10 +24,10 @@
 
 ## 4. 文档四件套（只转录已验证事实）
 
-- [ ] 4.1 根 `README.md`：starter 坐标 + yml 三行最小装配 + Book 实体与 search 代码样例 + 功能表（设计文档 §1.1 转录）+ demo 一键命令（3.4 实际记录转录）+ 构建命令含 `-s /home/lam/repo/settings.xml` 与 Docker/v1.49.0 前置声明 + 限制摘要清单 + 三份指南链接；验证：逐条命令可指认到任务 1–3 的实际执行记录，无一条臆造
-- [ ] 4.2 `docs/mapping-guide.md`：注解→settings 对照表（每注解一行）、"不标注=不声明"铁律含 displayed 白名单后果、嵌套点路径规则、`@MeiliSetting` 透传与投影合并/覆盖优先级、`searchableOrder` 排序语义、回调四件套样例、投影管线图；验证：按对照表构造实体的投影输出与 core golden 测试（`golden/books-settings.json`）一致，样例代码可编译
-- [ ] 4.3 `docs/limitations.md`：超时不可配（SDK 硬约束+exclusion/上游 issue 现状）、count 走 stats 语义、multiSearch 串行、Boot4 无容器 Jackson2 mapper 时自建行为、写后可查须 `wait-task`、改 filterable/sortable 全量重建代价、非目标表（响应式/@Version/analyzer/SpEL 索引名）——每条含 workaround；验证：逐项对照设计文档 §3.4/§1.2/§5.2 核销无漏项，且每条有代码事实或测试依据
-- [ ] 4.4 `docs/boot3-to-boot4.md`：编译基线策略（autoconfigure/examples-common=3.5.16、jackson3 为唯一 Boot 4.0.3 BOM 模块的例外及理由）、双矩阵工作方式与哨兵语义、jackson3 模块用法（Boot4 场景）、依赖升级检查清单（SDK/Boot/服务端镜像三类钉版变更→根 reactor 全绿含双矩阵、重读 spikeA/spikeB 哨兵结论、demo 真机冒烟一轮，各步给具体命令）；验证：清单中命令逐条可执行或 dry-run 通过（如 dependency:tree 类）。组尾 commit
+- [x] 4.1 根 `README.md`：starter 坐标 + yml 三行最小装配 + Book 实体与 search 代码样例 + 功能表（设计文档 §1.1 转录）+ demo 一键命令（3.4 实际记录转录）+ 构建命令含 `-s /home/lam/repo/settings.xml` 与 Docker/v1.49.0 前置声明 + 限制摘要清单 + 三份指南链接；验证：逐条命令可指认到任务 1–3 的实际执行记录，无一条臆造
+- [x] 4.2 `docs/mapping-guide.md`：注解→settings 对照表（每注解一行）、"不标注=不声明"铁律含 displayed 白名单后果、嵌套点路径规则、`@MeiliSetting` 透传与投影合并/覆盖优先级、`searchableOrder` 排序语义、回调四件套样例、投影管线图；验证：按对照表构造实体的投影输出与 core golden 测试（`golden/books-settings.json`）一致，样例代码可编译
+- [x] 4.3 `docs/limitations.md`：超时不可配（SDK 硬约束+exclusion/上游 issue 现状）、count 走 stats 语义、multiSearch 串行、Boot4 无容器 Jackson2 mapper 时自建行为、写后可查须 `wait-task`、改 filterable/sortable 全量重建代价、非目标表（响应式/@Version/analyzer/SpEL 索引名）——每条含 workaround；验证：逐项对照设计文档 §3.4/§1.2/§5.2 核销无漏项，且每条有代码事实或测试依据
+- [x] 4.4 `docs/boot3-to-boot4.md`：编译基线策略（autoconfigure/examples-common=3.5.16、jackson3 为唯一 Boot 4.0.3 BOM 模块的例外及理由）、双矩阵工作方式与哨兵语义、jackson3 模块用法（Boot4 场景）、依赖升级检查清单（SDK/Boot/服务端镜像三类钉版变更→根 reactor 全绿含双矩阵、重读 spikeA/spikeB 哨兵结论、demo 真机冒烟一轮，各步给具体命令）；验证：清单中命令逐条可执行或 dry-run 通过（如 dependency:tree 类）。组尾 commit
 
 ## 5. M3 出口核对（跨组集成检查）
 
