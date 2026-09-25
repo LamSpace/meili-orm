@@ -37,3 +37,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+### CodeGraph ###
+# 本地代码索引产物（SQLite 缓存，机器专属），不入版本库
+.codegraph/
