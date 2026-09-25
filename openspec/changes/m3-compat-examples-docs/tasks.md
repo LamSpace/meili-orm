@@ -8,11 +8,11 @@
 
 ## 2. 可选模块 meili-orm-serializer-jackson3
 
-- [ ] 2.1 模块 pom（自身 dependencyManagement 首位 import Boot 4.0.3 BOM 以解析 `tools.jackson`；依赖 core、spring-boot-autoconfigure、tools.jackson jackson-databind；`maven.compiler.release=17`；package-info 齐备）+ 根 modules 追加；验证：`mvn -s /home/lam/repo/settings.xml -q -pl meili-orm-serializer-jackson3 -am package` 绿且 `dependency:tree` 确认 tools.jackson 仅本模块在册（core/autoconfigure/starter/it-boot3 均无）
-- [ ] 2.2 先写 `Jackson3DocumentSerializerTest`（镜像 Jackson2 断言集四条：`book_title` 改名、Long 逐位无损、ISO 日期非时间戳、未知键忽略）确认红，再实现 `Jackson3DocumentSerializer`（tools.jackson mapper copy + `@MeiliField.name` introspector 镜像 Task 5 规则，注解取路径覆盖字段/组件/getter）；验证：`mvn -s /home/lam/repo/settings.xml -q -pl meili-orm-serializer-jackson3 test` 该测试绿
-- [ ] 2.3 实现 `MeiliJackson3SerializerAutoConfiguration`（`@AutoConfiguration(before = MeiliDataAutoConfiguration)`、`@ConditionalOnClass(tools.jackson ObjectMapper)`、`@ConditionalOnMissingBean(MeiliDocumentSerializer)`，容器有 Jackson3 mapper bean 则以其为底否则自建）+ 模块自有 imports + L2 测试（takesOver/userBeanWins/用户 mapper 命名策略被尊重）；验证：`mvn -s /home/lam/repo/settings.xml -q -pl meili-orm-serializer-jackson3 test` 全绿
-- [ ] 2.4 it-boot4 补 jar-plugin test-jar execution（使 `ITBook`/`ItApp` 可复用；重跑本模块 verify 确认仍绿）
-- [ ] 2.5 `it-boot4-jackson3` opt-in IT：加 jackson3 模块 test 依赖 + 基线 it-boot4 test-jar + core test-jar；`Jackson3WiringIT` 复用 `ItApp`/`ITBook` 上下文（同 @DynamicPropertySource 模式），断言 serializer instanceof Jackson3DocumentSerializer 且 save→findById→search 真机往返无损；it-boot3 与基线 it-boot4 零改动（"类缺席"分支由二者证明）；验证：`mvn -s /home/lam/repo/settings.xml -q -pl it/meili-orm-it-boot4-jackson3 -am verify` 绿 + 根 reactor `clean verify` 绿。组尾 commit
+- [x] 2.1 模块 pom（自身 dependencyManagement 首位 import Boot 4.0.3 BOM 以解析 `tools.jackson`；依赖 core、spring-boot-autoconfigure、tools.jackson jackson-databind；`maven.compiler.release=17`；package-info 齐备）+ 根 modules 追加；验证：`mvn -s /home/lam/repo/settings.xml -q -pl meili-orm-serializer-jackson3 -am package` 绿且 `dependency:tree` 确认 tools.jackson 仅本模块在册（core/autoconfigure/starter/it-boot3 均无）
+- [x] 2.2 先写 `Jackson3DocumentSerializerTest`（镜像 Jackson2 断言集四条：`book_title` 改名、Long 逐位无损、ISO 日期非时间戳、未知键忽略）确认红，再实现 `Jackson3DocumentSerializer`（tools.jackson mapper copy + `@MeiliField.name` introspector 镜像 Task 5 规则，注解取路径覆盖字段/组件/getter）；验证：`mvn -s /home/lam/repo/settings.xml -q -pl meili-orm-serializer-jackson3 test` 该测试绿
+- [x] 2.3 实现 `MeiliJackson3SerializerAutoConfiguration`（`@AutoConfiguration(before = MeiliDataAutoConfiguration)`、`@ConditionalOnClass(tools.jackson ObjectMapper)`、`@ConditionalOnMissingBean(MeiliDocumentSerializer)`，容器有 Jackson3 mapper bean 则以其为底否则自建）+ 模块自有 imports + L2 测试（takesOver/userBeanWins/用户 mapper 命名策略被尊重）；验证：`mvn -s /home/lam/repo/settings.xml -q -pl meili-orm-serializer-jackson3 test` 全绿
+- [x] 2.4 it-boot4 补 jar-plugin test-jar execution（使 `ITBook`/`ItApp` 可复用；重跑本模块 verify 确认仍绿）
+- [x] 2.5 `it-boot4-jackson3` opt-in IT：加 jackson3 模块 test 依赖 + 基线 it-boot4 test-jar + core test-jar；`Jackson3WiringIT` 复用 `ItApp`/`ITBook` 上下文（同 @DynamicPropertySource 模式），断言 serializer instanceof Jackson3DocumentSerializer 且 save→findById→search 真机往返无损；it-boot3 与基线 it-boot4 零改动（"类缺席"分支由二者证明）；验证：`mvn -s /home/lam/repo/settings.xml -q -pl it/meili-orm-it-boot4-jackson3 -am verify` 绿 + 根 reactor `clean verify` 绿。组尾 commit
 
 ## 3. examples 双代 demo
 

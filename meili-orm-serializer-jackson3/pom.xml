@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>io.github.lamspace</groupId><artifactId>meili-orm</artifactId><version>1.0-SNAPSHOT</version></parent>
+    <artifactId>meili-orm-serializer-jackson3</artifactId>
+    <name>meili-orm-serializer-jackson3</name>
+    <description>meili-orm 可选 Jackson 3 序列化模块：Boot 4 代应用加入依赖即接管文档序列化；主工程其余模块零 Jackson 3 编译依赖。</description>
+    <dependencyManagement>
+        <dependencies>
+            <!-- 全工程唯一以 Boot 4 为编译基线的产品模块：tools.jackson 坐标仅由该代 BOM
+                 管理（例外理由与升级义务见 docs/boot3-to-boot4.md）。 -->
+            <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-dependencies</artifactId><version>4.0.3</version><type>pom</type><scope>import</scope></dependency>
+        </dependencies>
+    </dependencyManagement>
+    <dependencies>
+        <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-core</artifactId></dependency>
+        <!-- 排序锚点：@AutoConfiguration(before=MeiliDataAutoConfiguration) 引用的装配类在 autoconfigure。 -->
+        <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-spring-boot-autoconfigure</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-autoconfigure</artifactId></dependency>
+        <dependency><groupId>tools.jackson.core</groupId><artifactId>jackson-databind</artifactId></dependency>
+        <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.assertj</groupId><artifactId>assertj-core</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-test</artifactId><scope>test</scope></dependency>
+    </dependencies>
+</project>
