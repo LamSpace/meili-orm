@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,7 +48,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-/** {@link DefaultMeiliSearchOperations} 写读删语义契约测试（网关全 mock）。 */
+/** Write/read/delete semantics contract tests for {@link DefaultMeiliSearchOperations} (gateway fully mocked). */
 class DefaultMeiliSearchOperationsWriteTest {
 
     static final ObjectMapper M = new ObjectMapper();
@@ -54,7 +69,7 @@ class DefaultMeiliSearchOperationsWriteTest {
     }
 
     @Test
-    @DisplayName("save = upsert 原始 JSON 单请求，主键与改名与元模型一致")
+    @DisplayName("save = single-request raw-JSON upsert; primary key and renames match the metamodel")
     void saveUpsertsViaRawJson() {
         when(gw.updateDocuments(eq("books"), anyString())).thenReturn(42);
         Book saved = ops.save(new Book(9007199254740993L, "三体", 59.0));
@@ -67,12 +82,12 @@ class DefaultMeiliSearchOperationsWriteTest {
     void saveNullIdFailsFastBeforeAnyCall() {
         assertThatThrownBy(() -> ops.save(new Book(null, "x", 1.0)))
                 .isInstanceOf(MeiliOrmException.class)
-                .hasMessageContaining("主键");
+                .hasMessageContaining("primary key");
         verifyNoInteractions(gw);
     }
 
     @Test
-    @DisplayName("saveAll：同类型多实体合并为单请求 JSON 数组")
+    @DisplayName("saveAll: multiple entities of the same type merge into one JSON-array request")
     void saveAllSendsOneArrayRequest() {
         when(gw.updateDocuments(eq("books"), anyString())).thenReturn(7);
         List<Book> saved = ops.saveAll(List.of(
@@ -101,7 +116,7 @@ class DefaultMeiliSearchOperationsWriteTest {
     }
 
     @Test
-    @DisplayName("回调顺序：BeforeConvert 改变序列化内容，AfterSave 在其后触发")
+    @DisplayName("Callback order: BeforeConvert changes the serialized content, AfterSave fires afterwards")
     void callbacksFireInOrderOnSave() {
         var cbs = new MeiliEntityCallbacks();
         cbs.register(Book.class, (BeforeConvertCallback<Book>)
@@ -118,7 +133,7 @@ class DefaultMeiliSearchOperationsWriteTest {
     }
 
     @Test
-    @DisplayName("findById：AfterLoad 改写先于反序列化，AfterConvert 其后")
+    @DisplayName("findById: AfterLoad rewrite happens before deserialization, AfterConvert after it")
     void findByIdRunsCallbackChainAndDeserializes() {
         var cbs = new MeiliEntityCallbacks();
         cbs.register(Book.class, (AfterLoadCallback<Book>)
@@ -143,12 +158,12 @@ class DefaultMeiliSearchOperationsWriteTest {
     void findByIdNullIdRejected() {
         assertThatThrownBy(() -> ops.findById(null, Book.class))
                 .isInstanceOf(MeiliOrmException.class)
-                .hasMessageContaining("主键");
+                .hasMessageContaining("primary key");
         verifyNoInteractions(gw);
     }
 
     @Test
-    @DisplayName("findAll：fetch 结果的每条 raw 文档走同一条读回调链")
+    @DisplayName("findAll: every raw document in the fetch result runs through the same read callback chain")
     void findAllAppliesReadChainPerDocument() {
         var cbs = new MeiliEntityCallbacks();
         cbs.register(Book.class, (AfterConvertCallback<Book>)

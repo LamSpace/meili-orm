@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,51 +47,52 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 /**
- * L1 黄金集（覆盖任务 3.2–3.5）：关键字→MeiliQuery 逐条渲染、桥接、启动期角色预检、
- * 分页/排序换算、空 IN 短路、不支持面的可定位报错。
+ * L1 golden set (covering tasks 3.2–3.5): per-keyword MeiliQuery rendering, property
+ * bridging, bootstrap role pre-checks, page/sort conversion, empty-IN short-circuit, and
+ * locatable errors on the out-of-scope surface.
  */
 class MeiliDerivedQueriesTest {
 
     @MeiliDocument(indexName = "dq_books")
     public static class DqBook {
-        /** 主键。 */
+        /** Primary key. */
         @MeiliId
         public Long id;
-        /** 改名 + searchable。 */
+        /** Renamed + searchable. */
         @MeiliField(name = "book_title", searchable = true)
         public String title;
-        /** searchable，无 filterable。 */
+        /** searchable, not filterable. */
         @MeiliField(searchable = true)
         public String overview;
-        /** filterable。 */
+        /** filterable. */
         @MeiliField(filterable = true)
         public String genre;
-        /** filterable+sortable。 */
+        /** filterable+sortable. */
         @MeiliField(filterable = true, sortable = true)
         public Double price;
-        /** filterable 布尔。 */
+        /** filterable boolean. */
         @MeiliField(filterable = true)
         public Boolean active;
-        /** sortable 时间。 */
+        /** sortable temporal. */
         @MeiliField(sortable = true)
         public java.time.OffsetDateTime publishedAt;
-        /** filterable 集合不透明叶。 */
+        /** filterable opaque collection leaf. */
         @MeiliField(filterable = true)
         public List<String> tags;
-        /** 嵌套聚合。 */
+        /** Nested aggregate. */
         public DqAuthor author;
     }
 
-    /** 嵌套类型。 */
+    /** Nested type. */
     public static class DqAuthor {
-        /** filterable+sortable。 */
+        /** filterable+sortable. */
         @MeiliField(filterable = true, sortable = true)
         public String city;
-        /** 无角色。 */
+        /** No roles declared. */
         public String name;
     }
 
-    /** 正常面仓库。 */
+    /** Happy-path repository. */
     public interface DqRepo extends MeiliRepository<DqBook, Long> {
         List<DqBook> findByGenre(String g);
 
@@ -153,7 +169,7 @@ class MeiliDerivedQueriesTest {
         repo.findByTagsIn(List.of("a", "b"));
         assertThat(captured().getFilterDsl()).isEqualTo("tags IN [\"a\", \"b\"]");
         repo.findByTagsIn(List.of());
-        // 空 IN 短路：不产生第二次检索
+        // empty-IN short-circuit: no second search is issued
         org.mockito.Mockito.verify(ops, org.mockito.Mockito.times(1)).search(any(MeiliQuery.class), any());
     }
 
@@ -241,7 +257,7 @@ class MeiliDerivedQueriesTest {
     }
 
     @Nested
-    @DisplayName("启动期角色预检（3.3）")
+    @DisplayName("Bootstrap role pre-check (3.3)")
     class RolePrecheck {
 
         private Object build(Class<?> iface) {
@@ -249,7 +265,7 @@ class MeiliDerivedQueriesTest {
         }
 
         @Test
-        @DisplayName("缺 filterable：启动失败，消息含属性与两条修复指引")
+        @DisplayName("Missing filterable: startup fails, message names the property and both fixes")
         void missingFilterable() {
             interface R extends MeiliRepository<DqBook, Long> {
                 List<DqBook> findByOverview(String s);
@@ -282,7 +298,7 @@ class MeiliDerivedQueriesTest {
         }
 
         @Test
-        @DisplayName("主键条件豁免 filterable 预检")
+        @DisplayName("Primary-key conditions are exempt from the filterable pre-check")
         void idConditionExempt() {
             interface R extends MeiliRepository<DqBook, Long> {
                 List<DqBook> readById(Long id);
@@ -292,7 +308,7 @@ class MeiliDerivedQueriesTest {
     }
 
     @Nested
-    @DisplayName("不支持面（3.5）")
+    @DisplayName("Out-of-scope surface (3.5)")
     class Unsupported {
 
         private void rejects(Class<?> iface, String messageFragment) {
@@ -326,7 +342,7 @@ class MeiliDerivedQueriesTest {
                 long countByGenre(String g);
             }
             rejects(D.class, "Distinct");
-            rejects(E.class, "仅支持 find/read/get/retrieve");
+            rejects(E.class, "find/read/get/retrieve");
         }
 
         @Test
@@ -334,13 +350,13 @@ class MeiliDerivedQueriesTest {
             interface R extends MeiliRepository<DqBook, Long> {
                 List<DqBook> findByAdrCity(String s);
             }
-            rejects(R.class, "不支持缩写");
+            rejects(R.class, "abbreviations are not supported");
         }
 
         @Test
         void excludedAndAggregateAndUnknownPropertiesRejected() {
             interface R1 extends MeiliRepository<DqBook, Long> {
-                List<DqBook> findByAuthorName(String s); // name 无角色 → 预检报错（可定位）
+                List<DqBook> findByAuthorName(String s); // name has no role → pre-check error (locatable)
             }
             interface R2 extends MeiliRepository<DqBook, Long> {
                 List<DqBook> findByAuthor(DqAuthor a);
@@ -348,11 +364,11 @@ class MeiliDerivedQueriesTest {
             interface R3 extends MeiliRepository<DqBook, Long> {
                 List<DqBook> findByNoSuch(String s);
             }
-            // name 无任何角色 → EQ 预检失败，角色类错误走 MeiliMappingException
+            // name has no role at all → EQ pre-check fails; role-class errors go through MeiliMappingException
             assertThatThrownBy(() -> MeiliRepositoryProxy.create(R1.class, ops, new MeiliMappingContext()))
                     .isInstanceOf(io.github.lamspace.meili.core.exception.MeiliMappingException.class)
                     .hasMessageContaining("filterable");
-            rejects(R2.class, "聚合");
+            rejects(R2.class, "aggregate");
             rejects(R3.class, "NoSuch");
         }
 
@@ -364,7 +380,7 @@ class MeiliDerivedQueriesTest {
             interface R2 extends MeiliRepository<DqBook, Long> {
                 Page<DqBook> findByGenreNoPage(String g);
             }
-            rejects(R1.class, "返回类型");
+            rejects(R1.class, "return type");
             rejects(R2.class, "Pageable");
         }
 
@@ -373,7 +389,7 @@ class MeiliDerivedQueriesTest {
             interface R extends MeiliRepository<DqBook, Long> {
                 List<DqBook> findByGenreAndPrice(String g);
             }
-            rejects(R.class, "值参数数量");
+            rejects(R.class, "value argument count");
         }
     }
 }

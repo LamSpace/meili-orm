@@ -1,14 +1,32 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 /**
- * meili-orm Testcontainers 集成：类型化 MeiliSearch 服务容器
- * （{@link io.github.lamspace.meili.testcontainers.MeiliSearchContainer}）与
- * Spring Boot 服务连接桥接
- * （{@link io.github.lamspace.meili.testcontainers.MeiliContainerConnectionDetailsFactory}）。
+ * meili-orm Testcontainers integration: a typed MeiliSearch service container
+ * ({@link io.github.lamspace.meili.testcontainers.MeiliSearchContainer}) and the Spring Boot
+ * service-connection bridge
+ * ({@link io.github.lamspace.meili.testcontainers.MeiliContainerConnectionDetailsFactory}).
  *
- * <p>桥接仅产出 {@link io.github.lamspace.meili.autoconfigure.MeiliConnectionDetails}，
- * 下游客户端与数据装配链完全复用自动配置行为。</p>
+ * <p>The bridge only produces a
+ * {@link io.github.lamspace.meili.autoconfigure.MeiliConnectionDetails}; the downstream client
+ * and data wiring chains reuse the auto-configuration behavior entirely.</p>
  *
- * <p>仅引用 Boot 3.5.x 与 4.x 两代稳定的服务连接工厂 SPI 与注解底座
- * （{@code org.springframework.boot.autoconfigure.service.connection.ConnectionDetailsFactory}、
- * {@code org.springframework.boot.testcontainers.service.connection.*}）；编译基线为最低支持代。</p>
+ * <p>References only the service-connection factory SPI and annotation infrastructure that are
+ * stable across both the Boot 3.5.x and 4.x generations
+ * ({@code org.springframework.boot.autoconfigure.service.connection.ConnectionDetailsFactory}
+ * and {@code org.springframework.boot.testcontainers.service.connection.*}); the compilation
+ * baseline is the lowest supported generation.</p>
  */
 package io.github.lamspace.meili.testcontainers;

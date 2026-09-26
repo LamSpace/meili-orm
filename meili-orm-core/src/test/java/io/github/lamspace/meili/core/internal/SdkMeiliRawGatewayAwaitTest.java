@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,7 +37,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** {@link SdkMeiliRawGateway#awaitTask} 与 {@code getTask} 的确定性行为测试（client mock）。 */
+/** Deterministic behavior tests for {@link SdkMeiliRawGateway#awaitTask} and {@code getTask} (mocked client). */
 class SdkMeiliRawGatewayAwaitTest {
 
     Client client;
@@ -49,7 +64,7 @@ class SdkMeiliRawGatewayAwaitTest {
     }
 
     @Test
-    @DisplayName("未到终态且预算耗尽 → MeiliTaskTimeoutException（含 uid 与预算）")
+    @DisplayName("Non-terminal when the budget runs out → MeiliTaskTimeoutException (carries uid and budget)")
     void timeoutWhenNotTerminal() {
         Task pending = sdkTask(TaskStatus.PROCESSING, null);
         when(client.getTask(anyInt())).thenReturn(pending);
@@ -59,7 +74,7 @@ class SdkMeiliRawGatewayAwaitTest {
     }
 
     @Test
-    @DisplayName("SUCCEEDED 终态 → 正常返回")
+    @DisplayName("SUCCEEDED terminal state → returns normally")
     void returnsOnSucceeded() {
         Task done = sdkTask(TaskStatus.SUCCEEDED, null);
         when(client.getTask(anyInt())).thenReturn(done);
@@ -67,7 +82,7 @@ class SdkMeiliRawGatewayAwaitTest {
     }
 
     @Test
-    @DisplayName("FAILED 终态 → IndexAccessException 携任务错误详情")
+    @DisplayName("FAILED terminal state → IndexAccessException carrying the task error detail")
     void failedTaskThrowsWithDetail() {
         Task failed = sdkTask(TaskStatus.FAILED, "primary key cannot be changed");
         when(client.getTask(anyInt())).thenReturn(failed);
@@ -77,7 +92,7 @@ class SdkMeiliRawGatewayAwaitTest {
     }
 
     @Test
-    @DisplayName("getTask 映射为不可变 core 视图（枚举按常量比较）")
+    @DisplayName("getTask maps to an immutable core view (enums compared by constant)")
     void getTaskMapsToCoreView() {
         Task enqueued = sdkTask(TaskStatus.ENQUEUED, null);
         when(client.getTask(anyInt())).thenReturn(enqueued);
@@ -91,7 +106,7 @@ class SdkMeiliRawGatewayAwaitTest {
     }
 
     @Test
-    @DisplayName("网关入口异常统一翻译，不抛穿 SDK 异常")
+    @DisplayName("Gateway entry exceptions are translated uniformly; SDK exceptions never leak through")
     void clientErrorsTranslated() {
         when(client.getTask(anyInt())).thenThrow(new MeilisearchApiException(
                 new APIError().setCode("task_not_found").setMessage("no task")));

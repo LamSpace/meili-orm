@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,12 +40,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 
 /**
- * L1：{@code @MeiliQuery} 契约——模板组合、双轨绑定、filter 字面量转义（注入面）、
- * 启动期占位符/括号校验、distinct 直通、与派生短路的 WARN 与排序/top 保留。
+ * L1: {@code @MeiliQuery} contract — template composition, dual-track binding, filter-literal
+ * escaping (injection surface), bootstrap placeholder/bracket validation, distinct
+ * pass-through, plus the short-circuit WARN and the kept order/top from the method name.
  */
 class MeiliAnnotatedQueriesTest {
 
-    /** 注解查询夹具仓库（复用派生测试实体）。 */
+    /** Annotated-query fixture repository (reuses the derived-test entity). */
     public interface AnnRepo extends MeiliRepository<DqBook, Long> {
 
         @io.github.lamspace.meili.repository.MeiliQuery(q = ":text", filter = "genre = :g")
@@ -86,7 +102,7 @@ class MeiliAnnotatedQueriesTest {
     }
 
     @Test
-    @DisplayName("注入面：恶意字符串整体成为被转义的字面量，DSL 结构不变")
+    @DisplayName("Injection surface: the malicious string becomes one escaped literal, DSL structure unchanged")
     void injectionEscaped() {
         repo.injection("科幻\" OR price > 0 --");
         assertThat(captured().getFilterDsl())
@@ -106,17 +122,17 @@ class MeiliAnnotatedQueriesTest {
     }
 
     @Test
-    @DisplayName("注解短路方法名条件：OrderBy/top 仍来自方法名，其余忽略但分页参数生效")
+    @DisplayName("The annotation short-circuits name criteria: OrderBy/top still come from the name, the rest is ignored but the paging argument applies")
     void precedenceKeepsOrderAndPageable() {
         repo.findByPriceGreaterThan(99.0, PageRequest.of(0, 10));
         MeiliQuery q = captured();
-        assertThat(q.getFilterDsl()).isEqualTo("active = true");   // 注解为准
+        assertThat(q.getFilterDsl()).isEqualTo("active = true");   // the annotation wins
         assertThat(q.getPage()).isEqualTo(1);
         assertThat(q.getHitsPerPage()).isEqualTo(10);
     }
 
     @Test
-    @DisplayName("SpEL 求值失败包装为 MeiliOrmException，含表达式与方法名")
+    @DisplayName("A failed SpEL evaluation is wrapped into MeiliOrmException carrying the expression and method name")
     void spelFailureWrapped() {
         assertThatThrownBy(() -> repo.spel(null))
                 .isInstanceOf(io.github.lamspace.meili.core.exception.MeiliOrmException.class)
@@ -124,39 +140,39 @@ class MeiliAnnotatedQueriesTest {
     }
 
     @Test
-    @DisplayName("启动期负向：空注解/未知占位符/括号不配对/?N 越界")
+    @DisplayName("Bootstrap negatives: empty annotation / unknown placeholder / unbalanced brackets / ?N out of range")
     void bootstrapValidation() {
-        // empty()、badPlaceholder()、badBrackets()、badIndex() 任一存在即使整个接口构建失败，
-        // 逐个接口的错误信息断言：
+        // Any of empty(), badPlaceholder(), badBrackets(), badIndex() fails the whole interface build,
+        // asserted per interface:
         assertThatThrownBy(() -> MeiliRepositoryProxy.create(EmptyOnly.class, ops, new MeiliMappingContext()))
-                .hasMessageContaining("至少提供");
+                .hasMessageContaining("must provide at least one");
         assertThatThrownBy(() -> MeiliRepositoryProxy.create(BadName.class, ops, new MeiliMappingContext()))
                 .hasMessageContaining("missing");
         assertThatThrownBy(() -> MeiliRepositoryProxy.create(BadParen.class, ops, new MeiliMappingContext()))
-                .hasMessageContaining("括号不配对");
+                .hasMessageContaining("parentheses are unbalanced");
         assertThatThrownBy(() -> MeiliRepositoryProxy.create(BadPos.class, ops, new MeiliMappingContext()))
                 .hasMessageContaining("?9");
     }
 
-    /** 空注解接口。 */
+    /** Empty-annotation interface. */
     public interface EmptyOnly extends MeiliRepository<DqBook, Long> {
         @io.github.lamspace.meili.repository.MeiliQuery
         List<DqBook> none();
     }
 
-    /** 未知占位符接口。 */
+    /** Unknown-placeholder interface. */
     public interface BadName extends MeiliRepository<DqBook, Long> {
         @io.github.lamspace.meili.repository.MeiliQuery(filter = "genre = :missing")
         List<DqBook> q(String g);
     }
 
-    /** 括号不配对接口。 */
+    /** Unbalanced-brackets interface. */
     public interface BadParen extends MeiliRepository<DqBook, Long> {
         @io.github.lamspace.meili.repository.MeiliQuery(filter = "genre = :g AND (price > 1")
         List<DqBook> q(@Param("g") String g);
     }
 
-    /** 越界位置接口。 */
+    /** Out-of-range positional interface. */
     public interface BadPos extends MeiliRepository<DqBook, Long> {
         @io.github.lamspace.meili.repository.MeiliQuery(filter = "price > ?9")
         List<DqBook> q(Double p);

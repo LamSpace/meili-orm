@@ -1,13 +1,28 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.spike;
 
 import io.github.lamspace.meili.core.mapping.MeiliField;
 
-/** spike 样本嵌套类型：city 声明 filterable+sortable，name 无角色。 */
+/** spike nested sample type: city declares filterable+sortable, name declares no role. */
 class SpikeAuthor {
 
-    /** 嵌套点路径目标（author.city）。 */
+    /** Nested dotted-path target (author.city). */
     @MeiliField(filterable = true, sortable = true)
     String city;
-    /** 无角色声明的嵌套属性。 */
+    /** Nested property with no role declarations. */
     String name;
 }

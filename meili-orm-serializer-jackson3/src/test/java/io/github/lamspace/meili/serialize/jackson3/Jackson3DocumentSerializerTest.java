@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.serialize.jackson3;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,12 +32,14 @@ import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * {@link Jackson3DocumentSerializer} 行为契约测试。
+ * Behavior-contract tests for {@link Jackson3DocumentSerializer}.
  *
- * <p>与 core 的 Jackson2 实现测试镜像同构断言集（精度、改名、日期、宽容读、base
- * 配置尊重、异常包装）：序列化后端可替换的前提是行为逐项等价，故这里移植断言而非
- * 另起炉灶。注解仍来自 com.fasterxml.jackson.annotation——Jackson 3 有意保留该
- * 坐标为注解事实源。
+ * <p>Mirrors the assertion set of core's Jackson 2 implementation (precision, renames, dates,
+ * lenient reads, base-configuration respect, exception wrapping): a swappable serialization
+ * backend is only viable when its behavior is equivalent item-for-item, so the assertions are
+ * ported rather than reinvented. Annotations still come from
+ * com.fasterxml.jackson.annotation — Jackson 3 deliberately keeps that coordinate as the
+ * source of truth for annotations.
  */
 class Jackson3DocumentSerializerTest {
 
@@ -42,7 +59,7 @@ class Jackson3DocumentSerializerTest {
     }
 
     @Test
-    @DisplayName("Long 主键逐位往返 + 改名 + JsonIgnore 排除 + ISO 日期")
+    @DisplayName("Long primary key round-trips bit-for-bit + rename + JsonIgnore exclusion + ISO date")
     void longPrecisionRoundTrip() {
         Doc d = new Doc(9007199254740993L, "三体", "hidden", OffsetDateTime.parse("2008-01-01T00:00:00Z"));
         String json = s.write(d);
@@ -57,7 +74,7 @@ class Jackson3DocumentSerializerTest {
     }
 
     @Test
-    @DisplayName("POJO 形态：字段改名序列化与反序列化双向生效")
+    @DisplayName("POJO shape: field rename applies in both serialization and deserialization")
     void pojoRenameRoundTrip() {
         String json = s.write(new PojoDoc(1L, "活着", "hidden"));
         assertThat(json).contains("\"book_title\":\"活着\"").doesNotContain("hidden");
@@ -66,7 +83,7 @@ class Jackson3DocumentSerializerTest {
     }
 
     @Test
-    @DisplayName("与映射层同名规则：@MeiliField.name 优先于 @JsonProperty（冲突裁决一致）")
+    @DisplayName("Same rule as the mapping layer: @MeiliField.name wins over @JsonProperty (consistent conflict)")
     void meiliFieldBeatsJsonPropertyForSerialization() {
         class Conflict {
             @MeiliId Long id;
@@ -82,7 +99,7 @@ class Jackson3DocumentSerializerTest {
     }
 
     @Test
-    @DisplayName("base mapper 的命名策略被尊重：unitPrice → unit_price")
+    @DisplayName("base mapper's naming strategy is respected: unitPrice → unit_price")
     void customBaseMapperRespected() {
         ObjectMapper m = JsonMapper.builder()
                 .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
@@ -93,12 +110,12 @@ class Jackson3DocumentSerializerTest {
     }
 
     @Test
-    @DisplayName("构造不污染 base mapper：注册后 base 仍可独立使用且无 meili 桥接")
+    @DisplayName("Construction does not pollute the base mapper: base stays usable without the meili bridge")
     void baseMapperNotMutated() {
         ObjectMapper base = new JsonMapper();
         Jackson3DocumentSerializer copy = new Jackson3DocumentSerializer(base);
         copy.write(new Doc(1L, "x", null, null));
-        // base 不含 meili 桥接：record 的 book_title 改名不生效
+        // base carries no meili bridge: the record's book_title rename does not apply
         assertThat(base.writeValueAsString(new Doc(1L, "x", null, null))).contains("\"title\"");
     }
 

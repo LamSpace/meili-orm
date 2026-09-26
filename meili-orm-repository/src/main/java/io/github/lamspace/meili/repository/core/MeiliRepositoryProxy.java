@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.core;
 
 import io.github.lamspace.meili.core.exception.MeiliMappingException;
@@ -76,7 +91,7 @@ public final class MeiliRepositoryProxy implements InvocationHandler {
                                 MeiliMappingContext context) {
         Class<?>[] generics = GenericTypeResolver.resolveTypeArguments(repositoryInterface, Repository.class);
         if (generics == null || generics.length < 2) {
-            throw new MeiliMappingException("无法从仓库接口解析域类型（需显式参数化 MeiliRepository<T, ID>）: "
+            throw new MeiliMappingException("Cannot resolve domain type from repository interface (explicit MeiliRepository<T, ID> parameterization required): "
                     + repositoryInterface.getName());
         }
         Class<?> domainType = generics[0];
@@ -133,7 +148,7 @@ public final class MeiliRepositoryProxy implements InvocationHandler {
         }
         MethodInvoker invoker = dispatch.get(method);
         if (invoker == null) {
-            throw new UnsupportedOperationException("未注册的方法: " + method);
+            throw new UnsupportedOperationException("Unregistered method: " + method);
         }
         try {
             return invoker.invoke(args == null ? new Object[0] : args);
@@ -153,7 +168,7 @@ public final class MeiliRepositoryProxy implements InvocationHandler {
         try {
             return clazz.getMethod(ifaceMethod.getName(), ifaceMethod.getParameterTypes());
         } catch (NoSuchMethodException e) {
-            throw new MeiliMappingException("默认仓库实现缺少接口方法: " + ifaceMethod, e);
+            throw new MeiliMappingException("Default repository implementation is missing the interface method: " + ifaceMethod, e);
         }
     }
 
@@ -177,9 +192,9 @@ public final class MeiliRepositoryProxy implements InvocationHandler {
             if (cause instanceof Error err) {
                 throw err;
             }
-            throw new MeiliMappingException("仓库委托失败: " + target, cause);
+            throw new MeiliMappingException("Repository delegation failed: " + target, cause);
         } catch (IllegalAccessException e) {
-            throw new MeiliMappingException("仓库委托不可访问: " + target, e);
+            throw new MeiliMappingException("Repository delegation is not accessible: " + target, e);
         }
     }
 }

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -11,35 +26,46 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.boot.test.context.SpringBootTest;
 
 /**
- * 真机 IT（服务连接场景一"容器接入上下文完成往返"）：静态字段加
- * {@code @ServiceConnection} 即让桥接注册 {@link MeiliConnectionDetails}，装配出的
- * SDK {@link Config} 携带容器 URL 与密钥（构建前观测），保存后按主键读取往返成功。
+ * Real-machine IT (service-connection scenario 1, "the container joins the context and
+ * completes the round trip"): a static field annotated {@code @ServiceConnection} makes the
+ * bridge register a {@link MeiliConnectionDetails}, the assembled SDK {@link Config} carries
+ * the container URL and key (observable before building), and a save-then-read-by-id round
+ * trip succeeds.
  *
- * <p>上下文不写任何 {@code meili.url}/{@code meili.api-key} 属性——连接信息的唯一
- * 来源是被桥接的容器，这正是"一行注解"语法糖的验收面。写路径开等待任务终态，
- * 读断言无竞态；索引由启动期 create-if-missing 建立。
+ * <p>The context declares no {@code meili.url}/{@code meili.api-key} properties at all — the
+ * bridged container is the sole source of connection information, which is exactly the
+ * acceptance surface of the "one annotation" syntax sugar. The write path waits for the task
+ * to reach a terminal state so the read assertions are race-free; the index is created at
+ * startup under create-if-missing.
  */
 @SpringBootTest(classes = BridgeApp.class, properties = "meili.wait-task=true")
 class MeiliServiceConnectionIT {
 
-    /** 被服务连接接管的容器：静态字段复用，上下文缓存期内只启动一次。 */
+    /**
+     * Container taken over by service connection: reused via the static field, started once
+     * for the cached context's lifetime.
+     */
     @ServiceConnection
     private static final MeiliSearchContainer CONTAINER = new MeiliSearchContainer();
 
-    /** 桥接产出的连接详情 bean（属性实现应因它退避）。 */
+    /**
+     * Connection details bean produced by the bridge (the properties-based implementation
+     * should back off because of it).
+     */
     @Autowired
     private MeiliConnectionDetails details;
 
-    /** 由桥接详情构建的 SDK 配置：构建前观测 URL 与密钥的落点。 */
+    /** SDK configuration built from the bridged details: observe where the URL and key land before building. */
     @Autowired
     private Config config;
 
-    /** 装配链末端的数据操作面：往返读写的入口。 */
+    /** Data operations surface at the end of the wiring chain: entry point of the round-trip reads and writes. */
     @Autowired
     private MeiliSearchOperations operations;
 
     /**
-     * 桥接 bean 的 URL/密钥与容器实际映射端口及所配密钥一致，且 Config 携带同一份值。
+     * The bridge bean's URL/key match the container's actual mapped port and configured key,
+     * and the Config carries the same values.
      */
     @Test
     void configIsBuiltFromTheLiveContainer() {
@@ -50,7 +76,8 @@ class MeiliServiceConnectionIT {
     }
 
     /**
-     * 保存后按主键读取往返成功（真机、经装配链、零手写连接配置）。
+     * Save then read-by-id round trip succeeds (real machine, through the wiring chain, zero
+     * hand-written connection configuration).
      */
     @Test
     void saveThenReadByIdRoundTripsThroughTheContainer() {

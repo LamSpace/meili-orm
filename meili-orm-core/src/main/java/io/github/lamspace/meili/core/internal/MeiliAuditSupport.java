@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.internal;
 
 import io.github.lamspace.meili.core.exception.MeiliMappingException;
@@ -138,7 +153,7 @@ public final class MeiliAuditSupport {
         try {
             return f.get(entity);
         } catch (ReflectiveOperationException | RuntimeException e) {
-            throw new MeiliMappingException("读取审计字段失败: " + type.getName() + "." + f.getName(),
+            throw new MeiliMappingException("failed to read audit field: " + type.getName() + "." + f.getName(),
                     unwrap(e));
         }
     }
@@ -155,8 +170,8 @@ public final class MeiliAuditSupport {
         try {
             f.set(entity, value);
         } catch (ReflectiveOperationException | RuntimeException e) {
-            throw new MeiliMappingException("写入审计字段失败: " + type.getName() + "." + f.getName(),
-                    unwrap(e));
+            throw new MeiliMappingException("failed to write audit field: "
+                    + type.getName() + "." + f.getName(), unwrap(e));
         }
     }
 
@@ -193,7 +208,8 @@ public final class MeiliAuditSupport {
             canonical.setAccessible(true);
             return canonical.newInstance(args);
         } catch (ReflectiveOperationException | RuntimeException e) {
-            throw new MeiliMappingException("record 审计重建失败: " + type.getName(), unwrap(e));
+            throw new MeiliMappingException("failed to rebuild record with audit values: "
+                    + type.getName(), unwrap(e));
         }
     }
 

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,8 +30,9 @@ import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 /**
- * L2-lite：{@link MeiliRepositoryFactoryBean} 在裸 Spring 上下文中的装配形态——
- * 构造参数驱动仓库接口、按类型拉取 operations/元模型、依赖缺失 fail-fast。
+ * L2-lite: how {@link MeiliRepositoryFactoryBean} wires up in a bare Spring context — the
+ * constructor argument drives the repository interface, operations/metamodel are pulled by
+ * type, and missing dependencies fail fast.
  */
 class MeiliRepositoryFactoryBeanTest {
 
@@ -52,9 +68,9 @@ class MeiliRepositoryFactoryBeanTest {
             ctx.refresh();
             BookRepository first = ctx.getBean(BookRepository.class);
             BookRepository second = ctx.getBean(BookRepository.class);
-            assertThat(first).isSameAs(second);          // FactoryBean 单例语义
+            assertThat(first).isSameAs(second);          // FactoryBean singleton semantics
             assertThat(first.count()).isEqualTo(11L);
-            assertThat(first.allBy()).isEmpty();         // default 方法直通
+            assertThat(first.allBy()).isEmpty();         // default methods pass straight through
         }
     }
 

@@ -6,7 +6,7 @@
     <parent><groupId>io.github.lamspace</groupId><artifactId>meili-orm-examples</artifactId><version>1.0-SNAPSHOT</version></parent>
     <artifactId>meili-orm-example-common</artifactId>
     <name>meili-orm-example-common</name>
-    <description>演示工程共享业务代码：全注解实体、透传 settings、回调与 REST 端点（编译基线 Boot 3.5.16，双代 app 复用同一份字节码）。</description>
+    <description>Shared demo business code: fully annotated entities, passthrough settings, callbacks and REST endpoints (compiled against the Boot 3.5.16 baseline; both launcher shells reuse the same bytecode).</description>
     <dependencies>
         <dependency><groupId>io.github.lamspace</groupId><artifactId>spring-boot-starter-meili-orm</artifactId><version>${project.version}</version></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>

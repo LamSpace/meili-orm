@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.it;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,17 +30,20 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 /**
- * Boot 4 + Jackson 3 opt-in 矩阵 IT：可选序列化模块"加依赖即接管"的真机端到端证明。
+ * Boot 4 + Jackson 3 opt-in matrix IT: real-server end-to-end proof of the optional serialization
+ * module's "add the dependency and it takes over".
  *
- * <p>复用基线 Boot4 矩阵的 {@link ItApp}/{@link ITBook} 测试壳（test-jar）；与基线的
- * 唯一差异是本模块 classpath 上存在 meili-orm-serializer-jackson3——自动配置排序使其
- * 先于数据层注册 Jackson3 序列化器。断言接管生效且 Long 精度往返不因此回退；
- * "类缺席则不接管"的分支由基线 it-boot4 与 it-boot3 矩阵证明，不在本模块重复。
+ * <p>Reuses the baseline Boot4 matrix's {@link ItApp}/{@link ITBook} test shell (test-jar); the
+ * only difference from the baseline is that meili-orm-serializer-jackson3 is present on this
+ * module's classpath — auto-configuration ordering registers the Jackson3 serializer ahead of the
+ * data layer. Asserts the takeover is in effect and the Long precision round-trip does not regress
+ * because of it; the "no takeover when the class is absent" branch is proven by the baseline
+ * it-boot4 and it-boot3 matrices and is not repeated in this module.
  */
 @SpringBootTest(classes = ItApp.class)
 class Jackson3WiringIT {
 
-    /** 超 2^53 的探针主键：Jackson3 通道同样必须逐位无损。 */
+    /** Probe primary key above 2^53: the Jackson3 channel must likewise stay bit-for-bit lossless. */
     private static final long LOSSY_ABOVE_DOUBLE_ID = 9007199254740993L;
 
     @Autowired
@@ -35,9 +53,9 @@ class Jackson3WiringIT {
     private MeiliDocumentSerializer serializer;
 
     /**
-     * 与基线矩阵同构的上下文属性：钉版容器 + 同步写 + sync-settings/apply。
+     * Context properties mirroring the baseline matrix: pinned container + synchronous write + sync-settings/apply.
      *
-     * @param registry 属性注册器
+     * @param registry the property registrar
      */
     @DynamicPropertySource
     static void meiliProperties(DynamicPropertyRegistry registry) {
@@ -49,18 +67,20 @@ class Jackson3WiringIT {
     }
 
     /**
-     * 接管哨兵：类在 classpath 即换为 Jackson3 实现（依赖缺席分支由基线矩阵覆盖）。
+     * Takeover sentinel: with the class on the classpath the serializer becomes the Jackson3
+     * implementation (the dependency-absent branch is covered by the baseline matrix).
      */
     @Test
     void serializerIsTakenOverByJackson3() {
         assertThat(SpringBootVersion.getVersion())
-                .as("矩阵版本钉定漂移：本模块运行 classpath 与钉版不符")
+                .as("matrix version-pin drift: this module's running classpath does not match the pinned version")
                 .startsWith("4.");
         assertThat(serializer).isInstanceOf(Jackson3DocumentSerializer.class);
     }
 
     /**
-     * Jackson3 通道下的真机 CRUD 往返：实体经 raw 通道读写，Long 主键逐位无损。
+     * Real-server CRUD round-trip through the Jackson3 channel: the entity is written and read via
+     * the raw channel, Long primary key bit-for-bit lossless.
      */
     @Test
     void jackson3ChannelRoundTripsAgainstRealServer() {

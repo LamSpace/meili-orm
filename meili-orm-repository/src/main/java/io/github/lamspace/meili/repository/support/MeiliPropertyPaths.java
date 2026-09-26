@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.support;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -20,7 +35,8 @@ import java.util.List;
  *
  * <p><b>Grammar boundary.</b> Segment splitting is longest-prefix matching against the
  * declared field dictionary of the entity type; <em>abbreviation restoration is explicitly
- * not supported</em> (a miss throws with "缩写" in the message rather than guessing). Fields
+ * not supported</em> (a miss throws with "abbreviations are not supported" in the message
+ * rather than guessing). Fields
  * that are {@code static}, synthetic, or {@code @JsonIgnore}-excluded are unqueryable and
  * reported as such; an aggregate (non-leaf) property used as a query target is rejected so a
  * caller can never filter on an object that the server sees only as flattened children.
@@ -52,8 +68,8 @@ public final class MeiliPropertyPaths {
      */
     public static String resolveChain(Class<?> domainType, String methodName, List<String> segments) {
         if (segments == null || segments.isEmpty() || segments.size() > MAX_DEPTH + 1) {
-            throw new IllegalArgumentException("派生查询属性段链非法（方法 " + methodName + "，实体 "
-                    + domainType.getSimpleName() + "）: "
+            throw new IllegalArgumentException("Invalid derived-query property segment chain (method " + methodName + ", entity "
+                    + domainType.getSimpleName() + "): "
                     + String.join(".", segments == null ? List.of() : segments));
         }
         List<String> docSegments = new ArrayList<>(segments.size());
@@ -64,16 +80,16 @@ public final class MeiliPropertyPaths {
             docSegments.add(MeiliNames.docName(field, field.getName()));
             if (!last) {
                 if (MeiliNames.isSimpleType(field.getType())) {
-                    throw new IllegalArgumentException("方法 " + methodName + " 的属性链在简单类型上中断: "
-                            + current.getSimpleName() + "." + field.getName() + "（实体 "
-                            + domainType.getSimpleName() + "）");
+                    throw new IllegalArgumentException("Method " + methodName + "'s property chain breaks on a simple type: "
+                            + current.getSimpleName() + "." + field.getName() + " (entity "
+                            + domainType.getSimpleName() + ")");
                 }
                 current = field.getType();
             } else if (!MeiliNames.isSimpleType(field.getType())) {
-                throw new IllegalArgumentException("方法 " + methodName + " 将聚合属性作为查询目标: "
+                throw new IllegalArgumentException("Method " + methodName + " targets an aggregate property: "
                         + current.getSimpleName() + "." + field.getName()
-                        + "（实体 " + domainType.getSimpleName() + "，嵌套对象请声明到叶子属性，如 "
-                        + field.getName() + "SomeLeaf）");
+                        + " (entity " + domainType.getSimpleName() + "; declare nested objects down to leaf properties, e.g. "
+                        + field.getName() + "SomeLeaf)");
             }
         }
         return String.join(".", docSegments);
@@ -126,8 +142,8 @@ public final class MeiliPropertyPaths {
                 }
             }
             if (match == null) {
-                throw new IllegalArgumentException("无法解析属性段（不支持缩写）: 方法 " + source
-                        + " 的属性 " + rawPath + " 在实体 " + domainType.getSimpleName() + " 上无法匹配");
+                throw new IllegalArgumentException("Cannot resolve property segment (abbreviations are not supported): method " + source
+                        + " property " + rawPath + " matches nothing on entity " + domainType.getSimpleName());
             }
             chain.add(match.getName());
             pos += match.getName().length();
@@ -182,15 +198,15 @@ public final class MeiliPropertyPaths {
                 if (f.getName().equalsIgnoreCase(javaName)) {
                     if (Modifier.isStatic(f.getModifiers()) || f.isSynthetic()
                             || f.isAnnotationPresent(JsonIgnore.class)) {
-                        throw new IllegalArgumentException("方法 " + methodName + " 引用了不可查询属性（"
-                                + "static/synthetic/@JsonIgnore）: " + domainType.getSimpleName()
+                        throw new IllegalArgumentException("Method " + methodName + " references an unqueryable property ("
+                                + "static/synthetic/@JsonIgnore): " + domainType.getSimpleName()
                                 + "." + f.getName());
                     }
                     return f;
                 }
             }
         }
-        throw new IllegalArgumentException("无法解析属性段（不支持缩写）: 方法 " + methodName + " 的属性 "
-                + javaName + " 在实体 " + domainType.getSimpleName() + " 上不存在");
+        throw new IllegalArgumentException("Cannot resolve property segment (abbreviations are not supported): method " + methodName + " property "
+                + javaName + " does not exist on entity " + domainType.getSimpleName());
     }
 }

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,8 +31,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
- * L2-lite：{@code @EnableMeiliRepositories} 三条路径——显式 basePackages、缺省=注解类包、
- * {@code @NoRepositoryBean} 排除，及 by-type 注入。
+ * L2-lite: the three paths of {@code @EnableMeiliRepositories} — explicit basePackages,
+ * default = the annotated class's package, {@code @NoRepositoryBean} exclusion — plus by-type
+ * injection.
  */
 class MeiliRepositoriesRegistrarTest {
 
@@ -33,7 +49,7 @@ class MeiliRepositoriesRegistrarTest {
     static class DefaultPackageConfig {
     }
 
-    /** 注解类位于 fixture 包：缺省扫描应命中该包（测试放外层，经内部类路径展开）。 */
+    /** The annotated class sits in the fixture package: the default scan should hit that package (the test lives in the outer package, expanded via the nested-class path). */
     @Configuration
     static class Infra {
         @Bean
@@ -69,8 +85,9 @@ class MeiliRepositoriesRegistrarTest {
 
     @Test
     void defaultPackagesFallBackToAnnotatedClassPackage() {
-        // 注解类在 config 包：缺省扫描 config（含 fixture 子包）→ 仅注册 fixture 接口，
-        // bean 名沿用 Spring Data 惯例（接口简名 decapitalize），@NoRepositoryBean 不出现。
+        // Annotated class in the config package: the default scan covers config (including the fixture sub-package) →
+        // only the fixture interface registers; bean names follow the Spring Data convention (decapitalized simple
+        // interface name), and @NoRepositoryBean never appears.
         try (AnnotationConfigApplicationContext ctx =
                      new AnnotationConfigApplicationContext(DefaultPackageConfig.class)) {
             assertThat(ctx.getBean(FixtureBookRepository.class)).isNotNull();

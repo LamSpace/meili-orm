@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,8 +35,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * L1：自持代理的分发契约（CRUD 委托 / default 方法 / Object 语义 / 未解析方法启动即错）
- * 与 {@link MeiliEntityInformation} 元数据桥。
+ * L1: dispatch contract of the self-held proxy (CRUD delegation / default methods / Object
+ * semantics / startup-time failure for unresolvable methods) and the
+ * {@link MeiliEntityInformation} metadata bridge.
  */
 class MeiliRepositoryProxyTest {
 
@@ -40,14 +56,14 @@ class MeiliRepositoryProxyTest {
         }
     }
 
-    /** CRUD-only 仓库 + 一个 default 组合方法。 */
+    /** CRUD-only repository plus one default composite method. */
     public interface BookRepository extends MeiliRepository<Book, Long> {
         default String label(Book b) {
             return "book:" + b.id;
         }
     }
 
-    /** 含未接入的自定义查询方法。 */
+    /** Contains an unresolvable custom query method. */
     public interface BadRepository extends MeiliRepository<Book, Long> {
         List<Book> findByTitle(String t);
     }
@@ -91,9 +107,9 @@ class MeiliRepositoryProxyTest {
     }
 
     @Test
-    @DisplayName("自定义查询方法在构建期即完成解析：非法条件启动即错，不拖到首调")
+    @DisplayName("Custom query methods resolve at build time: illegal criteria fail at startup, never deferred to the first call")
     void customMethodValidatedAtBootstrap() {
-        // BadRepository.findByTitle：title 无 filterable 角色 → 角色预检在 create() 期抛错
+        // BadRepository.findByTitle: title lacks the filterable role → the role pre-check throws during create()
         assertThatThrownBy(() -> MeiliRepositoryProxy.create(BadRepository.class, ops, context))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("findByTitle")
@@ -102,7 +118,7 @@ class MeiliRepositoryProxyTest {
 
     @Test
     void unresolvableDomainTypeRejected() {
-        // 域类型 Object 无 @MeiliDocument：元模型解析必须 fail-fast
+        // Domain type Object carries no @MeiliDocument: metamodel resolution must fail-fast
         interface RawRepo extends MeiliRepository<Object, Object> {
         }
         assertThatThrownBy(() -> MeiliRepositoryProxy.create(RawRepo.class, ops, context))

@@ -1,28 +1,44 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.example;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Boot 3.5.16 演示启动壳。
+ * Demo startup shell for Boot 3.5.16.
  *
- * <p>本包即自动配置根：实体扫描自此处出发发现 example-common 的 {@code domain} 子包，
- * 组件扫描发现 {@code web}/{@code config} 子包。壳内零业务代码——双 demo 的
- * 差异只有 BOM 与这一份启动类。
+ * <p>This package is the auto-configuration root: entity scanning starts here and finds
+ * example-common's {@code domain} subpackage; component scanning finds the {@code web}/{@code config}
+ * subpackages. The shell holds zero business code — the two demos differ only in the BOM and this
+ * one startup class.
  */
 @SpringBootApplication
 public class MeiliExampleApplication {
 
     /**
-     * 启动类由框架构造；入口逻辑全部在 {@link #main(String[])}。
+     * The startup class is constructed by the framework; all entry logic lives in {@link #main(String[])}.
      */
     public MeiliExampleApplication() {
     }
 
     /**
-     * 进程入口。
+     * Process entry point.
      *
-     * @param args 透传给 Spring Boot 的命令行参数
+     * @param args command-line arguments passed through to Spring Boot
      */
     public static void main(String[] args) {
         SpringApplication.run(MeiliExampleApplication.class, args);

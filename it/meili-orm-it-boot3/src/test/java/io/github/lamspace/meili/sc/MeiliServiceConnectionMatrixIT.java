@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.sc;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,45 +28,49 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.boot.test.context.SpringBootTest;
 
 /**
- * 矩阵真机 IT（服务连接场景一）：{@code @ServiceConnection} 声明的
- * {@link MeiliSearchContainer} 经桥接装配出指向活容器的 {@link Config}，
- * 保存后按主键读取往返成功。
+ * Matrix real-server IT (service-connection scenario 1): a {@link MeiliSearchContainer} declared
+ * via {@code @ServiceConnection} is bridged into a {@link Config} pointing at the live container,
+ * and after saving, a read-by-primary-key round-trip succeeds.
  *
- * <p>本类与 Boot 4.0.3 矩阵模块的同名类逐字节共用（唯一差异是版本哨兵期望值，
- * 模块实际钉住的代际由哨兵自证）：同一份 meili-orm-testcontainers 字节码必须
- * 在两代 classpath 下产出一致的桥接行为——单模块双包形态的端到端证据。
+ * <p>This class is shared byte-for-byte with the same-named class in the Boot 4.0.3 matrix module
+ * (the only difference is the version-sentinel expected value, and the generation a module
+ * actually pins is self-evidenced by that sentinel): one copy of meili-orm-testcontainers bytecode
+ * must produce consistent bridge behavior under both generations' classpaths — end-to-end
+ * evidence of the single-module dual-package shape.
  */
 @SpringBootTest(classes = ServiceConnectionApp.class, properties = "meili.wait-task=true")
 class MeiliServiceConnectionMatrixIT {
 
-    /** 被服务连接接管的容器：静态字段复用，上下文缓存期内只启动一次。 */
+    /** Container taken over by the service connection: held in a static field for reuse, started once per context-cache lifetime. */
     @ServiceConnection
     private static final MeiliSearchContainer CONTAINER = new MeiliSearchContainer();
 
-    /** 桥接产出的连接详情 bean。 */
+    /** Connection-details bean produced by the bridge. */
     @Autowired
     private MeiliConnectionDetails details;
 
-    /** 由桥接详情构建的 SDK 配置：构建前观测 URL 与密钥的落点。 */
+    /** SDK config built from the bridged details: observe the URL and key landing points before construction. */
     @Autowired
     private Config config;
 
-    /** 装配链末端的数据操作面。 */
+    /** Data-operation surface at the end of the assembly chain. */
     @Autowired
     private MeiliSearchOperations operations;
 
     /**
-     * 版本哨兵：证明本模块实际运行在它被钉住的那一代 Boot 上，矩阵没有静默换代。
+     * Version sentinel: proves this module actually runs on the Boot generation it is pinned to —
+     * the matrix has not silently switched generations.
      */
     @Test
     void classpathIsThePinnedGeneration() {
         assertThat(SpringBootVersion.getVersion())
-                .as("矩阵版本钉定漂移：本模块运行 classpath 与钉版不符")
+                .as("matrix version-pin drift: this module's running classpath does not match the pinned version")
                 .startsWith("3.");
     }
 
     /**
-     * 桥接 bean 的 URL/密钥与容器实际映射端口及所配密钥一致，且 Config 携带同一份值。
+     * The bridge bean's URL/key match the container's actual mapped port and configured key, and
+     * Config carries the same values.
      */
     @Test
     void configIsBuiltFromTheLiveContainer() {
@@ -62,7 +81,8 @@ class MeiliServiceConnectionMatrixIT {
     }
 
     /**
-     * 保存后按主键读取往返成功（真机、经装配链、零手写连接配置）。
+     * After saving, the read-by-primary-key round-trip succeeds (real server, through the
+     * assembly chain, zero hand-written connection configuration).
      */
     @Test
     void saveThenReadByIdRoundTripsThroughTheContainer() {

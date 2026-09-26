@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.example.web;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -22,39 +37,42 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 演示 REST 面：导入 / 检索（q+filter+sort+分页+facet 全链路）/ 单读 / 删除 / raw 逃生舱。
+ * Demo REST surface: import / search (full q+filter+sort+pagination+facet chain) / single read /
+ * delete / raw escape hatch.
  *
- * <p>业务代码只依赖 {@link MeiliSearchOperations} 与自有查询 IR，不触碰 SDK 类型——
- * 这正是 starter 的目标用户形态。预置数据反序列化用<b>显式自建</b>的 Jackson 2
- * mapper 而非注入容器 ObjectMapper：Boot 4 容器默认是 Jackson 3，注入会让 boot3
- * 壳与 boot4 壳行为分裂；显式 Jackson 2 保证两个壳读同一份 data.json 字节等价。
+ * <p>Business code depends only on {@link MeiliSearchOperations} and its own query IR and never
+ * touches SDK types — exactly the starter's target user shape. Preset-data deserialization uses an
+ * <b>explicitly self-built</b> Jackson 2 mapper rather than an injected container ObjectMapper:
+ * the Boot 4 container defaults to Jackson 3, and injection would split behavior between the boot3
+ * and boot4 shells; the explicit Jackson 2 mapper guarantees both shells read the same data.json
+ * byte-for-byte identically.
  */
 @RestController
 @RequestMapping("/api/books")
 public class BookController {
 
-    /** 预置数据专用 mapper：JSR-310 支持 + 宽容未知键。 */
+    /** Mapper dedicated to preset data: JSR-310 support + lenient about unknown keys. */
     private static final ObjectMapper DATA_MAPPER = new ObjectMapper()
             .registerModule(new JavaTimeModule())
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-    /** meili-orm 模板：全部场景经它走 raw 通道读写。 */
+    /** meili-orm template: every scenario reads and writes through its raw channel. */
     private final MeiliSearchOperations operations;
 
     /**
-     * 注入自动配置的 operations 模板。
+     * Injects the auto-configured operations template.
      *
-     * @param operations starter 装配的搜索/文档操作模板
+     * @param operations the starter-assembled search/document operations template
      */
     public BookController(MeiliSearchOperations operations) {
         this.operations = operations;
     }
 
     /**
-     * 批量导入预置书目（upsert 语义；wait-task=true 下返回即"写后可查"）。
+     * Bulk-imports the preset book list (upsert semantics; with wait-task=true, a return means read-after-write).
      *
-     * @return 导入条数回执
-     * @throws java.io.IOException 预置数据读取失败
+     * @return receipt of how many books were imported
+     * @throws java.io.IOException if the preset data cannot be read
      */
     @PostMapping("/import")
     public Map<String, Object> importBooks() throws java.io.IOException {
@@ -67,15 +85,15 @@ public class BookController {
     }
 
     /**
-     * 全链路检索：全文 q + 等值/区间 filter + 排序 + 页码分页 + genre facet。
+     * Full-chain search: full-text q + equality/range filters + sorting + page-number pagination + genre facets.
      *
-     * @param q        全文查询词
-     * @param genre    可选题材等值过滤
-     * @param minPrice 可选价格下界过滤
-     * @param sort     排序表达式，默认 price:asc
-     * @param page     页码（1 起），默认 1
-     * @param size     每页条数，默认 10
-     * @return 命中、分页元数据与 facet 分布的响应体
+     * @param q        full-text query
+     * @param genre    optional equality filter on genre
+     * @param minPrice optional lower price-bound filter
+     * @param sort     sort expression, defaults to price:asc
+     * @param page     page number (1-based), defaults to 1
+     * @param size     hits per page, defaults to 10
+     * @return response body with hits, pagination metadata, and facet distribution
      */
     @GetMapping("/search")
     public Map<String, Object> search(@RequestParam String q,
@@ -104,10 +122,10 @@ public class BookController {
     }
 
     /**
-     * 按主键单读（raw 通道反序列化，Long 精度无损）。
+     * Single read by primary key (deserialized via the raw channel, Long precision lossless).
      *
-     * @param id 主键
-     * @return 200 + 实体，或 404
+     * @param id primary key
+     * @return 200 + entity, or 404
      */
     @GetMapping("/{id}")
     public ResponseEntity<Book> byId(@PathVariable Long id) {
@@ -117,9 +135,9 @@ public class BookController {
     }
 
     /**
-     * 按主键删除（写后可查语义由 wait-task 承担）。
+     * Delete by primary key (read-after-write semantics are carried by wait-task).
      *
-     * @param id 主键
+     * @param id primary key
      * @return 204
      */
     @DeleteMapping("/{id}")
@@ -129,10 +147,10 @@ public class BookController {
     }
 
     /**
-     * 逃生舱：服务端原始 JSON 原样透传，不经任何映射。
+     * Escape hatch: passes the server's raw JSON through verbatim, with no mapping.
      *
-     * @param q 全文查询词
-     * @return 原始响应体
+     * @param q full-text query
+     * @return the raw response body
      */
     @GetMapping(value = "/raw", produces = MediaType.APPLICATION_JSON_VALUE)
     public String raw(@RequestParam String q) {

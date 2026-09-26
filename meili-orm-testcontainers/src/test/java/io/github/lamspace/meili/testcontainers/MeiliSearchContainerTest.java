@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -6,12 +21,14 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * L1 配置断言：容器的默认钉版与"镜像/密钥可覆盖"契约在构造期即可观察，不依赖 Docker。
+ * Configuration assertions: the container's default pinned image and the "image/key
+ * overridable" contract are observable at construction time, with no Docker dependency.
  */
 class MeiliSearchContainerTest {
 
     /**
-     * 默认构造：镜像钉 v1.49.0、暴露 7700、master key 环境变量与默认密钥一致。
+     * Default construction: image pinned to v1.49.0, port 7700 exposed, and the master key
+     * environment variable matches the default key.
      */
     @Test
     void defaultsPinImagePortAndMasterKey() {
@@ -26,10 +43,12 @@ class MeiliSearchContainerTest {
     }
 
     /**
-     * 覆盖生效：自定义镜像标签（同仓库任意 tag）与镜像搬家（仓库改名须
-     * {@code asCompatibleSubstituteFor} 声明兼容）两种路径都成立，密钥任意可换；
-     * 读取值即自定义值。全程不触 Docker（{@link MeiliSearchContainer#getConfiguredImage()}
-     * 为纯配置读取，不解析镜像）。
+     * Overrides take effect: both a custom image tag (any tag in the same repository) and an
+     * image relocation (a renamed repository must declare compatibility via
+     * {@code asCompatibleSubstituteFor}) work, and the key is freely replaceable; the value
+     * read back is exactly the value set. Nothing touches Docker throughout
+     * ({@link MeiliSearchContainer#getConfiguredImage()} is a pure configuration read with no
+     * image resolution).
      */
     @Test
     void imageAndMasterKeyAreOverridable() {

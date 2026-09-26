@@ -1,12 +1,29 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.sc;
 
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 
 /**
- * 矩阵服务连接 IT 的最小应用宿主：仅开启自动配置，连接信息完全交给服务连接桥接。
+ * Minimal application host for the matrix service-connection IT: enables auto-configuration only
+ * and leaves connection info entirely to the service-connection bridge.
  *
- * <p>不用 {@code @SpringBootApplication}：避免组件扫描把同包另一退避宿主也拉进上下文。
+ * <p>Avoids {@code @SpringBootApplication}: component scanning would otherwise pull the sibling
+ * backoff host in the same package into the context too.
  */
 @SpringBootConfiguration
 @EnableAutoConfiguration

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,9 +44,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * M1 出口真机全链路 IT（v1.49.0）：建索引→settings 投影→写→wait-task→读/搜/filter/
- * sort/facet/分页/嵌套 filter→fetch（含 sort）→删→索引生命周期，含中文与 Long 精度。
- * 使用真实 {@link SdkMeiliRawGateway}（SDK 通道 + 自有 HTTP 通道各覆盖）。
+ * M1 exit-gate end-to-end IT on a real server (v1.49.0): create index → settings
+ * projection → write → wait-task → read/search/filter/sort/facet/pagination/nested filter
+ * → fetch (with sort) → delete → index lifecycle, covering Chinese text and Long precision.
+ * Uses the real {@link SdkMeiliRawGateway} (both the SDK channel and the own HTTP channel
+ * are exercised).
  */
 class MeiliCoreIT extends AbstractMeiliIntegrationTest {
 
@@ -76,22 +93,22 @@ class MeiliCoreIT extends AbstractMeiliIntegrationTest {
     }
 
     @Test
-    @DisplayName("全生命周期：建索引（含投影）→批量写→读/搜/filter/sort/facet/fetch→删")
+    @DisplayName("Full lifecycle: create index (with projection) → batch write → read/search/filter/sort/facet/fetch → delete")
     void fullCrudSearchLifecycle() {
         var ops = newOps(true, Duration.ofSeconds(20));
 
         int taskUid = ops.createIndex(Book.class);
-        ops.awaitTask(taskUid); // 异步任务：显式等待到终态（写后可查语义的索引版）
+        ops.awaitTask(taskUid); // async task: wait explicitly for the terminal state (index-level write-then-read semantics)
         assertThat(ops.getTask(taskUid).status()).isEqualTo(MeiliTaskStatus.SUCCEEDED);
         assertThat(ops.indexExists(Book.class)).isTrue();
 
-        // settings 投影确已推送到服务端（读原文验证，spikeA 定的 raw settings 通道）
+        // the settings projection really reached the server (verified by reading it back via the raw settings channel fixed by spikeA)
         String settings = ops.projectedSettings(Book.class).toJson();
         assertThat(settings).contains("searchableAttributes").contains("book_title");
 
         ops.saveAll(FIXTURE);
 
-        // 主键读回：Long 逐位无损 + 嵌套/中文/日期/数组
+        // read back by primary key: Long bit-exact + nested/Chinese/date/array
         assertThat(ops.findById(9007199254740993L, Book.class)).hasValueSatisfying(b -> {
             assertThat(b.id()).isEqualTo(9007199254740993L);
             assertThat(b.title()).isEqualTo("三体");
@@ -100,12 +117,12 @@ class MeiliCoreIT extends AbstractMeiliIntegrationTest {
             assertThat(b.publishedAt()).isEqualTo(OffsetDateTime.parse("2008-01-01T00:00:00Z"));
         });
 
-        // 缺失文档 → 空 Optional，不是异常
+        // missing document → empty Optional, not an exception
         assertThat(ops.findById(999L, Book.class)).isEmpty();
 
         assertThat(ops.count(Book.class)).isEqualTo(4L);
 
-        // 搜索：q + filter + sort + facet + 分页（page 模式）
+        // search: q + filter + sort + facet + pagination (page mode)
         MeiliSearchResult<Book> r = ops.search(MeiliQuery.query("科幻")
                 .filter("price < 60").sort("price:asc")
                 .facets("genre").page(1).hitsPerPage(10), Book.class);
@@ -114,16 +131,16 @@ class MeiliCoreIT extends AbstractMeiliIntegrationTest {
         assertThat(r.getPage()).isEqualTo(1);
         assertThat(r.getTotalHits()).isEqualTo(2L);
         assertThat(r.getFacetDistribution()).containsKey("genre");
-        // facet 计数作用域 = filter 之后的结果集（沙丘 price 69 已被 filter 排除）
+        // facet counts scope = the result set after filtering (Dune at price 69 is already excluded by the filter)
         assertThat(r.getFacetDistribution().get("genre")).containsEntry("科幻", 2);
 
-        // 嵌套点路径 filter
+        // nested dotted-path filter
         assertThat(ops.search(MeiliQuery.query(null)
                 .filter("author.city = \"纽约\""), Book.class)
                 .getHits()).extracting(Book::title)
                 .containsExactlyInAnyOrder("沙丘", "银河帝国：基地");
 
-        // filterAdd 累积 AND
+        // filterAdd accumulates with AND
         assertThat(ops.search(MeiliQuery.query("沙丘")
                 .filterAdd("genre = \"科幻\"").filterAdd("price > 100"), Book.class)
                 .getHits()).isEmpty();
@@ -131,13 +148,13 @@ class MeiliCoreIT extends AbstractMeiliIntegrationTest {
                 .filterAdd("genre = \"科幻\"").filterAdd("price > 60"), Book.class)
                 .getHits()).hasSize(1);
 
-        // findAll：documents/fetch 通道，filter + sort 真机反查（HTTP 直连通道）
+        // findAll: documents/fetch channel, filter + sort cross-checked against the real server (direct HTTP channel)
         List<Book> fetched = ops.findAll(Book.class, DocumentsFetchQuery.fetchQuery()
                 .filter("genre = \"科幻\"").sort("price:desc").limit(2));
         assertThat(fetched).extracting(Book::title)
                 .containsExactly("沙丘", "三体");
 
-        // 单条写 + 回调链 + 删
+        // single write + callback chain + delete
         var cbs = new MeiliEntityCallbacks();
         cbs.register(Book.class, (BeforeConvertCallback<Book>) (e, i) ->
                 new Book(e.id(), e.title().trim(), e.genre(), e.price(), e.author(), e.tags(),
@@ -151,7 +168,7 @@ class MeiliCoreIT extends AbstractMeiliIntegrationTest {
         opsCb.deleteById(5L, Book.class);
         assertThat(opsCb.findById(5L, Book.class)).isEmpty();
 
-        // deleteAll 保索引，count 归零
+        // deleteAll keeps the index; count drops to zero
         ops.deleteAll(Book.class);
         assertThat(ops.count(Book.class)).isZero();
         assertThat(ops.indexExists(Book.class)).isTrue();
@@ -161,7 +178,7 @@ class MeiliCoreIT extends AbstractMeiliIntegrationTest {
     }
 
     @Test
-    @DisplayName("HTTP 直连通道的服务端错误：不存在索引 → IndexAccessException 且错误码可读")
+    @DisplayName("Server error on the direct HTTP channel: missing index → IndexAccessException with a readable error code")
     void missingIndexSurfacesErrorCodeFromHttpChannel() {
         var ops = newOps(false, Duration.ofSeconds(5));
         @MeiliDocument(indexName = "m1core_no_such_index")
@@ -173,11 +190,11 @@ class MeiliCoreIT extends AbstractMeiliIntegrationTest {
     }
 
     @Test
-    @DisplayName("读回调链在真机路径生效（AfterLoad 改写 raw 文档）")
+    @DisplayName("Read callback chain takes effect on the real-server path (AfterLoad rewrites the raw document)")
     void afterLoadRewritesRawDocumentEndToEnd() {
         var opsPrep = newOps(true, Duration.ofSeconds(20));
         opsPrep.createIndex(Book.class);
-        opsPrep.save(FIXTURE.get(1)); // 活着
+        opsPrep.save(FIXTURE.get(1)); // the "To Live" fixture
         var cbs = new MeiliEntityCallbacks();
         cbs.register(Book.class, (AfterLoadCallback<Book>) (json, i) ->
                 json.replace("余华", "Yu Hua"));

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.core;
 
 import io.github.lamspace.meili.core.mapping.MeiliPersistentEntity;
@@ -171,8 +186,8 @@ public class SimpleMeiliRepository<T, ID> implements MeiliRepository<T, ID> {
                 : result.getTotalHits();
         long reported = total != null ? total : hits.size();
         if (total == null) {
-            log.debug("检索响应未携带总数估计（estimatedTotalHits/totalHits 均为空），"
-                    + "以本页命中数 {} 作为 Page 总数（索引 {}）", hits.size(), entity.getIndexName());
+            log.debug("Search response carried no total estimate (estimatedTotalHits/totalHits both null), "
+                    + "using this page's hit count {} as the Page total (index {})", hits.size(), entity.getIndexName());
         }
         return new PageImpl<>(hits, pageable, reported);
     }
@@ -190,7 +205,7 @@ public class SimpleMeiliRepository<T, ID> implements MeiliRepository<T, ID> {
         List<String> out = new ArrayList<>();
         for (Sort.Order order : sort) {
             String path = MeiliPropertyPaths.resolveDotted(domainType,
-                    "Pageable/Sort 属性 " + order.getProperty(), order.getProperty());
+                    "Pageable/Sort property " + order.getProperty(), order.getProperty());
             out.add(path + ":" + (order.isDescending() ? "desc" : "asc"));
         }
         return out.toArray(new String[0]);
@@ -204,8 +219,8 @@ public class SimpleMeiliRepository<T, ID> implements MeiliRepository<T, ID> {
      */
     private void warnIfAtCeiling(int size, String call) {
         if (size >= FETCH_CEILING) {
-            log.warn("索引 {} 的 {} 返回 {} 条，已达 documents/fetch 上限"
-                    + "（pagination.maxTotalHits，默认 1000）——结果可能被截断，请改用分页查询",
+            log.warn("Index {} call {} returned {} documents, reaching the documents/fetch ceiling"
+                    + " (pagination.maxTotalHits, default 1000) — results may be truncated, switch to a paging query",
                     entity.getIndexName(), call, size);
         }
     }

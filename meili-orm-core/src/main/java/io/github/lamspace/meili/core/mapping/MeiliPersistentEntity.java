@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.mapping;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -112,10 +127,10 @@ public final class MeiliPersistentEntity {
     public static MeiliPersistentEntity of(Class<?> type) {
         MeiliDocument doc = type.getAnnotation(MeiliDocument.class);
         if (doc == null) {
-            throw new MeiliMappingException("实体 " + type.getName() + " 缺少 @MeiliDocument 声明");
+            throw new MeiliMappingException("entity " + type.getName() + " lacks a @MeiliDocument declaration");
         }
         if (doc.indexName().isBlank()) {
-            throw new MeiliMappingException("实体 " + type.getName() + " 的 indexName 不能为空");
+            throw new MeiliMappingException("entity " + type.getName() + " must declare a non-blank indexName");
         }
 
         List<Field> fields = collectFields(type);
@@ -126,18 +141,20 @@ public final class MeiliPersistentEntity {
             }
         }
         if (idFields.isEmpty()) {
-            throw new MeiliMappingException("实体 " + type.getName() + " 缺少 @MeiliId 主键声明");
+            throw new MeiliMappingException("entity " + type.getName()
+                    + " lacks a @MeiliId primary key declaration");
         }
         if (idFields.size() > 1) {
-            throw new MeiliMappingException("实体 " + type.getName() + " 声明了 " + idFields.size()
-                    + " 个 @MeiliId，主键有且仅有一个");
+            throw new MeiliMappingException("entity " + type.getName() + " declares " + idFields.size()
+                    + " @MeiliId fields; exactly one primary key is required");
         }
         Field idField = idFields.get(0);
         Class<?> idType = idField.getType();
         if (idType != String.class && idType != Long.class && idType != long.class
                 && idType != Integer.class && idType != int.class) {
-            throw new MeiliMappingException("实体 " + type.getName() + " 的主键 " + idField.getName()
-                    + " 类型非法: " + idType.getName() + "，MeiliSearch 主键仅允许 String 或整型");
+            throw new MeiliMappingException("entity " + type.getName() + " has illegal primary key "
+                    + idField.getName() + ": " + idType.getName()
+                    + ", MeiliSearch primary keys allow only String or integer types");
         }
 
         List<MeiliPersistentProperty> properties = new ArrayList<>();
@@ -233,8 +250,9 @@ public final class MeiliPersistentEntity {
                     && depth < MAX_FLATTEN_DEPTH;
             if (aggregate) {
                 if (rolesPresent) {
-                    throw new MeiliMappingException("实体 " + owner.getName() + " 的角色注解声明在将展开为"
-                            + "点路径的容器字段 " + path + " 上，请标注到其叶子属性");
+                    throw new MeiliMappingException("entity " + owner.getName()
+                            + " declares a role annotation on container field " + path
+                            + " that expands to dotted paths; annotate its leaf properties instead");
                 }
                 pathTypes.push(fieldType);
                 flatten(owner, collectFields(fieldType), path + ".", depth + 1, pathTypes, out,
@@ -267,9 +285,9 @@ public final class MeiliPersistentEntity {
         if (fieldType != Instant.class && fieldType != OffsetDateTime.class
                 && fieldType != ZonedDateTime.class && fieldType != LocalDateTime.class
                 && fieldType != long.class && fieldType != Long.class) {
-            throw new MeiliMappingException("实体 " + owner.getName() + " 的审计字段 " + f.getName()
-                    + " 类型非法: " + fieldType.getName()
-                    + "，@CreatedDate/@LastModifiedDate 仅允许 Instant/OffsetDateTime/"
+            throw new MeiliMappingException("entity " + owner.getName() + " audit field " + f.getName()
+                    + " has illegal type " + fieldType.getName()
+                    + ": @CreatedDate/@LastModifiedDate allow only Instant/OffsetDateTime/"
                     + "ZonedDateTime/LocalDateTime/long/Long");
         }
     }
@@ -286,8 +304,8 @@ public final class MeiliPersistentEntity {
         Set<Integer> seen = new HashSet<>();
         for (MeiliPersistentProperty p : properties) {
             if (p.isSearchable() && p.getSearchableOrder() >= 0 && !seen.add(p.getSearchableOrder())) {
-                throw new MeiliMappingException("实体 " + owner.getName() + " 的 searchableOrder="
-                        + p.getSearchableOrder() + " 重复（字段 " + p.getJsonPath() + "）");
+                throw new MeiliMappingException("entity " + owner.getName() + " has duplicate searchableOrder="
+                        + p.getSearchableOrder() + " (field " + p.getJsonPath() + ")");
             }
         }
     }
@@ -354,13 +372,14 @@ public final class MeiliPersistentEntity {
      */
     public Object idValue(Object entity) {
         if (!type.isInstance(entity)) {
-            throw new IllegalArgumentException("实体实例类型不符: 期望 " + type.getName()
-                    + "，实际 " + (entity == null ? "null" : entity.getClass().getName()));
+            throw new IllegalArgumentException("entity instance type mismatch: expected " + type.getName()
+                    + ", actual " + (entity == null ? "null" : entity.getClass().getName()));
         }
         try {
             return idReadMethod != null ? idReadMethod.invoke(entity) : idField.get(entity);
         } catch (ReflectiveOperationException | RuntimeException e) {
-            throw new MeiliMappingException("读取主键失败: " + type.getName() + "." + idField.getName(), e);
+            throw new MeiliMappingException("failed to read primary key: "
+                    + type.getName() + "." + idField.getName(), e);
         }
     }
 

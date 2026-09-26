@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.core;
 
 import io.github.lamspace.meili.core.mapping.MeiliPersistentEntity;
@@ -63,7 +78,7 @@ public final class MeiliEntityInformation<T, ID> implements EntityInformation<T,
                 }
             }
         }
-        throw new IllegalStateException("元模型校验通过后找不到 @MeiliId 成员: " + type.getName());
+        throw new IllegalStateException("No @MeiliId member found after metamodel validation passed: " + type.getName());
     }
 
     @Override

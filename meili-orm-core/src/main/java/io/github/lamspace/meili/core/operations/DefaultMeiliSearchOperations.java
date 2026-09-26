@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.operations;
 
 import io.github.lamspace.meili.core.event.MeiliEntityCallbacks;
@@ -84,7 +99,7 @@ public final class DefaultMeiliSearchOperations implements MeiliSearchOperations
     @Override
     public <T> T save(T entity) {
         if (entity == null) {
-            throw new MeiliOrmException("save 需要实体实例");
+            throw new MeiliOrmException("save requires an entity instance");
         }
         MeiliPersistentEntity meta = context.getEntity(entity.getClass());
         String index = meta.getIndexName();
@@ -105,14 +120,14 @@ public final class DefaultMeiliSearchOperations implements MeiliSearchOperations
         String index = null;
         for (T entity : entities) {
             if (entity == null) {
-                throw new MeiliOrmException("saveAll 不接受 null 实体");
+                throw new MeiliOrmException("saveAll does not accept null entities");
             }
             MeiliPersistentEntity current = context.getEntity(entity.getClass());
             if (meta == null) {
                 meta = current;
                 index = meta.getIndexName();
             } else if (meta != current) {
-                throw new MeiliOrmException("saveAll 仅支持同一实体类型: "
+                throw new MeiliOrmException("saveAll supports a single entity type only: "
                         + meta.getType().getName() + " vs " + current.getType().getName());
             }
             T audited = MeiliAuditSupport.audit(entity, current, Instant.now());
@@ -245,7 +260,7 @@ public final class DefaultMeiliSearchOperations implements MeiliSearchOperations
         MeiliPersistentEntity meta = context.getEntity(type);
         ProjectedSettings settings = projection.project(meta);
         if (!settings.hasAny()) {
-            throw new MeiliOrmException("实体未声明任何 settings 投影，无需推送: "
+            throw new MeiliOrmException("entity declares no settings projection, nothing to push: "
                     + meta.getType().getName());
         }
         return gateway.updateSettings(meta.getIndexName(), settings.toJson());
@@ -303,7 +318,7 @@ public final class DefaultMeiliSearchOperations implements MeiliSearchOperations
      */
     private static <T> void requireId(MeiliPersistentEntity meta, T entity) {
         if (meta.idValue(entity) == null) {
-            throw new MeiliOrmException("实体缺少主键值（@MeiliId 为 null）: "
+            throw new MeiliOrmException("entity has no primary key value (@MeiliId is null): "
                     + meta.getType().getName());
         }
     }
@@ -316,7 +331,7 @@ public final class DefaultMeiliSearchOperations implements MeiliSearchOperations
      */
     private static String requireKey(Object id) {
         if (id == null) {
-            throw new MeiliOrmException("查询主键不可为 null");
+            throw new MeiliOrmException("query primary key must not be null");
         }
         return String.valueOf(id);
     }

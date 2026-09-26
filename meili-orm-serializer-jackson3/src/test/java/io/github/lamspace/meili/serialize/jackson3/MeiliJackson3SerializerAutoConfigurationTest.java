@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.serialize.jackson3;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -12,8 +27,10 @@ import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * L2 条件装配测试：Jackson3 序列化接管的"加依赖即生效、用户 bean 即让位、容器 mapper 优先"
- * 三条契约，全部在 ApplicationContextRunner 隔离上下文中判定，无需 Boot 应用或网络。
+ * Conditional-assembly tests for the Jackson 3 serializer takeover: the three contracts —
+ * adding the dependency activates it, a user bean makes it back off, the container mapper is
+ * preferred — are all judged inside isolated ApplicationContextRunner contexts, with no Boot
+ * application or network required.
  */
 class MeiliJackson3SerializerAutoConfigurationTest {
 
@@ -21,7 +38,7 @@ class MeiliJackson3SerializerAutoConfigurationTest {
             .withUserConfiguration(MeiliJackson3SerializerAutoConfiguration.class);
 
     @Test
-    @DisplayName("无用户 serializer 时接管为 Jackson3 实现")
+    @DisplayName("Takes over with the Jackson 3 implementation when no user serializer exists")
     void takesOverSerializer() {
         runner.run(ctx -> {
             assertThat(ctx).hasSingleBean(MeiliDocumentSerializer.class);
@@ -31,7 +48,7 @@ class MeiliJackson3SerializerAutoConfigurationTest {
     }
 
     @Test
-    @DisplayName("用户自定义 serializer 让位：Jackson3 实现不注册")
+    @DisplayName("User-defined serializer wins: the Jackson 3 implementation is not registered")
     void userBeanWins() {
         MeiliDocumentSerializer stub = new MeiliDocumentSerializer() {
             @Override
@@ -53,7 +70,7 @@ class MeiliJackson3SerializerAutoConfigurationTest {
     }
 
     @Test
-    @DisplayName("容器 Jackson 3 mapper 作为底：用户命名策略被尊重")
+    @DisplayName("Container Jackson 3 mapper as the base: the user's naming strategy is respected")
     void containerObjectMapperPreferred() {
         record Book(@MeiliId Long id, @MeiliField(name = "book_title") String title,
                     String originalLanguage) {}

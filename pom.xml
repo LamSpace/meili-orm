@@ -8,7 +8,27 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>meili-orm</name>
-    <description>MeiliSearch Spring Boot Starter：注解映射 + settings 投影 + 模板 Operations（Boot 3.5.x / 4.x 双兼容）。</description>
+    <description>Meilisearch Spring Boot starter: annotation-driven mapping, settings projection and templated operations (compatible with Spring Boot 3.5.x and 4.x).</description>
+    <url>https://github.com/LamSpace/meili-orm</url>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>A business-friendly OSS license</comments>
+        </license>
+    </licenses>
+    <scm>
+        <connection>scm:git:https://github.com/LamSpace/meili-orm.git</connection>
+        <developerConnection>scm:git:git@github.com:LamSpace/meili-orm.git</developerConnection>
+        <url>https://github.com/LamSpace/meili-orm</url>
+    </scm>
+    <developers>
+        <developer>
+            <id>lamspace</id>
+            <name>LamSpace</name>
+        </developer>
+    </developers>
     <modules>
         <module>meili-orm-core</module>
         <module>meili-orm-spring-boot-autoconfigure</module>
@@ -26,14 +46,15 @@
         <okhttp.version>5.3.2</okhttp.version>
         <gson.version>2.13.2</gson.version>
         <jackson2.version>2.21.2</jackson2.version>
-        <spring-boot.version>3.5.16</spring-boot.version><!-- 编译基线=最低支持代 -->
+        <spring-boot.version>3.5.16</spring-boot.version><!-- compile baseline = lowest supported Boot generation -->
         <meili-server.version>v1.49.0</meili-server.version>
     </properties>
     <dependencyManagement>
         <dependencies>
-            <!-- 显式钉版优先于 BOM：与 SDK 0.21.0 传递依赖对齐。
-                 okhttp 5.x 的 Maven 构件是多平台空壳，JVM 类在 okhttp-jvm（docs/spikes.md M0.2 冒烟实证），
-                 两者同时钉版并由 core 显式引入 okhttp-jvm。 -->
+            <!-- Explicit version pins take precedence over the BOM and align with the
+                 transitive dependencies of meilisearch-java 0.21.0. The okhttp 5.x Maven artifact
+                 is a multi-platform shell whose JVM classes live in okhttp-jvm (verified
+                 empirically); both are pinned here and core depends on okhttp-jvm explicitly. -->
             <dependency><groupId>com.squareup.okhttp3</groupId><artifactId>okhttp</artifactId><version>${okhttp.version}</version></dependency>
             <dependency><groupId>com.squareup.okhttp3</groupId><artifactId>okhttp-jvm</artifactId><version>${okhttp.version}</version></dependency>
             <dependency><groupId>com.squareup.okhttp3</groupId><artifactId>logging-interceptor</artifactId><version>${okhttp.version}</version></dependency>
@@ -52,19 +73,39 @@
     <build>
         <pluginManagement>
             <plugins>
-                <!-- Spring 生态惯例：@PathVariable/@RequestParam 等按参数名解析注解依赖
-                     编译期 -parameters（Boot 官方 parent 的默认行为，本仓库不继承该 parent）。 -->
+                <!-- Spring convention: parameter-name resolution by annotations such as
+                     @PathVariable/@RequestParam relies on the -parameters compiler flag
+                     (default of the official Boot parent, which this repo does not inherit). -->
                 <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.15.0</version>
                     <configuration><parameters>true</parameters></configuration></plugin>
                 <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>3.5.2</version></plugin>
                 <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><version>3.5.2</version></plugin>
                 <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.4.2</version></plugin>
                 <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId><version>3.11.2</version></plugin>
+                <plugin>
+                    <groupId>com.mycila</groupId>
+                    <artifactId>license-maven-plugin</artifactId>
+                    <version>5.1.2</version>
+                    <configuration>
+                        <licenseSets>
+                            <licenseSet>
+                                <header>${maven.multiModuleProjectDirectory}/etc/license-header.txt</header>
+                                <includes>
+                                    <include>src/main/java/**/*.java</include>
+                                    <include>src/test/java/**/*.java</include>
+                                </includes>
+                            </licenseSet>
+                        </licenseSets>
+                        <mapping>
+                            <java>SLASHSTAR_STYLE</java>
+                        </mapping>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
-            <!-- 私有能力 Javadoc 门禁（CLAUDE.md §5）：show=private 使缺注释以 doclint warning 呈现，
-                 failOnWarnings 将"缺失即红"落为构建事实（探测实证见 docs/spikes.md 预检节）。 -->
+            <!-- Private-member Javadoc gate: show=private surfaces missing Javadoc as a
+                 doclint warning and failOnWarnings turns "missing = build failure" into a build fact. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -79,6 +120,17 @@
                     <execution>
                         <id>attach-javadocs</id>
                         <goals><goal>jar</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>license-header-check</id>
+                        <phase>validate</phase>
+                        <goals><goal>check</goal></goals>
                     </execution>
                 </executions>
             </plugin>

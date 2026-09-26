@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.query;
 
 import java.time.Instant;
@@ -33,7 +48,7 @@ public final class MeiliLiterals {
      */
     public static String of(Object value) {
         if (value == null) {
-            throw new IllegalArgumentException("查询条件不接受 null 参数（派生查询不支持可选条件；如需缺省匹配请显式分支）");
+            throw new IllegalArgumentException("Query conditions do not accept null arguments (derived queries have no optional-condition support; branch explicitly if a default match is needed)");
         }
         if (value instanceof Boolean || value instanceof Integer || value instanceof Long
                 || value instanceof Short || value instanceof Byte) {
@@ -62,7 +77,7 @@ public final class MeiliLiterals {
         if (value instanceof Temporal) {
             return temporal(value);
         }
-        throw new IllegalArgumentException("不支持的查询参数类型: " + value.getClass().getName());
+        throw new IllegalArgumentException("Unsupported query parameter type: " + value.getClass().getName());
     }
 
     /**
@@ -95,7 +110,7 @@ public final class MeiliLiterals {
                 || value instanceof OffsetDateTime || value instanceof Instant) {
             return value.toString();
         }
-        throw new IllegalArgumentException("不支持的时间参数类型: " + value.getClass().getName());
+        throw new IllegalArgumentException("Unsupported temporal parameter type: " + value.getClass().getName());
     }
 
     /**
@@ -105,7 +120,7 @@ public final class MeiliLiterals {
      */
     private static void requireFinite(double d) {
         if (!Double.isFinite(d)) {
-            throw new IllegalArgumentException("浮点条件参数必须是有限值: " + d);
+            throw new IllegalArgumentException("Floating-point condition argument must be finite: " + d);
         }
     }
 }

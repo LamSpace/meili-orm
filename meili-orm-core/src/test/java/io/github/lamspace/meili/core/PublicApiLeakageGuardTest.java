@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,9 +33,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * 常驻零泄漏守卫：core 公开 API（{@code io.github.lamspace.meili.core} 下非
- * {@code internal} 包）的任何 public 类型/成员签名都不得引用官方客户端类型
- * （{@code com.meilisearch.sdk.*}）。泄漏即红，替代人工出口审查。
+ * Standing zero-leakage guard: no public type or member signature in the core public API
+ * (non-{@code internal} packages under {@code io.github.lamspace.meili.core}) may reference
+ * official client types ({@code com.meilisearch.sdk.*}). Any leak turns the test red,
+ * replacing manual API-surface review.
  */
 class PublicApiLeakageGuardTest {
 
@@ -29,11 +45,11 @@ class PublicApiLeakageGuardTest {
     private static final String FORBIDDEN = "com.meilisearch.sdk";
 
     @Test
-    @DisplayName("公开面签名全量扫描：无官方客户端类型泄漏")
+    @DisplayName("Full scan of public signatures: no official client type leakage")
     void publicApiNeverReferencesClientTypes() throws Exception {
         List<Class<?>> exported = discoverExportedTypes();
-        // 防空跑：守卫本身失效（包发现为 0 类）也算红
-        assertThat(exported).as("发现的核心公开类型数").hasSizeGreaterThan(15);
+        // anti-no-op: the guard itself failing (0 discovered package classes) is also red
+        assertThat(exported).as("count of discovered core public types").hasSizeGreaterThan(15);
 
         List<String> leaks = new ArrayList<>();
         for (Class<?> type : exported) {

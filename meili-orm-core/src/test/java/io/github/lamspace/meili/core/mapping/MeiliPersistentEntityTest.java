@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.mapping;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,7 +30,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** {@link MeiliPersistentEntity} 解析与启动期校验行为契约测试。 */
+/** Behavior contract tests for {@link MeiliPersistentEntity} parsing and startup validation. */
 class MeiliPersistentEntityTest {
 
     @MeiliDocument(indexName = "books")
@@ -39,7 +54,7 @@ class MeiliPersistentEntityTest {
     }
 
     @Test
-    @DisplayName("解析注解角色、改名点路径与透传声明，属性按 jsonPath 稳定排序")
+    @DisplayName("Parses annotation roles, renamed dotted paths and passthrough declarations; properties sort stably by jsonPath")
     void parsesFlagsAndPaths() {
         MeiliPersistentEntity e = MeiliPersistentEntity.of(Book.class);
 
@@ -59,13 +74,13 @@ class MeiliPersistentEntityTest {
         assertThat(price.isSearchable()).isFalse();
         assertThat(price.getSearchableOrder()).isEqualTo(-1);
 
-        assertThat(property(e, "author.city").isFilterable()).isTrue(); // 嵌套展平点路径
+        assertThat(property(e, "author.city").isFilterable()).isTrue(); // nested flattening dotted path
 
-        MeiliPersistentProperty title = property(e, "book_title"); // @MeiliField.name 改名即投影名
+        MeiliPersistentProperty title = property(e, "book_title"); // @MeiliField.name rename is the projection name
         assertThat(title.isSearchable()).isTrue();
         assertThat(title.getSearchableOrder()).isEqualTo(1);
 
-        // @JsonIgnore 与 static 字段被排除；未标注字段仅以投影名存在、无任何角色
+        // @JsonIgnore and static fields are excluded; unannotated fields exist only under their projection name with no roles
         assertThat(e.getProperties()).noneMatch(p -> p.getJsonPath().equals("secret"));
         assertThat(e.getProperties()).noneMatch(p -> p.getJsonPath().equals("staticField"));
         assertThat(property(e, "genre").isFilterable()).isFalse();
@@ -75,7 +90,7 @@ class MeiliPersistentEntityTest {
     record AnnotatedBookRecord(@MeiliId Long id, @MeiliField(searchable = true) String title) {}
 
     @Test
-    @DisplayName("record 形态：组件注解经字段传播生效，主键访问器走组件访问方法")
+    @DisplayName("record shape: component annotations propagate via fields; the primary-key accessor uses the component accessor method")
     void recordComponentsWithDocument() {
         MeiliPersistentEntity e = MeiliPersistentEntity.of(AnnotatedBookRecord.class);
         assertThat(e.getIdProperty().getJsonPath()).isEqualTo("id");
@@ -86,7 +101,7 @@ class MeiliPersistentEntityTest {
     }
 
     @Test
-    @DisplayName("idValue 三通道：显式 getter 优先，其次 record 访问器，字段回退")
+    @DisplayName("idValue three channels: explicit getter first, then record accessor, field as fallback")
     void idValueResolutionOrder() {
         MeiliPersistentEntity viaGetter = MeiliPersistentEntity.of(GetterId.class);
         assertThat(viaGetter.idValue(new GetterId(42L))).isEqualTo(42L);
@@ -142,7 +157,7 @@ class MeiliPersistentEntityTest {
         @MeiliDocument(indexName = "x") class BadId { @MeiliId Double id; }
         assertThatThrownBy(() -> MeiliPersistentEntity.of(BadId.class))
                 .isInstanceOf(MeiliMappingException.class)
-                .hasMessageContaining("主键")
+                .hasMessageContaining("primary key")
                 .hasMessageContaining("Double");
     }
 
@@ -179,11 +194,11 @@ class MeiliPersistentEntityTest {
         MeiliPersistentEntity e = MeiliPersistentEntity.of(Node.class);
         assertThat(e.getProperties()).isNotEmpty();
         assertThat(e.getProperties()).extracting(MeiliPersistentProperty::getJsonPath)
-                .containsExactly("id", "next"); // 环引用字段止步为叶子，不再展开
+                .containsExactly("id", "next"); // the cyclic field stops as a leaf, no further expansion
     }
 
     @Test
-    @DisplayName("嵌套展平深度上限 3：第 4 层对象止步为叶子属性")
+    @DisplayName("Nested flattening depth cap 3: the 4th-level object stops as a leaf property")
     void nestingDepthLimited() {
         MeiliPersistentEntity e = MeiliPersistentEntity.of(Depth1.class);
         List<String> paths = e.getProperties().stream()
@@ -199,7 +214,7 @@ class MeiliPersistentEntityTest {
     static class Depth4 { String val; }
 
     @Test
-    @DisplayName("角色注解声明在将展开的容器字段上 → fail-fast 指向叶子")
+    @DisplayName("Role annotation on a container field that would expand → fail-fast pointing at the leaves")
     void roleOnContainerFieldRejected() {
         @MeiliDocument(indexName = "x") class Bad {
             @MeiliId Long id;
@@ -211,7 +226,7 @@ class MeiliPersistentEntityTest {
     }
 
     @Test
-    @DisplayName("searchableOrder 重复 → 拒绝（排序不得依赖遍历巧合）")
+    @DisplayName("Duplicate searchableOrder → rejected (ordering must not depend on traversal accidents)")
     void duplicateSearchableOrderRejected() {
         @MeiliDocument(indexName = "x") class Dup {
             @MeiliId Long id;
@@ -224,7 +239,7 @@ class MeiliPersistentEntityTest {
     }
 
     @Test
-    @DisplayName("集合/数组为不透明叶子：不递归泛型参数")
+    @DisplayName("Collections/arrays are opaque leaves: generic parameters are not recursed")
     void collectionsAreOpaqueLeaves() {
         @MeiliDocument(indexName = "x") class Bag {
             @MeiliId Long id;
@@ -237,7 +252,7 @@ class MeiliPersistentEntityTest {
     }
 
     @Test
-    @DisplayName("审计注解解析为元模型标记，六类许可类型全部通过")
+    @DisplayName("Audit annotations parse into metamodel flags; all six allowed types pass")
     void auditFlagsParsed() {
         @MeiliDocument(indexName = "a") class Audited {
             @MeiliId Long id;
@@ -267,7 +282,7 @@ class MeiliPersistentEntityTest {
     }
 
     @Test
-    @DisplayName("许可集六类型（Instant/OffsetDateTime/ZonedDateTime/LocalDateTime/long/Long）解析成功")
+    @DisplayName("The six allowed types (Instant/OffsetDateTime/ZonedDateTime/LocalDateTime/long/Long) parse successfully")
     void auditAllowedTypesParse() {
         MeiliPersistentEntity e = MeiliPersistentEntity.of(AuditSixTypes.class);
         assertThat(e.getProperties()).hasSize(7);
@@ -276,7 +291,7 @@ class MeiliPersistentEntityTest {
     }
 
     @Test
-    @DisplayName("@CreatedDate String → 解析期 fail-fast，消息含类名与字段名")
+    @DisplayName("@CreatedDate String → fail-fast at parse time, message names the class and the field")
     void auditStringTypeRejected() {
         @MeiliDocument(indexName = "x") class Bad {
             @MeiliId Long id;
@@ -289,7 +304,7 @@ class MeiliPersistentEntityTest {
     }
 
     @Test
-    @DisplayName("@LastModifiedDate String → 同样 fail-fast")
+    @DisplayName("@LastModifiedDate String → fails fast the same way")
     void lastModifiedStringTypeRejected() {
         @MeiliDocument(indexName = "x") class Bad {
             @MeiliId Long id;
@@ -302,7 +317,7 @@ class MeiliPersistentEntityTest {
     }
 
     @Test
-    @DisplayName("审计标记与 @MeiliField 角色标注共现互不干扰")
+    @DisplayName("Audit flags and @MeiliField role annotations coexist without interference")
     void auditCoexistsWithRoles() {
         @MeiliDocument(indexName = "x") class Both {
             @MeiliId Long id;
@@ -318,7 +333,7 @@ class MeiliPersistentEntityTest {
     }
 
     @Test
-    @DisplayName("无审计实体回归不变：所有属性审计标记为 false，hasAuditFields 为 false")
+    @DisplayName("Audit-free entity unchanged: every property's audit flags are false and hasAuditFields is false")
     void nonAuditEntityUnaffected() {
         MeiliPersistentEntity e = MeiliPersistentEntity.of(Book.class);
         assertThat(e.hasAuditFields()).isFalse();

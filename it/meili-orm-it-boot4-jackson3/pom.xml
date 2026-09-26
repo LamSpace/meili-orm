@@ -6,18 +6,18 @@
     <parent><groupId>io.github.lamspace</groupId><artifactId>meili-orm-it</artifactId><version>1.0-SNAPSHOT</version></parent>
     <artifactId>meili-orm-it-boot4-jackson3</artifactId>
     <name>meili-orm-it-boot4-jackson3</name>
-    <description>兼容矩阵 Boot 4 + Jackson3 opt-in 代：验证可选序列化模块"加依赖即接管"与真机往返。</description>
+    <description>Compatibility matrix, Boot 4 + Jackson3 opt-in generation: verifies the "dependency equals takeover" behavior of the optional serializer module with real round-trips.</description>
     <dependencyManagement>
         <dependencies>
             <dependency><groupId>org.testcontainers</groupId><artifactId>testcontainers-bom</artifactId><version>${testcontainers.version}</version><type>pom</type><scope>import</scope></dependency>
-            <!-- 与 Boot 4.0.3 基线矩阵同代：本模块只增 classpath 成员，不换代。 -->
+            <!-- Same generation as the Boot 4.0.3 baseline matrix: this module only adds classpath members, it does not switch generations. -->
             <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-dependencies</artifactId><version>4.0.3</version><type>pom</type><scope>import</scope></dependency>
         </dependencies>
     </dependencyManagement>
     <dependencies>
         <dependency><groupId>io.github.lamspace</groupId><artifactId>spring-boot-starter-meili-orm</artifactId><version>${project.version}</version></dependency>
-        <!-- 复用基线 Boot4 矩阵的 ITBook/ItApp 测试壳（其主 IT 因不在本模块 classpath
-             而不会运行，仅取其 test 类）。 -->
+        <!-- Reuses the ITBook/ItApp test shells from the baseline Boot 4 matrix test-jar
+             (its main ITs are not on this classpath and do not run; only the test classes are taken). -->
         <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-it-boot4</artifactId><version>${project.version}</version><type>test-jar</type><scope>test</scope></dependency>
         <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-core</artifactId><type>test-jar</type><scope>test</scope></dependency>
         <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-serializer-jackson3</artifactId><version>${project.version}</version><scope>test</scope></dependency>

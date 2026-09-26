@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.spike;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -8,31 +23,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * spike 原型：结构桥的属性段解析器。只吃"Java 属性段名字符串"（来自
- * {@code Part.getPropertyParts()}），完全绕开 commons 的
- * {@code PropertyPath}/{@code PersistentPropertyPath} 属性模型，用反射 +
- * core 的 {@link MeiliNames#docName} 逐段拼出文档点路径——证明"语法归 commons、
- * 语义归 core"的单源码双代可行性。正式实现按同规则落 src/main。
+ * spike prototype: property-segment resolver for the structural-bridge route. Consumes only
+ * "Java property segment name strings" (from {@code Part.getPropertyParts()}), fully bypassing
+ * commons' {@code PropertyPath}/{@code PersistentPropertyPath} property model — reflection plus
+ * core's {@link MeiliNames#docName} assemble the dotted document path segment by segment,
+ * proving the single-source/two-generation feasibility of "grammar in commons, semantics in
+ * core". The production implementation follows the same rules in src/main.
  */
 final class SpikePropertyResolver {
 
-    /** 最大嵌套深度，与 core 展平深度一致。 */
+    /** Maximum nesting depth, matching core's flattening depth. */
     private static final int MAX_DEPTH = 3;
 
     private SpikePropertyResolver() {
     }
 
     /**
-     * 将 Java 属性段链解析为文档点路径。
+     * Resolves a Java property-segment chain into a dotted document path.
      *
-     * @param rootType 实体类
-     * @param segments 方法名解析出的 Java 属性段（如 ["author","city"]）
-     * @return 文档路径（如 {@code author.city}）
-     * @throws IllegalArgumentException 任一解析失败（未知段/被排除段/链断在叶上）
+     * @param rootType entity class
+     * @param segments Java property segments parsed from the method name (e.g. ["author","city"])
+     * @return document path (e.g. {@code author.city})
+     * @throws IllegalArgumentException on any resolution failure (unknown segment / excluded segment / chain broken on a leaf)
      */
     static String resolve(Class<?> rootType, String[] segments) {
         if (segments == null || segments.length == 0 || segments.length > MAX_DEPTH + 1) {
-            throw new IllegalArgumentException("非法属性段链: " + String.join(".",
+            throw new IllegalArgumentException("Invalid property segment chain: " + String.join(".",
                     segments == null ? new String[0] : segments));
         }
         List<String> docSegments = new ArrayList<>(segments.length);
@@ -43,32 +59,32 @@ final class SpikePropertyResolver {
             docSegments.add(MeiliNames.docName(field, field.getName()));
             if (!last) {
                 if (MeiliNames.isSimpleType(field.getType())) {
-                    throw new IllegalArgumentException("属性链在简单类型上中断: "
+                    throw new IllegalArgumentException("Property chain breaks on a simple type: "
                             + current.getSimpleName() + "." + field.getName());
                 }
                 current = field.getType();
             } else if (!MeiliNames.isSimpleType(field.getType())) {
-                throw new IllegalArgumentException("聚合属性不能作为查询目标: "
+                throw new IllegalArgumentException("Aggregate property cannot be a query target: "
                         + current.getSimpleName() + "." + field.getName());
             }
         }
         return String.join(".", docSegments);
     }
 
-    /** 按 Java 名（首字母大小写不敏感）沿类层级查找可查询字段。 */
+    /** Finds a queryable field by Java name (first letter case-insensitive) walking the class hierarchy. */
     private static Field findField(Class<?> type, String javaName) {
         for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {
             for (Field f : c.getDeclaredFields()) {
                 if (f.getName().equalsIgnoreCase(javaName)) {
                     if (Modifier.isStatic(f.getModifiers()) || f.isSynthetic()
                             || f.isAnnotationPresent(JsonIgnore.class)) {
-                        throw new IllegalArgumentException("属性不可查询（static/synthetic/@JsonIgnore）: "
+                        throw new IllegalArgumentException("Property is not queryable (static/synthetic/@JsonIgnore): "
                                 + c.getSimpleName() + "." + f.getName());
                     }
                     return f;
                 }
             }
         }
-        throw new IllegalArgumentException("实体无此 Java 属性: " + type.getSimpleName() + "." + javaName);
+        throw new IllegalArgumentException("Entity has no such Java property: " + type.getSimpleName() + "." + javaName);
     }
 }

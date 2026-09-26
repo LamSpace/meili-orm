@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.example;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -12,12 +27,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 /**
- * 装配期防腐冒烟（零外部依赖）：auto-init=none + 未监听端口，验证的是"启动上下文
- * 不触网也能完成全量装配"——扫描器发现实体、控制器/回调/序列化器/模板 bean 齐备、
- * 默认序列化通道为 Jackson2（demo 未引入可选 Jackson3 模块）。
+ * Assembly-time anti-corruption smoke (zero external dependencies): with auto-init=none + a
+ * non-listening port, it verifies that the startup context completes full assembly without any
+ * network contact — the scanner finds the entities, controller/callback/serializer/template beans
+ * are all present, and the default serialization channel is Jackson2 (the demo does not pull in
+ * the optional Jackson3 module).
  *
- * <p>真机行为验证不在此层（由 demo README 的 curl 冒烟脚本承担），本测试只兜装配
- * 回归：任何 wiring 断裂在 mvn verify 即红，无需 Docker。
+ * <p>Real-server behavior verification lives elsewhere (carried by the demo README's curl smoke
+ * script); this test only guards assembly regressions: any wiring break goes red at mvn verify,
+ * no Docker needed.
  */
 @SpringBootTest(properties = {
         "meili.url=http://127.0.0.1:1",

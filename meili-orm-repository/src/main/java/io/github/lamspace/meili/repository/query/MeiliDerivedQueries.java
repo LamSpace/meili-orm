@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.query;
 
 import io.github.lamspace.meili.core.exception.MeiliMappingException;
@@ -121,8 +136,8 @@ public final class MeiliDerivedQueries {
                                               MeiliSearchOperations operations) {
         Parsed parsed = MeiliMethodNames.parse(method.getName());
         if (parsed.distinct()) {
-            throw new MeiliRepositoryConfigurationException("v1 不支持方法名 Distinct 修饰符（Meili 的 distinct 必须指定属性）；"
-                    + "请改用 @MeiliQuery(distinct = \"…\")：方法 " + method.getName());
+            throw new MeiliRepositoryConfigurationException("v1 does not support the method-name Distinct modifier (Meili's distinct must specify a property); "
+                    + "use @MeiliQuery(distinct = \"…\") instead: method " + method.getName());
         }
         Shape shape = returnShape(method);
         Class<?> domainType = entity.getType();
@@ -140,11 +155,11 @@ public final class MeiliDerivedQueries {
             }
         }
         if (parsed.expectedValueArguments() != valueArgs.size()) {
-            throw new MeiliRepositoryConfigurationException("方法 " + methodName + " 的值参数数量与派生条件不符: 需要 "
-                    + parsed.expectedValueArguments() + " 个，实际 " + valueArgs.size());
+            throw new MeiliRepositoryConfigurationException("Method " + methodName + ": value argument count does not match the derived criteria: expected "
+                    + parsed.expectedValueArguments() + ", actual " + valueArgs.size());
         }
         if (pageableIndex >= 0 && parsed.maxResults() != null) {
-            log.warn("方法 {} 同时声明 TopN 与分页参数：TopN 被忽略，以分页为准", methodName);
+            log.warn("Method {} declares both TopN and paging arguments: TopN is ignored, paging wins", methodName);
         }
 
         String idPath = entity.getIdProperty().getJsonPath();
@@ -176,7 +191,7 @@ public final class MeiliDerivedQueries {
                 if (c.keyword() == Keyword.CONTAINING || c.keyword() == Keyword.LIKE) {
                     if (searchPath != null) {
                         throw new MeiliRepositoryConfigurationException(
-                                "v1 仅允许一个 Containing/Like 条件（全文 q 唯一）: " + methodName);
+                                "v1 allows only one Containing/Like condition (full-text q is unique): " + methodName);
                     }
                     searchPath = c.path();
                     searchArg = c.argIndex();
@@ -272,7 +287,7 @@ public final class MeiliDerivedQueries {
             case LIST -> List.copyOf(hits);
             case OPTIONAL -> {
                 if (hits.size() > 1) {
-                    log.debug("Optional 查询命中 {} 条，返回首条（方法 {}）", hits.size(), plan.methodName());
+                    log.debug("Optional query matched {} hits, returning the first (method {})", hits.size(), plan.methodName());
                 }
                 yield hits.isEmpty() ? Optional.empty() : Optional.of(hits.get(0));
             }
@@ -297,8 +312,8 @@ public final class MeiliDerivedQueries {
     private static String argOf(Object[] args, int index, Plan plan) {
         Object v = args[index];
         if (v == null) {
-            throw new IllegalArgumentException("方法 " + plan.methodName()
-                    + " 的全文条件参数不允许为 null");
+            throw new IllegalArgumentException("The full-text condition argument of method " + plan.methodName()
+                    + " must not be null");
         }
         return String.valueOf(v);
     }
@@ -312,7 +327,7 @@ public final class MeiliDerivedQueries {
      * @return DSL fragment
      */
     private static String renderClause(BoundClause c, Object[] args, String methodName) {
-        Object value = c.argIndex() >= 0 ? args[c.argIndex()] : null; // TRUE/FALSE 无值槽
+        Object value = c.argIndex() >= 0 ? args[c.argIndex()] : null; // TRUE/FALSE have no value slot
         String expr = switch (c.keyword()) {
             case EQ -> c.path + " = " + MeiliLiterals.of(value);
             case NE -> c.path + " != " + MeiliLiterals.of(value);
@@ -354,7 +369,7 @@ public final class MeiliDerivedQueries {
         } else if (collectionOrArray instanceof Object[] arr) {
             items.addAll(List.of(arr));
         } else {
-            throw new IllegalArgumentException("方法 " + methodName + " 的 In 条件参数必须是集合或数组: "
+            throw new IllegalArgumentException("The In condition argument of method " + methodName + " must be a collection or array: "
                     + collectionOrArray.getClass().getName());
         }
         List<String> out = new ArrayList<>();
@@ -377,7 +392,7 @@ public final class MeiliDerivedQueries {
         }
         for (Sort.Order o : s) {
             String path = MeiliPropertyPaths.resolveDotted(plan.domainType(),
-                    plan.methodName() + " 的 Pageable/Sort", o.getProperty());
+                    "Pageable/Sort of " + plan.methodName(), o.getProperty());
             sort.add(path + ":" + (o.isDescending() ? "desc" : "asc"));
         }
     }
@@ -441,9 +456,9 @@ public final class MeiliDerivedQueries {
                 return;
             }
         }
-        throw new MeiliMappingException("方法 " + methodName + " 的属性 " + path + " 未声明 " + roleName
-                + "；修复：在该字段的 @MeiliField 上声明 " + roleName + " = true，"
-                + "或经 @MeiliSetting 透传在服务端声明（实体声明是本校验的唯一判定源）");
+        throw new MeiliMappingException("Method " + methodName + " uses property " + path + " without declared " + roleName
+                + "; fix: declare " + roleName + " = true on the field's @MeiliField, "
+                + "or declare it server-side via @MeiliSetting passthrough (the entity declaration is this check's only source of truth)");
     }
 
     /**
@@ -464,13 +479,13 @@ public final class MeiliDerivedQueries {
             boolean hasPageable = java.util.Arrays.stream(method.getParameters())
                     .anyMatch(p -> Pageable.class.isAssignableFrom(p.getType()));
             if (!hasPageable) {
-                throw new MeiliRepositoryConfigurationException("返回 Page 的方法必须声明 Pageable 参数: "
+                throw new MeiliRepositoryConfigurationException("Methods returning Page must declare a Pageable parameter: "
                         + method.getName());
             }
             return Shape.PAGE;
         }
         throw new MeiliRepositoryConfigurationException(
-                "v1 派生查询仅支持 List/Optional/Page 返回类型（不支持投影/Stream/基本类型）: "
+                "v1 derived queries support only List/Optional/Page return types (projection/Stream/primitive types are not supported): "
                         + method.getName() + " -> " + r.getName());
     }
 }

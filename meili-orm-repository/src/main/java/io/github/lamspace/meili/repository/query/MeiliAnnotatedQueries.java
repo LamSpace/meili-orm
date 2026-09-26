@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.query;
 
 import io.github.lamspace.meili.core.exception.MeiliOrmException;
@@ -93,12 +108,12 @@ public final class MeiliAnnotatedQueries {
         String methodName = method.getName();
         if (ann.q().isEmpty() && ann.filter().isEmpty() && ann.distinct().isEmpty()) {
             throw new MeiliRepositoryConfigurationException(
-                    "@MeiliQuery 必须至少提供 q/filter/distinct 之一: " + methodName);
+                    "@MeiliQuery must provide at least one of q/filter/distinct: " + methodName);
         }
         checkBrackets(ann.filter(), methodName);
         if (ann.distinct().contains(":") || ann.distinct().contains("?") || ann.distinct().contains("#{")) {
             throw new MeiliRepositoryConfigurationException(
-                    "distinct 属性不接受占位符（必须为字面量投影路径）: " + methodName);
+                    "The distinct attribute accepts no placeholders (must be a literal projection path): " + methodName);
         }
 
         Map<String, Integer> byName = new HashMap<>();
@@ -147,7 +162,7 @@ public final class MeiliAnnotatedQueries {
         }
         Matcher cm = CRITERIA.matcher(methodName);
         if (cm.matches() && !cm.group(1).isEmpty()) {
-            log.warn("方法 {} 标注了 @MeiliQuery：方法名条件段 {} 被注解短路忽略（排序/top 仍生效）",
+            log.warn("Method {} is annotated with @MeiliQuery: name criteria segment {} is short-circuited and ignored by the annotation (order/top still apply)",
                     methodName, cm.group(1));
         }
 
@@ -217,7 +232,7 @@ public final class MeiliAnnotatedQueries {
                 return List.copyOf(hits);
             case "OPTIONAL": {
                 if (hits.size() > 1) {
-                    log.debug("Optional 查询命中 {} 条，返回首条（方法 {}）", hits.size(), methodName);
+                    log.debug("Optional query matched {} hits, returning the first (method {})", hits.size(), methodName);
                 }
                 return hits.isEmpty() ? Optional.empty() : Optional.of(hits.get(0));
             }
@@ -250,7 +265,7 @@ public final class MeiliAnnotatedQueries {
                 int end = template.indexOf('}', i);
                 if (end < 0) {
                     throw new MeiliRepositoryConfigurationException(
-                            "模板 #{{ 未闭合: " + methodName);
+                            "Template #{{ is not closed: " + methodName);
                 }
                 Object v = eval(template.substring(i + 2, end), vars, methodName);
                 out.append(asText(v, filterMode, methodName));
@@ -262,8 +277,8 @@ public final class MeiliAnnotatedQueries {
                 }
                 String name = template.substring(i + 1, j);
                 if (!vars.containsKey(name)) {
-                    throw new MeiliRepositoryConfigurationException("占位符 :" + name
-                            + " 无可绑定参数（可绑定: " + vars.keySet() + "，方法 " + methodName + "）");
+                    throw new MeiliRepositoryConfigurationException("Placeholder :" + name
+                            + " has no bindable parameter (bindable: " + vars.keySet() + ", method " + methodName + ")");
                 }
                 out.append(asText(vars.get(name), filterMode, methodName));
                 i = j;
@@ -274,8 +289,8 @@ public final class MeiliAnnotatedQueries {
                 }
                 int n = Integer.parseInt(template.substring(i + 1, j));
                 if (!vars.containsKey("arg" + n)) {
-                    throw new MeiliRepositoryConfigurationException("占位符 ?" + n
-                            + " 越界（值参数数 " + countArgVars(vars) + "，方法 " + methodName + "）");
+                    throw new MeiliRepositoryConfigurationException("Placeholder ?" + n
+                            + " out of range (value parameter count " + countArgVars(vars) + ", method " + methodName + ")");
                 }
                 out.append(asText(vars.get("arg" + n), filterMode, methodName));
                 i = j;
@@ -312,8 +327,8 @@ public final class MeiliAnnotatedQueries {
             vars.forEach(ctx::setVariable);
             return PARSER.parseExpression(expression).getValue(ctx);
         } catch (RuntimeException e) {
-            throw new MeiliOrmException("SpEL 求值失败: #{" + expression + "}（方法 "
-                    + methodName + "）: " + e.getMessage(), e);
+            throw new MeiliOrmException("SpEL evaluation failed: #{" + expression + "} (method "
+                    + methodName + "): " + e.getMessage(), e);
         }
     }
 
@@ -328,7 +343,7 @@ public final class MeiliAnnotatedQueries {
     private static String asText(Object value, boolean filterMode, String methodName) {
         if (value == null) {
             throw new MeiliRepositoryConfigurationException(
-                    "模板参数值为 null（方法 " + methodName + "）");
+                    "Template parameter value is null (method " + methodName + ")");
         }
         return filterMode ? MeiliLiterals.of(value) : String.valueOf(value);
     }
@@ -346,16 +361,16 @@ public final class MeiliAnnotatedQueries {
         Matcher named = NAMED.matcher(template);
         while (named.find()) {
             if (!byName.containsKey(named.group(1))) {
-                throw new MeiliRepositoryConfigurationException("占位符 :" + named.group(1)
-                        + " 无可绑定参数（可绑定: " + byName.keySet() + "，方法 " + methodName + "）");
+                throw new MeiliRepositoryConfigurationException("Placeholder :" + named.group(1)
+                        + " has no bindable parameter (bindable: " + byName.keySet() + ", method " + methodName + ")");
             }
         }
         Matcher pos = POSITIONAL.matcher(template);
         while (pos.find()) {
             int n = Integer.parseInt(pos.group(1));
             if (n >= valueCount) {
-                throw new MeiliRepositoryConfigurationException("占位符 ?" + n + " 越界（值参数数 "
-                        + valueCount + "，方法 " + methodName + "）");
+                throw new MeiliRepositoryConfigurationException("Placeholder ?" + n + " out of range (value parameter count "
+                        + valueCount + ", method " + methodName + ")");
             }
         }
     }
@@ -378,13 +393,13 @@ public final class MeiliAnnotatedQueries {
             } else if (!inString && c == ')') {
                 if (--depth < 0) {
                     throw new MeiliRepositoryConfigurationException(
-                            "filter 模板括号不配对（第 " + (i + 1) + " 字符）: " + methodName);
+                            "filter template parentheses are unbalanced (at character " + (i + 1) + "): " + methodName);
                 }
             }
         }
         if (depth != 0) {
             throw new MeiliRepositoryConfigurationException(
-                    "filter 模板括号不配对（缺少 " + depth + " 个 ')'）: " + methodName);
+                    "filter template parentheses are unbalanced (missing " + depth + " closing ')'): " + methodName);
         }
     }
 
@@ -403,7 +418,7 @@ public final class MeiliAnnotatedQueries {
         }
         for (Sort.Order o : s) {
             String path = MeiliPropertyPaths.resolveDotted(entity.getType(),
-                    methodName + " 的 Pageable/Sort", o.getProperty());
+                    "Pageable/Sort of " + methodName, o.getProperty());
             sort.add(path + ":" + (o.isDescending() ? "desc" : "asc"));
         }
     }
@@ -421,9 +436,9 @@ public final class MeiliAnnotatedQueries {
                 return;
             }
         }
-        throw new io.github.lamspace.meili.core.exception.MeiliMappingException("方法 " + methodName
-                + " 的属性 " + path + " 未声明 sortable；修复：在该字段的 @MeiliField 上声明 sortable = true，"
-                + "或经 @MeiliSetting 透传在服务端声明（实体声明是本校验的唯一判定源）");
+        throw new io.github.lamspace.meili.core.exception.MeiliMappingException("Method " + methodName
+                + " uses property " + path + " without declared sortable; fix: declare sortable = true on the field's @MeiliField, "
+                + "or declare it server-side via @MeiliSetting passthrough (the entity declaration is this check's only source of truth)");
     }
 
     /**
@@ -445,12 +460,12 @@ public final class MeiliAnnotatedQueries {
                     .anyMatch(p -> Pageable.class.isAssignableFrom(p.getType()));
             if (!hasPageable) {
                 throw new MeiliRepositoryConfigurationException(
-                        "返回 Page 的方法必须声明 Pageable 参数: " + method.getName());
+                        "Methods returning Page must declare a Pageable parameter: " + method.getName());
             }
             return "PAGE";
         }
         throw new MeiliRepositoryConfigurationException(
-                "@MeiliQuery 仅支持 List/Optional/Page 返回类型: " + method.getName()
+                "@MeiliQuery supports only List/Optional/Page return types: " + method.getName()
                         + " -> " + r.getName());
     }
 }

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.spike;
 
 import com.meilisearch.sdk.Client;
@@ -24,31 +39,35 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * spikeA 哨兵：JsonHandler 注入兼容性实证（结论见 docs/spikes.md「spikeA 结论」）。
+ * spikeA sentinel: empirical verification of JsonHandler injection compatibility
+ * (conclusion documented in docs/spikes.md, "spikeA conclusion").
  *
- * <p>实测锁定的行为基线（meilisearch-java 0.21.0 × 服务端 v1.49.0）：
- * ① SDK 全部 typed 读环节（TaskInfo/Task/Settings/文档 Map/Results）经由可插拔
- * JsonHandler；② 换 JacksonJsonHandler 后请求侧 {@code Settings.encode} 泄漏 Java 双视
- * 图字段 {@code filterableAttributesConfig}，服务端 400 拒绝；③ 任务/索引写环节不经过
- * 该泄漏时可正常完成。因此装配 Client 一律保持默认 GsonJsonHandler，实体读路径走
- * raw 字符串 API（{@code getRawDocument}/{@code rawSearch}）。</p>
+ * <p>Behavior baseline locked by measurement (meilisearch-java 0.21.0 × server v1.49.0):
+ * (1) all SDK typed-read paths (TaskInfo/Task/Settings/document Map/Results) go through the
+ * pluggable JsonHandler; (2) switching to JacksonJsonHandler makes the request-side
+ * {@code Settings.encode} leak the Java dual-view field {@code filterableAttributesConfig},
+ * rejected by the server with 400; (3) task/index write paths complete normally when they do
+ * not touch that leak. Hence assembled Clients always keep the default GsonJsonHandler and
+ * the entity read path uses the raw string API ({@code getRawDocument}/{@code rawSearch}).</p>
  *
- * <p>本类断言为**行为锁定**而非期望设计：任一断言变红意味着 SDK 或服务端版本行为
- * 漂移，须重新走实证并更新 docs/spikes.md，不得只改断言。</p>
+ * <p>The assertions here are **behavior locks**, not desired design: any red assertion means
+ * the SDK or server version behavior has drifted; re-run the empirical verification and
+ * update docs/spikes.md — never just change the assertion.</p>
  */
 class SpikeAJsonHandlerIT extends AbstractMeiliIntegrationTest {
 
-    /** 含 &gt;2^53 的 Long 主键（精度主判权在 spikeB，本类只记录通道行为）。 */
+    /** Long primary key &gt;2^53 here (spikeB owns the precision verdict; this class records channel behavior only). */
     private static final String SAMPLE_DOC =
             "{\"id\":9007199254740993,\"title\":\"三体\",\"genre\":\"科幻\"}";
 
     /**
-     * 写文档并等待任务终态，锁定 addDocuments→TaskInfo.decode→Task.decode 环节。
+     * Writes a document and waits for the task's terminal state, locking the
+     * addDocuments→TaskInfo.decode→Task.decode path.
      *
-     * @param client 被测装配的客户端
-     * @param uid    独立索引名
-     * @return 已成功的任务终态
-     * @throws Exception SDK 调用异常
+     * @param client the client under test
+     * @param uid    dedicated index name
+     * @return the succeeded terminal task
+     * @throws Exception on SDK invocation failure
      */
     private static Task writeAndWait(Client client, String uid) throws Exception {
         TaskInfo t = client.index(uid).addDocuments("[" + SAMPLE_DOC + "]");
@@ -58,7 +77,7 @@ class SpikeAJsonHandlerIT extends AbstractMeiliIntegrationTest {
         return done;
     }
 
-    /** 计数委托 handler：decode 记录目标类型后委托 GsonJsonHandler（观察经过 JsonHandler 的环节）。 */
+    /** Counting handler: decode records the target type, then delegates to GsonJsonHandler (observes JsonHandler dispatch). */
     static final class CountingGsonDelegatingHandler implements JsonHandler {
         private final GsonJsonHandler delegate = new GsonJsonHandler();
         final Set<String> decodeTargets = new LinkedHashSet<>();
@@ -80,7 +99,7 @@ class SpikeAJsonHandlerIT extends AbstractMeiliIntegrationTest {
     }
 
     @Test
-    @DisplayName("对照组：默认 GsonJsonHandler 全模型解析正常（基线）")
+    @DisplayName("Control group: default GsonJsonHandler parses all models normally (baseline)")
     void gsonHandlerBaseline() throws Exception {
         Client client = client();
         writeAndWait(client, "spikeA_gson");
@@ -88,7 +107,7 @@ class SpikeAJsonHandlerIT extends AbstractMeiliIntegrationTest {
         Settings s = new Settings();
         s.setFilterableAttributes(new String[]{"genre"});
         TaskInfo settingsTask = client.index("spikeA_gson").updateSettings(s);
-        client.waitForTask(settingsTask.getTaskUid());   // settings 更新为异步任务，等终态再读，避免竞态
+        client.waitForTask(settingsTask.getTaskUid());   // settings updates are async; await the terminal state before reading to avoid a race
         Settings read = client.index("spikeA_gson").getSettings();
         assertThat(read.getFilterableAttributes()).containsExactly("genre");
 
@@ -100,16 +119,16 @@ class SpikeAJsonHandlerIT extends AbstractMeiliIntegrationTest {
     }
 
     @Test
-    @DisplayName("实验组锁定：JacksonJsonHandler 下 Settings.encode 泄漏双视图字段致服务端 400，任务 decode 环节仍正常")
+    @DisplayName("Experiment lock: under JacksonJsonHandler, Settings.encode leaks the dual-view field and the server rejects with 400, while task decode still passes")
     void jacksonHandlerLeaksDualViewField() throws Exception {
         Config config = new Config(MeiliContainer.url(), MeiliContainer.MASTER_KEY, new JacksonJsonHandler());
         Client client = new Client(config);
 
-        // 环节①：addDocuments/waitForTask/getTask 的 encode+decode 不经过 Settings 泄漏，实测通过——锁定
+        // Step 1: addDocuments/waitForTask/getTask encode+decode never touch the Settings leak — passes in practice, locked
         Task done = writeAndWait(client, "spikeA_jackson");
         assertThat(done.getType()).isEqualTo("documentAdditionOrUpdate");
 
-        // 环节②：updateSettings 请求侧 Settings.encode 泄漏 filterableAttributesConfig——锁定异常形态
+        // Step 2: updateSettings request-side Settings.encode leaks filterableAttributesConfig — lock the failure shape
         Settings s = new Settings();
         s.setFilterableAttributes(new String[]{"genre"});
         assertThatThrownBy(() -> client.index("spikeA_jackson").updateSettings(s))
@@ -117,13 +136,13 @@ class SpikeAJsonHandlerIT extends AbstractMeiliIntegrationTest {
                 .hasMessageContaining("Unknown field")
                 .hasMessageContaining("filterableAttributesConfig");
 
-        // 环节③：getSettings（纯读，decode Settings）实测不抛——锁定可读性边界
+        // Step 3: getSettings (pure read, decode Settings) does not throw in practice — locks the readability boundary
         assertThatCode(() -> client.index("spikeA_jackson").getSettings())
                 .doesNotThrowAnyException();
     }
 
     @Test
-    @DisplayName("探针组锁定：五类 typed 读全部经过 JsonHandler（自定义 handler 的耦合面为全读链）")
+    @DisplayName("Probe lock: all five typed reads pass through JsonHandler (a custom handler couples to the whole read chain)")
     void countingHandlerObservesDispatch() throws Exception {
         CountingGsonDelegatingHandler handler = new CountingGsonDelegatingHandler();
         Config config = new Config(MeiliContainer.url(), MeiliContainer.MASTER_KEY, handler);

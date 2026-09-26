@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.testcontainers.manual;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -12,26 +27,27 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
 /**
- * 真机 IT：文档"手工桥接"样例逐字可跑形态——默认发现解析应用配置，
- * 容器经嵌套 {@code @TestConfiguration} 接成 {@link MeiliConnectionDetails} bean，
- * 属性默认退避，保存后按主键读取往返成功。
+ * Real-machine IT: the documentation's "manual bridge" sample in verbatim-runnable form —
+ * default discovery resolves the application configuration, the container is bridged into a
+ * {@link MeiliConnectionDetails} bean via a nested {@code @TestConfiguration}, the
+ * properties-based details back off by default, and a save-then-read-by-id round trip succeeds.
  */
 @SpringBootTest(properties = "meili.wait-task=true")
 class ManualBridgeIT {
 
-    /** 手工管理生命周期的容器：类加载即启动，Ryuk 负责回收。 */
+    /** Manually lifecycle-managed container: started on class load, reclaimed by Ryuk. */
     private static final MeiliSearchContainer MEILI = new MeiliSearchContainer();
 
     static {
         MEILI.start();
     }
 
-    /** 装配链末端的数据操作面。 */
+    /** Data operations surface at the end of the wiring chain. */
     @Autowired
     private MeiliSearchOperations operations;
 
     /**
-     * 经手工桥接的装配链完成保存-读取往返。
+     * Completes a save-read round trip through the manually bridged wiring chain.
      */
     @Test
     void saveThenReadByIdRoundTripsThroughManuallyBridgedContainer() {
@@ -42,16 +58,17 @@ class ManualBridgeIT {
     }
 
     /**
-     * 手工桥接配置：声明 {@link MeiliConnectionDetails} bean 即令属性默认实现退避，
-     * 与文档样例逐字对应。
+     * Manual bridge configuration: declaring a {@link MeiliConnectionDetails} bean makes the
+     * default properties-based implementation back off, matching the documentation sample
+     * verbatim.
      */
     @TestConfiguration
     static class BridgeConfig {
 
         /**
-         * 把静态容器的连接事实接成详情 bean。
+         * Bridges the static container's connection facts into a details bean.
          *
-         * @return 委托活容器的连接详情
+         * @return connection details delegating to the live container
          */
         @Bean
         MeiliConnectionDetails meiliConnectionDetails() {

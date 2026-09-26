@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.event;
 
 import io.github.lamspace.meili.core.exception.MeiliMappingException;
@@ -93,12 +108,12 @@ public final class MeiliEntityCallbacks {
                         continue;
                     }
                     if (!(pt.getActualTypeArguments()[0] instanceof Class<?> concrete)) {
-                        throw new MeiliMappingException("回调泛型实参不可解析: "
+                        throw new MeiliMappingException("callback generic type argument is unresolvable: "
                                 + callback.getClass().getName());
                     }
                     target = concrete;
                 } else if (t instanceof Class<?> raw && kindOf(raw) != null) {
-                    throw new MeiliMappingException("回调未提供具体泛型实参: "
+                    throw new MeiliMappingException("callback provides no concrete generic type argument: "
                             + callback.getClass().getName());
                 } else {
                     continue;
@@ -108,7 +123,8 @@ public final class MeiliEntityCallbacks {
             }
         }
         if (added == 0) {
-            throw new MeiliMappingException("回调未声明任何生命周期接口: " + callback.getClass().getName());
+            throw new MeiliMappingException("callback declares no lifecycle interface: "
+                    + callback.getClass().getName());
         }
         registeredCount += added;
     }
@@ -124,7 +140,7 @@ public final class MeiliEntityCallbacks {
      */
     public void register(Class<?> entityType, MeiliCallback callback) {
         if (entityType == null) {
-            throw new MeiliMappingException("显式注册回调需要目标实体类型");
+            throw new MeiliMappingException("explicit callback registration requires a target entity type");
         }
         int added = 0;
         for (Kind kind : Kind.values()) {
@@ -134,7 +150,8 @@ public final class MeiliEntityCallbacks {
             }
         }
         if (added == 0) {
-            throw new MeiliMappingException("回调未声明任何生命周期接口: " + callback.getClass().getName());
+            throw new MeiliMappingException("callback declares no lifecycle interface: "
+                    + callback.getClass().getName());
         }
         registeredCount += added;
     }

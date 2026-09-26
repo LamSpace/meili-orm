@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.settings;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -135,8 +150,8 @@ public final class MeiliSettingsProjection {
             Map<String, Object> doc = readSettingsFile(settingPath);
             for (String key : doc.keySet()) {
                 if (!WHITELIST.contains(key)) {
-                    throw new MeiliMappingException("settings 透传文件 " + settingPath
-                            + " 含未知键 " + key);
+                    throw new MeiliMappingException("settings passthrough file " + settingPath
+                            + " contains unknown key " + key);
                 }
             }
             merged.putAll(doc);
@@ -164,14 +179,14 @@ public final class MeiliSettingsProjection {
         }
         try (InputStream in = loader.getResourceAsStream(resource)) {
             if (in == null) {
-                throw new MeiliMappingException("settings 透传文件缺失: " + settingPath);
+                throw new MeiliMappingException("settings passthrough file not found: " + settingPath);
             }
             Object parsed = JSON.readValue(in, Map.class);
             return (Map<String, Object>) parsed;
         } catch (MeiliMappingException e) {
             throw e;
         } catch (Exception e) {
-            throw new MeiliMappingException("settings 透传文件解析失败: " + settingPath, e);
+            throw new MeiliMappingException("failed to parse settings passthrough file: " + settingPath, e);
         }
     }
 }

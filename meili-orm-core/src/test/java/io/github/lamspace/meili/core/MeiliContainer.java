@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core;
 
 import org.testcontainers.containers.GenericContainer;
@@ -5,28 +20,32 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * 全工程共用的 MeiliSearch 测试容器（镜像钉死 v1.49.0，随 core test-jar 分发）。
+ * Project-wide shared MeiliSearch test container (image pinned to v1.49.0, distributed
+ * via the core test-jar).
  *
- * <p>线程模型：类加载时经静态初始化块启动单例容器，同一 JVM 内所有集成测试共享之；
- * 容器直至 JVM 退出由 Testcontainers Ryuk 回收，不做逐测试重启。</p>
+ * <p>Threading model: the singleton container starts in the static initializer at class
+ * load time and is shared by every integration test in the same JVM; it is reclaimed by
+ * Testcontainers Ryuk at JVM exit, never restarted per test.</p>
  *
- * <p>硬前置（声明式，缺失即快速失败且不做静默跳过）：本机 Docker 守护进程可用，
- * 且本地已存在 {@code getmeili/meilisearch:v1.49.0} 镜像。守护进程不可用时，
- * 失败形态为 {@code NoClassDefFoundError}/{@code ExceptionInInitializerError}
- * （Testcontainers 客户端初始化异常），属环境问题而非用例缺陷。</p>
+ * <p>Hard prerequisites (declarative: missing ones fail fast with no silent skips):
+ * a usable local Docker daemon and a local {@code getmeili/meilisearch:v1.49.0} image.
+ * When the daemon is unavailable, the failure surfaces as
+ * {@code NoClassDefFoundError}/{@code ExceptionInInitializerError} (Testcontainers
+ * client initialization), which is an environment problem rather than a test defect.</p>
  *
- * <p>就绪条件：{@code /health} 返回 HTTP 200。master key 为固定测试值，仅对
- * 本容器内一次性数据生效，不得用于任何非测试场景。</p>
+ * <p>Readiness: {@code /health} returns HTTP 200. The master key is a fixed test value
+ * valid only for the throwaway data inside this container and must never be used in
+ * any non-test scenario.</p>
  */
 public final class MeiliContainer {
 
-    /** 容器内主密钥（测试专用固定值）。 */
+    /** Master key inside the container (fixed test-only value). */
     public static final String MASTER_KEY = "masterKey-test-123456";
 
-    /** 钉死的镜像坐标：tag 精确到 v1.49.0，禁止 latest 或版本区间。 */
+    /** Pinned image coordinate: tag exactly v1.49.0, never latest or a version range. */
     public static final String IMAGE = "getmeili/meilisearch:v1.49.0";
 
-    /** 单例容器：随机宿主端口映射到 7700，dev 模式 + 固定 master key。 */
+    /** Singleton container: random host port mapped to 7700, dev mode + fixed master key. */
     public static final GenericContainer<?> MEILI = new GenericContainer<>(
             DockerImageName.parse(IMAGE))
         .withExposedPorts(7700)
@@ -42,10 +61,10 @@ public final class MeiliContainer {
     }
 
     /**
-     * 返回当前容器的基础 URL（{@code http://host:mappedPort}），
-     * 供 SDK {@code Config} 或属性注入使用。
+     * Returns the base URL of the running container ({@code http://host:mappedPort})
+     * for use by SDK {@code Config} or property injection.
      *
-     * @return 形如 {@code http://localhost:49152} 的服务地址
+     * @return service address of the form {@code http://localhost:49152}
      */
     public static String url() {
         return "http://" + MEILI.getHost() + ":" + MEILI.getMappedPort(7700);

@@ -1,12 +1,29 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.it;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * 矩阵用例的 Boot 应用壳。
+ * Boot application shell for the matrix test cases.
  *
- * <p>包即自动配置根：meili 自动配置经 imports 文件装配，实体扫描以本包为起点发现
- * {@link ITBook}。不声明任何业务 bean——矩阵验证的正是"零装配即可用"的 starter 语义。
+ * <p>The package is the auto-configuration root: meili auto-configuration is assembled via the
+ * imports file, and entity scanning starts from this package to discover {@link ITBook}. It
+ * declares no business beans — what the matrix verifies is exactly the starter semantics of
+ * "usable with zero assembly".
  */
 @SpringBootApplication
 public class ItApp {

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.serialize;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,7 +30,10 @@ import java.time.OffsetDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** {@link Jackson2DocumentSerializer} 行为契约测试：精度、改名一致、日期、宽容读、base 配置尊重。 */
+/**
+ * Behavior contract tests for {@link Jackson2DocumentSerializer}: precision, rename
+ * consistency, dates, lenient reads and respect for the base mapper configuration.
+ */
 class Jackson2DocumentSerializerTest {
 
     private final Jackson2DocumentSerializer s = new Jackson2DocumentSerializer(new ObjectMapper());
@@ -34,7 +52,7 @@ class Jackson2DocumentSerializerTest {
     }
 
     @Test
-    @DisplayName("Long 主键逐位往返 + 改名 + JsonIgnore 排除 + ISO 日期")
+    @DisplayName("Bit-exact Long primary key round-trip + rename + JsonIgnore exclusion + ISO date")
     void longPrecisionRoundTrip() {
         Doc d = new Doc(9007199254740993L, "三体", "hidden", OffsetDateTime.parse("2008-01-01T00:00:00Z"));
         String json = s.write(d);
@@ -49,7 +67,7 @@ class Jackson2DocumentSerializerTest {
     }
 
     @Test
-    @DisplayName("POJO 形态：字段改名序列化与反序列化双向生效")
+    @DisplayName("POJO shape: field rename takes effect in both serialization and deserialization")
     void pojoRenameRoundTrip() {
         String json = s.write(new PojoDoc(1L, "活着", "hidden"));
         assertThat(json).contains("\"book_title\":\"活着\"").doesNotContain("hidden");
@@ -58,7 +76,7 @@ class Jackson2DocumentSerializerTest {
     }
 
     @Test
-    @DisplayName("与映射层同名规则：@MeiliField.name 优先于 @JsonProperty（冲突裁决一致）")
+    @DisplayName("Same naming rule as the mapping layer: @MeiliField.name wins over @JsonProperty (consistent conflict arbitration)")
     void meiliFieldBeatsJsonPropertyForSerialization() {
         class Conflict {
             @MeiliId Long id;
@@ -74,7 +92,7 @@ class Jackson2DocumentSerializerTest {
     }
 
     @Test
-    @DisplayName("base mapper 的命名策略被尊重：unitPrice → unit_price")
+    @DisplayName("Base mapper naming strategy is respected: unitPrice → unit_price")
     void customBaseMapperRespected() {
         ObjectMapper m = new ObjectMapper()
                 .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
@@ -84,12 +102,12 @@ class Jackson2DocumentSerializerTest {
     }
 
     @Test
-    @DisplayName("构造不污染 base mapper：注册后 base 仍可独立使用且无 meili 桥接")
+    @DisplayName("Construction does not pollute the base mapper: base stays usable on its own, without the meili bridge")
     void baseMapperNotMutated() throws Exception {
         ObjectMapper base = new ObjectMapper();
         Jackson2DocumentSerializer copy = new Jackson2DocumentSerializer(base);
         copy.write(new Doc(1L, "x", null, null));
-        // base 不含 meili 桥接：record 的 book_title 改名不生效
+        // the base has no meili bridge: the record's book_title rename does not apply
         assertThat(base.writeValueAsString(new Doc(1L, "x", null, null))).contains("\"title\"");
     }
 

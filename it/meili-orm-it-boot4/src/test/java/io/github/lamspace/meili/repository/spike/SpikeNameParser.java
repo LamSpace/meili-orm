@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.spike;
 
 import java.lang.reflect.Field;
@@ -11,16 +26,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * spike 原型：自研派生查询方法名解析器（结构桥路线被 commons 4.0 的
- * {@code Part.getProperty()} 返回类型代际迁移证伪后的替代形态）。
- * 语法（动词/By/top/OrderBy/And/Or/Not/关键字尾缀）自研，属性段用实体反射字典
- * 做最长前缀切分（不支持缩写）；语义仍由 {@link SpikePropertyResolver} 落 core 投影名。
+ * Spike prototype: hand-rolled derived-query method-name parser (the replacement shape after the
+ * structural-bridge route was disproven by commons 4.0's {@code Part.getProperty()} return-type
+ * generation migration). The syntax (verb/By/top/OrderBy/And/Or/Not/keyword suffixes) is
+ * hand-rolled; property segments are cut by longest-prefix match against a reflection dictionary
+ * of the entity (abbreviations unsupported); semantics still land on core projection names via
+ * {@link SpikePropertyResolver}.
  */
 final class SpikeNameParser {
 
-    /** 关键字 → 内部规范名；按长度降序尝试剥离。 */
+    /** Keyword → internal canonical name; stripping attempted in descending length order. */
     private static final Map<String, String> SUFFIX_KEYWORDS = new HashMap<>();
-    /** 不支持面关键字（v1 直接拒绝）。 */
+    /** Unsupported-surface keywords (rejected outright in v1). */
     private static final List<String> UNSUPPORTED =
             List.of("StartingWith", "EndingWith", "RegularExpression", "IsNotNull", "IsNull",
                     "IsNotEmpty", "IsEmpty", "Exists", "IgnoreCase");
@@ -49,31 +66,31 @@ final class SpikeNameParser {
     private SpikeNameParser() {
     }
 
-    /** 一个条件子句。 */
+    /** A single criteria clause. */
     record Clause(boolean or, boolean negate, String keyword, List<String> chain) {
     }
 
-    /** 一个排序子句。 */
+    /** A single order clause. */
     record Order(List<String> chain, boolean asc) {
     }
 
-    /** 解析结果。 */
+    /** The parse result. */
     record Parsed(Integer maxResults, boolean distinct, List<Clause> clauses, List<Order> orders) {
     }
 
     /**
-     * 解析派生查询方法名。
+     * Parses a derived-query method name.
      *
-     * @param domainType 实体类（属性字典来源）
-     * @param methodName 仓库接口方法名
-     * @return 结构化解析结果
-     * @throws IllegalArgumentException 语法非法或属性段无法解析
-     * @throws UnsupportedOperationException v1 不支持关键字
+     * @param domainType the entity class (source of the property dictionary)
+     * @param methodName the repository-interface method name
+     * @return the structured parse result
+     * @throws IllegalArgumentException invalid syntax or an unresolvable property segment
+     * @throws UnsupportedOperationException a keyword unsupported in v1
      */
     static Parsed parse(Class<?> domainType, String methodName) {
         Matcher m = METHOD.matcher(methodName);
         if (!m.matches() || m.group(4) == null) {
-            throw new IllegalArgumentException("方法名无法解析: " + methodName);
+            throw new IllegalArgumentException("cannot parse method name: " + methodName);
         }
         Integer top = null;
         if (m.group(1) != null) {
@@ -116,7 +133,7 @@ final class SpikeNameParser {
         return out;
     }
 
-    /** 按大写 And/Or 定界切分（保持出现顺序）。 */
+    /** Splits on upper-case And/Or delimiters, preserving occurrence order. */
     private static List<String> splitDelimited(String criteria) {
         List<String> parts = new ArrayList<>();
         int start = 0;
@@ -138,7 +155,7 @@ final class SpikeNameParser {
         return parts;
     }
 
-    /** 子句后的连接词（and 默认；or 影响下一子句）。 */
+    /** The conjunction following a clause (and by default; or affects the next clause). */
     private static boolean isOrSeparated(String criteria, String seg) {
         int idx = criteria.indexOf(seg) + seg.length();
         return idx < criteria.length() && criteria.regionMatches(idx, "Or", 0, 2);
@@ -163,12 +180,12 @@ final class SpikeNameParser {
     private static void rejectUnsupported(String seg) {
         for (String kw : UNSUPPORTED) {
             if (seg.endsWith(kw) && seg.length() > kw.length()) {
-                throw new UnsupportedOperationException("v1 不支持关键字: " + kw + "（方法名片段 " + seg + "）");
+                throw new UnsupportedOperationException("unsupported keyword in v1: " + kw + " (method-name fragment " + seg + ")");
             }
         }
     }
 
-    /** 属性字典最长前缀切分：AuthorCity → [author, city]；缩写不支持。 */
+    /** Longest-prefix split against the property dictionary: AuthorCity → [author, city]; abbreviations unsupported. */
     private static List<String> segment(Class<?> type, String path) {
         List<String> chain = new ArrayList<>();
         Class<?> current = type;
@@ -183,7 +200,7 @@ final class SpikeNameParser {
                 }
             }
             if (match == null) {
-                throw new IllegalArgumentException("无法解析属性段（不支持缩写）: " + path
+                throw new IllegalArgumentException("cannot resolve property segment (abbreviations unsupported): " + path
                         + " @ " + current.getSimpleName());
             }
             chain.add(match.getName());
@@ -193,7 +210,7 @@ final class SpikeNameParser {
         return chain;
     }
 
-    /** 当前类型可查询字段集合（含被排除字段以便给出精确错误）。 */
+    /** The current type's queryable field set (excluded fields included, so the error can be precise). */
     private static List<Field> candidates(Class<?> type) {
         List<Field> out = new ArrayList<>();
         for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {

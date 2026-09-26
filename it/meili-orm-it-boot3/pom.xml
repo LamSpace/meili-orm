@@ -6,11 +6,11 @@
     <parent><groupId>io.github.lamspace</groupId><artifactId>meili-orm-it</artifactId><version>1.0-SNAPSHOT</version></parent>
     <artifactId>meili-orm-it-boot3</artifactId>
     <name>meili-orm-it-boot3</name>
-    <description>兼容矩阵 Boot 3.5.16 代：starter 装配与 Long 主键 CRUD 真机往返及版本哨兵。</description>
+    <description>Compatibility matrix, Boot 3.5.16 generation: starter wiring and Long-primary-key CRUD round-trips against a real server, plus version sentinels.</description>
     <dependencyManagement>
         <dependencies>
             <dependency><groupId>org.testcontainers</groupId><artifactId>testcontainers-bom</artifactId><version>${testcontainers.version}</version><type>pom</type><scope>import</scope></dependency>
-            <!-- 与父基线同代也显式写出：矩阵两侧 BOM 覆盖机制对称自证。 -->
+            <!-- Written out explicitly although same generation as the parent baseline: symmetric self-evidence of the BOM-override mechanism on both matrix sides. -->
             <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-dependencies</artifactId><version>3.5.16</version><type>pom</type><scope>import</scope></dependency>
         </dependencies>
     </dependencyManagement>
@@ -20,9 +20,9 @@
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.testcontainers</groupId><artifactId>testcontainers</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.testcontainers</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
-        <!-- 矩阵仓库用例：opt-in 坐标显式引入（starter 聚合面零变化）。 -->
+        <!-- Matrix repository cases: pulled in via the explicit opt-in coordinate (the starter aggregate surface stays unchanged). -->
         <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-repository</artifactId><version>${project.version}</version><scope>test</scope></dependency>
-        <!-- 服务连接桥接矩阵用例：opt-in testcontainers 模块显式引入（starter 聚合面零变化）。 -->
+        <!-- Service-connection bridge matrix cases: the opt-in testcontainers module is added explicitly (the starter aggregate surface stays unchanged). -->
         <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-testcontainers</artifactId><version>${project.version}</version><scope>test</scope></dependency>
     </dependencies>
     <build><plugins>

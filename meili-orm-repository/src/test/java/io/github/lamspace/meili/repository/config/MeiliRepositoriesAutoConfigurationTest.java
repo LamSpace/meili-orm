@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,8 +30,9 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * L2：仓库自动配置条件链——兜底启用、属性开关、显式 enable 让位、数据层缺席静默跳过、
- * imports 可加载、属性元数据在册。
+ * L2: the repository auto-configuration condition chain — fallback enablement, the property
+ * switch, backing off when enable is explicit, silent skip when the data layer is absent,
+ * loadable imports, and registered property metadata.
  */
 class MeiliRepositoriesAutoConfigurationTest {
 
@@ -25,7 +41,7 @@ class MeiliRepositoriesAutoConfigurationTest {
     static class ExplicitEnable {
     }
 
-    /** 数据层 + 仓库兜底全链路（Client 构造不发请求，url 可指向不可达端口）。 */
+    /** Full chain of data layer + repository fallback (the Client constructor issues no requests, so the url may point at an unreachable port). */
     private final ApplicationContextRunner runner = new ApplicationContextRunner()
             .withConfiguration(AutoConfigurations.of(
                     MeiliClientAutoConfiguration.class,
@@ -46,7 +62,7 @@ class MeiliRepositoriesAutoConfigurationTest {
                 .run(ctx -> {
                     assertThat(ctx).doesNotHaveBean(BookRepository.class);
                     assertThat(ctx).hasNotFailed();
-                    // 数据层不受本开关影响
+                    // the data layer is unaffected by this switch
                     assertThat(ctx).hasSingleBean(io.github.lamspace.meili.core.operations.MeiliSearchOperations.class);
                 });
     }
@@ -73,7 +89,7 @@ class MeiliRepositoriesAutoConfigurationTest {
 
     @Test
     void nonBootTestPackageStillSkippedWithoutFailure() {
-        // 无 @AutoConfigurationPackage 的普通上下文：兜底跳过（DEBUG），不抛错
+        // Plain context without @AutoConfigurationPackage: fallback skipped (DEBUG), no failure thrown
         new ApplicationContextRunner()
                 .withConfiguration(AutoConfigurations.of(
                         MeiliClientAutoConfiguration.class,

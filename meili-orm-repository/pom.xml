@@ -6,12 +6,13 @@
     <parent><groupId>io.github.lamspace</groupId><artifactId>meili-orm</artifactId><version>1.0-SNAPSHOT</version></parent>
     <artifactId>meili-orm-repository</artifactId>
     <name>meili-orm-repository</name>
-    <description>meili-orm Repository 层：Spring Data 风格声明式仓库、方法名派生查询与注解查询，数据通路全部委托 Operations；全工程唯一依赖 spring-data-commons 的产品模块，应用显式引入本坐标即启用。</description>
+    <description>meili-orm repository layer: Spring Data-style declarative repositories with derived and annotated queries; all data access delegates to Operations. The only product module that depends on spring-data-commons; enabled by adding this coordinate explicitly.</description>
     <dependencies>
         <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-core</artifactId></dependency>
         <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-spring-boot-autoconfigure</artifactId></dependency>
-        <!-- commons 版本由父 pom 导入的 Boot 3.5.16 BOM 解析（最低支持代编译基线）；
-             Boot 4.0.3 运行期兼容由双代矩阵验证。 -->
+        <!-- The commons version resolves through the Boot 3.5.16 BOM imported by the parent
+             pom (lowest-supported-generation compile baseline); runtime compatibility with
+             Boot 4.0.3 is proven by the dual-generation matrix. -->
         <dependency><groupId>org.springframework.data</groupId><artifactId>spring-data-commons</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-autoconfigure</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot</artifactId></dependency>
@@ -28,8 +29,9 @@
         <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-classic</artifactId><scope>test</scope></dependency>
     </dependencies>
     <build><plugins>
-        <!-- 与 autoconfigure 模块同理：JDK 23+ 默认关闭 classpath 注解处理，
-             显式挂 processor 才会把 additional-spring-configuration-metadata.json 合并进产物。 -->
+        <!-- Same reason as in the autoconfigure module: JDK 23+ turns off classpath annotation
+             processing by default, so the processor must be wired explicitly for
+             additional-spring-configuration-metadata.json to be merged into the artifact. -->
         <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>
             <configuration><annotationProcessorPaths>
                 <path><groupId>org.springframework.boot</groupId><artifactId>spring-boot-configuration-processor</artifactId><version>${spring-boot.version}</version></path>

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -11,31 +26,34 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 
 /**
- * 真机 IT（服务连接场景二"用户连接详情 bean 优先"）：测试上下文同时声明用户自有
- * {@link MeiliConnectionDetails} bean 与 {@code @ServiceConnection} 容器时，桥接退避，
- * {@link Config} 使用用户 bean 的连接信息。
+ * Real-machine IT (service-connection scenario 2, "the user connection details bean wins"):
+ * when the test context declares both a user-owned {@link MeiliConnectionDetails} bean and a
+ * {@code @ServiceConnection} container, the bridge backs off and the {@link Config} uses the
+ * user bean's connection information.
  *
- * <p>退避的验收面是最终装配事实：Config 的 URL/密钥来自用户 bean，且上下文中
- * {@link MeiliConnectionDetails} 类型仅存用户一个实例（桥接 bean 不残留，
- * 避免下游按类型注入歧义）。
+ * <p>The backoff acceptance surface is the final wiring facts: the Config's URL/key come from
+ * the user bean, and exactly one {@link MeiliConnectionDetails} instance — the user's — remains
+ * in the context (the bridge bean leaves no residue, avoiding by-type injection ambiguity
+ * downstream).
  */
 @SpringBootTest(classes = BridgeBackoffApp.class, properties = "meili.index.auto-init=none")
 class MeiliServiceConnectionBackoffIT {
 
-    /** 同一机制接管容器，但其桥接结果应被用户自有 bean 压制。 */
+    /** Container taken over by the same mechanism, whose bridge result should be superseded by the user-owned bean. */
     @ServiceConnection
     private static final MeiliSearchContainer CONTAINER = new MeiliSearchContainer();
 
-    /** 装配结果观测点：必须携带用户 bean 的连接信息。 */
+    /** Observation point of the wiring result: must carry the user bean's connection information. */
     @Autowired
     private Config config;
 
-    /** 退避后类型唯一性断言的查询面。 */
+    /** Lookup surface for the post-backoff type-uniqueness assertion. */
     @Autowired
     private ApplicationContext context;
 
     /**
-     * 用户自有 bean 优先：Config 落在用户 URL/密钥上，桥接不残留同类 bean。
+     * The user-owned bean wins: the Config lands on the user URL/key and the bridge leaves no
+     * bean of the type behind.
      */
     @Test
     void userConnectionDetailsBeanWinsOverTheBridge() {

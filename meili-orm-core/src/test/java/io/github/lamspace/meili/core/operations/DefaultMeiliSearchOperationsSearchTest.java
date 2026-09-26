@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,7 +43,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-/** {@link DefaultMeiliSearchOperations} 搜索/索引段契约测试（网关全 mock）。 */
+/** Search/index-scope contract tests for {@link DefaultMeiliSearchOperations} (gateway fully mocked). */
 class DefaultMeiliSearchOperationsSearchTest {
 
     @MeiliDocument(indexName = "books")
@@ -51,7 +66,7 @@ class DefaultMeiliSearchOperationsSearchTest {
     }
 
     @Test
-    @DisplayName("search 委托网关（IR 原样传递）并解析为强类型无损结果")
+    @DisplayName("search delegates to the gateway (IR passed verbatim) and parses into a strongly typed lossless result")
     void searchDelegatesIrAndParsesRaw() {
         when(gw.rawSearch(eq("books"), any(MeiliQuery.class)))
                 .thenReturn("{\"hits\":[{\"id\":9007199254740993,\"title\":\"三体\"}],"
@@ -69,7 +84,7 @@ class DefaultMeiliSearchOperationsSearchTest {
     }
 
     @Test
-    @DisplayName("search(q, type) 便捷入口等价于 IR 查询")
+    @DisplayName("search(q, type) convenience entry is equivalent to an IR query")
     void stringSearchOverload() {
         when(gw.rawSearch(eq("books"), any(MeiliQuery.class))).thenReturn("{\"hits\":[]}");
         ops.search("活着", Book.class);
@@ -79,7 +94,7 @@ class DefaultMeiliSearchOperationsSearchTest {
     }
 
     @Test
-    @DisplayName("搜索命中走同一条读回调链（AfterLoad 在反序列化前生效）")
+    @DisplayName("Search hits run through the same read callback chain (AfterLoad takes effect before deserialization)")
     void searchAppliesReadChainToHits() {
         var cbs = new MeiliEntityCallbacks();
         cbs.register(Book.class, (AfterLoadCallback<Book>)
@@ -93,7 +108,7 @@ class DefaultMeiliSearchOperationsSearchTest {
     }
 
     @Test
-    @DisplayName("createIndex：主键名取元模型；投影非空则推 settings，返回最后一步 uid")
+    @DisplayName("createIndex: primary-key name from the metamodel; pushes settings when the projection is non-empty, returns the last step's uid")
     void createIndexPushesSettingsWhenProjectedNotEmpty() {
         when(gw.createIndex("books", "id")).thenReturn(1);
         when(gw.updateSettings(eq("books"), any(String.class))).thenReturn(2);
@@ -115,7 +130,7 @@ class DefaultMeiliSearchOperationsSearchTest {
     }
 
     @Test
-    @DisplayName("multiSearch：串行按序执行，结果按序返回")
+    @DisplayName("multiSearch: runs serially in order and returns results in order")
     void multiSearchSerialInOrder() {
         when(gw.rawSearch(eq("books"), any(MeiliQuery.class)))
                 .thenReturn("{\"hits\":[{\"id\":1,\"title\":\"a\"}]}", "{\"hits\":[]}");
@@ -137,10 +152,10 @@ class DefaultMeiliSearchOperationsSearchTest {
     }
 
     @Test
-    @DisplayName("applySettings 对无投影实体快速失败（不误发空 PATCH）")
+    @DisplayName("applySettings fails fast for an entity without a projection (no empty PATCH is ever sent)")
     void applySettingsEmptyRejected() {
         assertThatThrownBy(() -> ops.applySettings(Bare.class))
                 .isInstanceOf(MeiliOrmException.class)
-                .hasMessageContaining("投影");
+                .hasMessageContaining("projection");
     }
 }

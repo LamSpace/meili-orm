@@ -1,5 +1,22 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 /**
- * meili-orm 可选 Jackson 3 序列化模块：Boot 4 代应用（容器默认 ObjectMapper 为 Jackson 3）
- * 加入本依赖即接管文档序列化通道，行为与 Jackson 2 默认实现逐项等价。
+ * meili-orm optional Jackson 3 serialization module: Boot 4 generation applications (whose
+ * container default ObjectMapper is Jackson 3) take over the document serialization channel
+ * simply by adding this dependency, with behavior equivalent item-for-item to the Jackson 2
+ * default implementation.
  */
 package io.github.lamspace.meili.serialize.jackson3;

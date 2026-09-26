@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.query;
 
 import java.util.ArrayList;
@@ -167,12 +182,12 @@ public final class MeiliMethodNames {
     public static Parsed parse(String methodName) {
         Matcher m = METHOD.matcher(methodName);
         if (!m.matches() || m.group(5) == null || m.group(5).isEmpty()) {
-            throw new IllegalArgumentException("方法名不符合派生查询语法 <动词>[TopN]By…[OrderBy…]（不支持 count/exists/delete 派生）: "
+            throw new IllegalArgumentException("Method name does not match the derived-query grammar <verb>[TopN]By…[OrderBy…] (count/exists/delete derived queries are not supported): "
                     + methodName);
         }
         String verb = m.group(1).toLowerCase();
         if (VERBS.stream().noneMatch(verb::startsWith)) {
-            throw new IllegalArgumentException("v1 仅支持 find/read/get/retrieve 开头的派生查询: " + methodName);
+            throw new IllegalArgumentException("v1 supports only derived queries starting with find/read/get/retrieve: " + methodName);
         }
         Integer top = null;
         if (m.group(2) != null) {
@@ -261,7 +276,7 @@ public final class MeiliMethodNames {
             }
         }
         if (s.isEmpty()) {
-            throw new IllegalArgumentException("子句缺少属性段: " + methodName + " 片段 " + segment);
+            throw new IllegalArgumentException("Clause is missing its property segment: " + methodName + " segment " + segment);
         }
         return new Clause(negate, keyword, List.of(s));
     }
@@ -286,7 +301,7 @@ public final class MeiliMethodNames {
                 s = s.substring(0, s.length() - 3);
             }
             if (s.isEmpty()) {
-                throw new IllegalArgumentException("OrderBy 子句缺少属性: " + methodName);
+                throw new IllegalArgumentException("OrderBy clause is missing a property: " + methodName);
             }
             out.add(new Order(List.of(s), asc));
         }
@@ -302,8 +317,8 @@ public final class MeiliMethodNames {
     private static void rejectUnsupported(String segment, String methodName) {
         for (String kw : UNSUPPORTED) {
             if (segment.endsWith(kw) && segment.length() > kw.length()) {
-                throw new IllegalArgumentException("v1 不支持关键字 " + kw + "（方法 " + methodName
-                        + " 片段 " + segment + "）；支持面见映射指南派生查询对照表");
+                throw new IllegalArgumentException("v1 does not support keyword " + kw + " (method " + methodName
+                        + " segment " + segment + "); see the derived-query support table in the mapping guide");
             }
         }
     }

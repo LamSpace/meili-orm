@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.internal;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -139,8 +154,8 @@ public final class SdkMeiliRawGateway implements MeiliRawGateway {
 
     @Override
     public long count(String indexUid) {
-        // documents/count 路由在本服务端代际不可用（实测被 documents/{id} 捕获为
-        // document_not_found）；stats 是等价的整型事实源
+        // documents/count route is unavailable on this server generation (observed to be
+        // captured by documents/{id} as document_not_found); stats is the equivalent integer source of truth
         String response = execute("GET", new String[]{"indexes", indexUid, "stats"}, null, null);
         return readTree(response, indexUid).path("numberOfDocuments").asLong();
     }
@@ -227,7 +242,7 @@ public final class SdkMeiliRawGateway implements MeiliRawGateway {
                     return;
                 }
                 throw new MeiliIndexAccessException("task_" + task.status().name().toLowerCase(),
-                        "任务未成功: uid=" + task.uid() + ", status=" + task.status()
+                        "task did not succeed: uid=" + task.uid() + ", status=" + task.status()
                                 + ", error=" + task.errorMessage(), null);
             }
             if (System.nanoTime() >= deadline) {
@@ -237,7 +252,7 @@ public final class SdkMeiliRawGateway implements MeiliRawGateway {
                 Thread.sleep(POLL_INTERVAL_MS);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new MeiliIndexAccessException(null, "等待任务被中断: uid=" + taskUid, e);
+                throw new MeiliIndexAccessException(null, "waiting for task interrupted: uid=" + taskUid, e);
             }
         }
     }
@@ -292,7 +307,7 @@ public final class SdkMeiliRawGateway implements MeiliRawGateway {
             return text;
         } catch (IOException e) {
             throw new MeiliIndexAccessException(null,
-                    "直连通道访问失败: " + method + " /" + String.join("/", segments), e);
+                    "direct-channel access failure: " + method + " /" + String.join("/", segments), e);
         }
     }
 
@@ -332,7 +347,7 @@ public final class SdkMeiliRawGateway implements MeiliRawGateway {
             return MAPPER.readTree(json);
         } catch (Exception e) {
             throw new MeiliIndexAccessException(null,
-                    "直连通道响应解析失败: index=" + indexUid, e);
+                    "failed to parse direct-channel response: index=" + indexUid, e);
         }
     }
 

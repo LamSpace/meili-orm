@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.spike;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,15 +31,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 /**
- * spike 黄金集（路线 b：自研语法 + core 语义桥）：20+ 典型派生方法名经
- * {@link SpikeNameParser} 解析、{@link SpikePropertyResolver} 落投影名。
- * 同一份源文件（含 parser/resolver/样本实体）复制到 Boot 4 矩阵模块运行，
- * 证明所用 commons 面（{@code org.springframework.data.domain.*}）在两代
- * 二进制下链接与行为一致。
+ * spike golden set (route b: hand-rolled grammar + core semantics bridge): 20+ typical derived
+ * method names parsed by {@link SpikeNameParser} and projected by
+ * {@link SpikePropertyResolver}. The same source files (parser/resolver/sample entities) are
+ * copied into the Boot 4 matrix module to prove the commons surface used here
+ * ({@code org.springframework.data.domain.*}) links and behaves identically on both generations.
  */
 class SpikeDerivedNameBridgeTest {
 
-    /** 解析 + 桥接全部条件子句，返回 dot 路径列表。 */
+    /** Parses and bridges all condition clauses, returning the dot-path list. */
     private static List<String> resolved(Class<?> type, String method) {
         return SpikeNameParser.parse(type, method).clauses().stream()
                 .map(c -> SpikePropertyResolver.resolve(type, c.chain().toArray(new String[0])))
@@ -36,7 +51,7 @@ class SpikeDerivedNameBridgeTest {
     }
 
     @Nested
-    @DisplayName("关键字解析 + 属性段桥接")
+    @DisplayName("Keyword parsing + property-segment bridging")
     class Keywords {
 
         @Test
@@ -173,14 +188,14 @@ class SpikeDerivedNameBridgeTest {
     }
 
     @Nested
-    @DisplayName("负向与限制面")
+    @DisplayName("Negative and out-of-scope surface")
     class Negative {
 
         @Test
         void unknownPropertyRejects() {
             assertThatThrownBy(() -> SpikeNameParser.parse(SpikeBook.class, "findByNoSuch"))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("无法解析属性段");
+                    .hasMessageContaining("Cannot resolve property segment");
         }
 
         @Test
@@ -194,15 +209,15 @@ class SpikeDerivedNameBridgeTest {
         void aggregateAsLeafRejected() {
             assertThatThrownBy(() -> resolved(SpikeBook.class, "findByAuthor"))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("聚合");
+                    .hasMessageContaining("Aggregate property");
         }
 
         @Test
-        @DisplayName("缩写不支持（自研语法无 commons 属性缩写还原）")
+        @DisplayName("Abbreviations unsupported (hand-rolled grammar has no commons abbreviation restoration)")
         void abbreviationUnsupported() {
             assertThatThrownBy(() -> SpikeNameParser.parse(SpikeBook.class, "findByAdrCity"))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("缩写");
+                    .hasMessageContaining("abbreviations are not supported");
         }
 
         @Test
@@ -222,7 +237,7 @@ class SpikeDerivedNameBridgeTest {
     }
 
     @Nested
-    @DisplayName("commons 稳定面链接与行为（双代共用清单）")
+    @DisplayName("commons stable surface links and behaves (list shared across generations)")
     class CommonsSurface {
 
         @Test

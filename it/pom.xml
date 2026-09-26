@@ -7,7 +7,7 @@
     <artifactId>meili-orm-it</artifactId>
     <packaging>pom</packaging>
     <name>meili-orm-it</name>
-    <description>兼容矩阵聚合：按 Spring Boot 代际钉版独立编译运行的集成测试模块，不产出发布物。</description>
+    <description>Compatibility-matrix aggregate: integration-test modules, one pinned Spring Boot generation each, compiled and run independently; produces no published artifacts.</description>
     <modules>
         <module>meili-orm-it-boot3</module>
         <module>meili-orm-it-boot4</module>
@@ -15,13 +15,14 @@
     </modules>
     <properties>
         <maven.deploy.skip>true</maven.deploy.skip>
-        <!-- Boot 4.0 BOM 不再管理 org.testcontainers；矩阵三代统一钉与 core test-jar
-             编译基线同版本的 TC，杜绝代际间容器 API 漂移。 -->
+        <!-- The Boot 4.0 BOM no longer manages org.testcontainers; all three matrix
+             generations pin the Testcontainers version used by the core test-jar compile
+             baseline, eliminating container-API drift between generations. -->
         <testcontainers.version>1.21.4</testcontainers.version>
     </properties>
     <build>
         <plugins>
-            <!-- 矩阵模块无 src/main：javadoc 门禁不适用，显式关闭以免空源报错。 -->
+            <!-- Matrix modules have no src/main: the Javadoc gate does not apply here; switched off explicitly to avoid empty-source errors. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>

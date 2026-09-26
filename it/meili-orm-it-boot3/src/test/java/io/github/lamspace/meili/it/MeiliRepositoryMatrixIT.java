@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.it;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,18 +30,21 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 /**
- * 双代矩阵仓库用例：commons 3.5.13（Boot 3.5 代）运行时下，starter 装配 + repository 模块
- * 兜底自动配置 + 派生/全文/分页/注解查询全链路真机往返，并与 Boot 3 侧保持逐条一致。
+ * Dual-generation matrix repository case: under the commons 3.5.13 (Boot 3.5 generation) runtime,
+ * starter assembly + repository-module fallback auto-configuration + full-chain real-server
+ * round-trips of derived/full-text/paginated/annotated queries, kept item-for-item consistent
+ * with the Boot 3 side.
  *
- * <p>与 {@code it-boot4} 同名文件除两个哨兵期望值外逐字节一致（矩阵源码双份复制规则）。
+ * <p>Byte-identical to the {@code it-boot4} file of the same name except for the two sentinel
+ * expected values (matrix source dual-copy rule).
  */
 @SpringBootTest(classes = ItApp.class)
 class MeiliRepositoryMatrixIT {
 
-    /** Boot 代哨兵期望（本模块为 4）。 */
+    /** Boot-generation sentinel expectation (this module is 4). */
     private static final String EXPECTED_BOOT_MAJOR = "3.";
 
-    /** commons 代结构哨兵期望：4.0 独有类 org.springframework.data.core.PropertyPath 存在为 true。 */
+    /** commons-generation structural sentinel expectation: true iff the 4.0-only class org.springframework.data.core.PropertyPath exists. */
     private static final boolean EXPECT_GENERATION_4 = false;
 
     @DynamicPropertySource
@@ -61,7 +79,7 @@ class MeiliRepositoryMatrixIT {
             gen4 = false;
         }
         assertThat(gen4)
-                .as("commons 钉定漂移：org.springframework.data.core.PropertyPath 存在性=%s，期望=%s",
+                .as("commons pin drift: org.springframework.data.core.PropertyPath presence=%s, expected=%s",
                         gen4, EXPECT_GENERATION_4)
                 .isEqualTo(EXPECT_GENERATION_4);
     }

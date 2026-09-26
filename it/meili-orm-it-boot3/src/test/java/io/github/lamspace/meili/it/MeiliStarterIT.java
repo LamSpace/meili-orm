@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.it;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,17 +30,19 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 /**
- * 矩阵 IT：starter 在真机（钉版 v1.49.0 容器）上的装配与 CRUD 往返。
+ * Matrix IT: the starter's assembly and CRUD round-trip on a real server (pinned v1.49.0 container).
  *
- * <p>本类在 Boot 3.5.16 与 4.0.3 两代矩阵模块间逐字节共用（唯一差异是版本哨兵
- * 期望值，模块实际钉住的代际由该哨兵自证）：两代 classpath 下装配链、raw 读通道
- * 与 Long 精度契约必须等价。容器由 core test-jar 的 {@link MeiliContainer}
- * 静态单例承载；写路径配置为等待任务终态，读断言无竞态。
+ * <p>This class is shared byte-for-byte between the two matrix modules, Boot 3.5.16 and 4.0.3
+ * (the only differences are the version-sentinel expected values, and the generation a module
+ * actually pins is self-evidenced by that sentinel): under both generations' classpaths, the
+ * assembly chain, the raw read channel, and the Long precision contract must be equivalent. The
+ * container is carried by core test-jar's {@link MeiliContainer} static singleton; the write path
+ * is configured to wait for task completion, so read assertions are race-free.
  */
 @SpringBootTest(classes = ItApp.class)
 class MeiliStarterIT {
 
-    /** 超 2^53 的探针主键：任何 Gson/Double 中转都会在此丢精度。 */
+    /** Probe primary key above 2^53: any Gson/Double intermediary would lose precision here. */
     private static final long LOSSY_ABOVE_DOUBLE_ID = 9007199254740993L;
 
     @Autowired
@@ -35,9 +52,9 @@ class MeiliStarterIT {
     private MeiliDocumentSerializer serializer;
 
     /**
-     * 把钉版容器的连接参数与同步写策略注入测试上下文。
+     * Injects the pinned container's connection parameters and synchronous-write policy into the test context.
      *
-     * @param registry 属性注册器
+     * @param registry the property registrar
      */
     @DynamicPropertySource
     static void meiliProperties(DynamicPropertyRegistry registry) {
@@ -49,18 +66,20 @@ class MeiliStarterIT {
     }
 
     /**
-     * 版本哨兵：证明本模块实际运行在它被钉住的那一代 Boot 上，矩阵没有静默换代。
+     * Version sentinel: proves this module actually runs on the Boot generation it is pinned to —
+     * the matrix has not silently switched generations.
      */
     @Test
     void classpathIsThePinnedGeneration() {
         assertThat(SpringBootVersion.getVersion())
-                .as("矩阵版本钉定漂移：本模块运行 classpath 与钉版不符")
+                .as("matrix version-pin drift: this module's running classpath does not match the pinned version")
                 .startsWith("3.");
     }
 
     /**
-     * starter 装配 + 写读搜往返：默认序列化器为 Jackson2；启动 initializer 建索引；
-     * Long 主键经 save→findById→search 全链路逐位无损。
+     * Starter assembly + write/read/search round-trip: the default serializer is Jackson2; the
+     * startup initializer creates the index; the Long primary key survives the full
+     * save→findById→search chain bit-for-bit lossless.
      */
     @Test
     void starterWiresAndRoundTripsLongKeyedEntity() {

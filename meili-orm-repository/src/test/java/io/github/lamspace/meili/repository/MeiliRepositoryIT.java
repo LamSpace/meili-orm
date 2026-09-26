@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,44 +42,45 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 /**
- * L3 真机（钉 v1.49.0）：仓库 + 派生查询全链路——索引创建（角色 settings 推送）、写入、
- * 各关键字命中集合与手写 Operations 查询等价、分页换算、Containing 中文全文、
- * NOT 对存在属性的行为钉死。任务矩阵扩面（双代）复用同一测试源。
+ * L3 against the real server (pinned v1.49.0): the full repository + derived-query chain —
+ * index creation (role settings push), writes, per-keyword hit sets equivalent to hand-written
+ * Operations queries, page conversion, Containing on Chinese full text, and the NOT behavior on
+ * declared properties pinned. The two-generation matrix expansion reuses this same test source.
  */
 class MeiliRepositoryIT extends AbstractMeiliIntegrationTest {
 
     @MeiliDocument(indexName = "it_repo_books")
     public static class RepoBook {
-        /** 主键。 */
+        /** Primary key. */
         @MeiliId
         public Long id;
-        /** 改名 + searchable。 */
+        /** Renamed + searchable. */
         @MeiliField(name = "book_title", searchable = true, searchableOrder = 1)
         public String title;
-        /** filterable。 */
+        /** filterable. */
         @MeiliField(filterable = true)
         public String genre;
-        /** filterable + sortable。 */
+        /** filterable + sortable. */
         @MeiliField(filterable = true, sortable = true)
         public Double price;
-        /** filterable 集合叶。 */
+        /** filterable collection leaf. */
         @MeiliField(filterable = true)
         public List<String> tags;
-        /** filterable 布尔。 */
+        /** filterable boolean. */
         @MeiliField(filterable = true)
         public Boolean active;
-        /** 嵌套。 */
+        /** Nested. */
         public RepoAuthor author;
     }
 
-    /** 嵌套类型。 */
+    /** Nested type. */
     public static class RepoAuthor {
-        /** filterable+sortable。 */
+        /** filterable+sortable. */
         @MeiliField(filterable = true, sortable = true)
         public String city;
     }
 
-    /** IT 仓库接口：覆盖主要关键字族。 */
+    /** IT repository interface: covers the main keyword families. */
     public interface RepoBookRepository extends MeiliRepository<RepoBook, Long> {
         List<RepoBook> findByGenre(String g);
 
@@ -131,21 +147,21 @@ class MeiliRepositoryIT extends AbstractMeiliIntegrationTest {
                 book(3L, "银河帝国", "科幻", 39.0, List.of("基地"), true, "上海"),
                 book(4L, "平凡的世界", "现实", 33.0, List.of("茅盾"), true, "西安")));
 
-        // 等值
+        // equality
         assertThat(repo.findByGenre("科幻")).extracting(b -> b.id)
                 .containsExactlyInAnyOrder(9007199254740993L, 2L, 3L);
-        // 比较 + 排序
+        // comparison + sorting
         assertThat(repo.findByPriceGreaterThan(40.0)).extracting(b -> b.price)
                 .containsExactlyInAnyOrder(59.0, 45.0);
         assertThat(repo.findByGenreOrderByPriceDesc("科幻")).extracting(b -> b.price)
                 .containsExactly(59.0, 45.0, 39.0);
-        // 全文 Containing（改名属性 book_title）
+        // full-text Containing (renamed property book_title)
         assertThat(repo.findByTitleContaining("三体")).extracting(b -> b.id)
                 .containsExactly(9007199254740993L);
-        // 嵌套点路径 filterable
+        // nested dotted path filterable
         assertThat(repo.findByAuthorCity("北京")).extracting(b -> b.id)
                 .containsExactlyInAnyOrder(9007199254740993L, 2L);
-        // IN + 布尔 NOT（服务端语义：NOT 命中显式 false 的文档）
+        // IN + boolean NOT (server semantics: NOT matches documents with explicit false)
         assertThat(repo.findByTagsIn(List.of("经典", "基地"))).extracting(b -> b.id)
                 .containsExactlyInAnyOrder(1L, 3L);
         assertThat(repo.findByNotGenre("科幻")).extracting(b -> b.id)
@@ -153,17 +169,17 @@ class MeiliRepositoryIT extends AbstractMeiliIntegrationTest {
         // TopN
         assertThat(repo.findTop2ByGenreOrderByPriceAsc("科幻")).extracting(b -> b.price)
                 .containsExactly(39.0, 45.0);
-        // 分页换算：page 1(size 2) 第三小的科幻按价升序 = 59.0 单条
+        // page conversion: page 1 (size 2) of the genre-filtered docs sorted by price asc = the single 59.0 hit (third cheapest)
         List<RepoBook> paged = repo.findByGenre("科幻", PageRequest.of(1, 2, Sort.by("price")));
         assertThat(paged).extracting(b -> b.price).containsExactly(59.0);
-        // Optional 首条
+        // Optional first hit
         assertThat(repo.findFirstByGenreOrderByPriceAsc("科幻")).hasValueSatisfying(
                 b -> assertThat(b.price).isEqualTo(39.0));
-        // Page 估算总数
+        // Page estimated total
         Page<RepoBook> page = repo.findPageByGenre("科幻", PageRequest.of(0, 2));
         assertThat(page.getContent()).hasSize(2);
         assertThat(page.getTotalElements()).isPositive();
-        // CRUD 面
+        // CRUD surface
         assertThat(repo.findById(9007199254740993L)).hasValueSatisfying(
                 b -> assertThat(b.title).isEqualTo("三体"));
         assertThat(repo.count()).isEqualTo(5L);

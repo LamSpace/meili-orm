@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.settings;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,7 +29,10 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** {@link MeiliSettingsProjection} 角色投影、透传合并与格式稳定性契约测试。 */
+/**
+ * Contract tests for {@link MeiliSettingsProjection}: role projection, passthrough merging
+ * and format stability.
+ */
 class MeiliSettingsProjectionTest {
 
     @MeiliDocument(indexName = "books")
@@ -36,7 +54,7 @@ class MeiliSettingsProjectionTest {
     private final MeiliSettingsProjection projection = new MeiliSettingsProjection();
 
     @Test
-    @DisplayName("仅声明角色生成数组：显式 order 在前，其余按字典序稳定排列")
+    @DisplayName("Only declared roles generate arrays: explicit order first, the rest in stable lexicographic order")
     void generatesOnlyDeclaredRolesInStableOrder() {
         var p = projection.project(MeiliPersistentEntity.of(Book.class));
         assertThat(p.searchableAttributes()).containsExactly("book_title", "overview");
@@ -48,7 +66,7 @@ class MeiliSettingsProjectionTest {
     }
 
     @Test
-    @DisplayName("不标注 = 不声明：无任何角色时四数组皆 null 且 hasAny=false")
+    @DisplayName("No annotation = no declaration: with no roles all four arrays are null and hasAny=false")
     void nothingDeclaredMeansNoArray() {
         @MeiliDocument(indexName = "x") class Bare {
             @MeiliId Long id;
@@ -64,7 +82,7 @@ class MeiliSettingsProjectionTest {
     }
 
     @Test
-    @DisplayName("输出格式逐字节锁定（golden 文件），变更格式 = 显式改 golden")
+    @DisplayName("Output format locked byte-for-byte (golden file); changing the format requires editing the golden explicitly")
     void goldenFileDiff() {
         var p = projection.project(MeiliPersistentEntity.of(Book.class));
         String golden = resource("/golden/books-settings.json").trim();
@@ -72,7 +90,7 @@ class MeiliSettingsProjectionTest {
     }
 
     @Test
-    @DisplayName("透传键合并进投影且透传优先（覆盖同名数组），嵌套对象原样保留")
+    @DisplayName("Passthrough keys merge into the projection and win (overriding same-named arrays); nested objects kept verbatim")
     void passthroughMergesAndOverrides() {
         @MeiliDocument(indexName = "pt")
         @MeiliSetting(settingPath = "classpath:golden/passthrough.json")
@@ -83,7 +101,7 @@ class MeiliSettingsProjectionTest {
         var p = projection.project(MeiliPersistentEntity.of(Pt.class));
         assertThat(p.passthrough()).containsEntry("rankingRules", List.of("words", "typo", "exactness"))
                 .containsKey("stopWords");
-        assertThat(p.searchableAttributes()).containsExactly("t"); // 字段保留投影值
+        assertThat(p.searchableAttributes()).containsExactly("t"); // field keeps its projected value
 
         @MeiliDocument(indexName = "ov")
         @MeiliSetting(settingPath = "classpath:golden/passthrough-override.json")
@@ -98,7 +116,7 @@ class MeiliSettingsProjectionTest {
     }
 
     @Test
-    @DisplayName("透传未知键拒绝：消息含非法键名与来源文件")
+    @DisplayName("Unknown passthrough key rejected: message names the illegal key and its source file")
     void unknownPassthroughKeyRejected() {
         @MeiliDocument(indexName = "bad")
         @MeiliSetting(settingPath = "classpath:golden/unknown-key.json")

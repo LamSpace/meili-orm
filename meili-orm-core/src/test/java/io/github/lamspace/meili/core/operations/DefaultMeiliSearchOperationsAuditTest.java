@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,7 +44,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-/** 写入路径审计填充（@CreatedDate/@LastModifiedDate）的 mock 网关契约测试。 */
+/** Mock-gateway contract tests for write-path audit filling (@CreatedDate/@LastModifiedDate). */
 class DefaultMeiliSearchOperationsAuditTest {
 
     static final ObjectMapper M = new ObjectMapper();
@@ -64,7 +79,7 @@ class DefaultMeiliSearchOperationsAuditTest {
     }
 
     @Test
-    @DisplayName("全新实体：created/modified 均落在调用前后时间窗，写入文档含双值，POJO 返回同一实例")
+    @DisplayName("Fresh entity: created/modified both land in the call's time window, written doc carries both, POJO returns the same instance")
     void freshPojoBothFilledInWindow() {
         PojoBook b = new PojoBook(1L, "三体");
         Instant before = Instant.now();
@@ -83,7 +98,7 @@ class DefaultMeiliSearchOperationsAuditTest {
     }
 
     @Test
-    @DisplayName("用户预置非空 created 原样保留；long 的 0 哨兵被填充、非零值保留")
+    @DisplayName("User-supplied non-null created is kept verbatim; the 0 sentinel of long gets filled, non-zero values stay")
     void userSuppliedCreatedKeptZeroSentinelFilled() {
         PojoBook preset = new PojoBook(2L, "活着");
         OffsetDateTime old = OffsetDateTime.parse("2000-01-01T00:00:00Z");
@@ -92,18 +107,18 @@ class DefaultMeiliSearchOperationsAuditTest {
         assertThat(savedPreset.createdAt).isEqualTo(old);
         assertThat(savedPreset.updatedAt).isNotEqualTo(old);
 
-        // Long 组件 null → 填充；long 组件 0 → 哨兵视为未设置被填充
+        // Long component null → filled; long component 0 → sentinel treated as unset and filled
         RecBook blank = ops.save(new RecBook(3L, "a", null, 0L));
         assertThat(blank.createdAt()).isNotNull().isNotZero();
         assertThat(blank.updatedAt()).isNotZero();
 
-        // 用户非 null/非零值保留
+        // user-supplied non-null/non-zero values stay
         RecBook kept = ops.save(new RecBook(4L, "b", 5L, 777L));
         assertThat(kept.createdAt()).isEqualTo(5L);
     }
 
     @Test
-    @DisplayName("重载后再保存：created 与首次填充值一致，modified 落于新时间窗")
+    @DisplayName("Re-save after reload: created equals the first fill, modified lands in the new time window")
     void reloadResaveCreatedStableModifiedAdvances() {
         RecBook first = ops.save(new RecBook(5L, "沙丘", null, 0L));
         assertThat(first.createdAt()).isNotNull();
@@ -120,7 +135,7 @@ class DefaultMeiliSearchOperationsAuditTest {
     }
 
     @Test
-    @DisplayName("record 返回新实例且非审计组件逐项相等；无审计实体返回同一实例且文档零新增")
+    @DisplayName("record returns a new instance with every non-audit component equal; an audit-free entity returns the same instance with no extra document fields")
     void recordRebuiltOthersPreservedPlainUnaffected() {
         RecBook input = new RecBook(6L, "基地", null, 0L);
         RecBook saved = ops.save(input);
@@ -137,7 +152,7 @@ class DefaultMeiliSearchOperationsAuditTest {
     }
 
     @Test
-    @DisplayName("BeforeConvertCallback 收到的实体已完成审计填充，且序列化值与回调观察一致")
+    @DisplayName("BeforeConvertCallback sees the entity already audit-filled, and the serialized values match what the callback observed")
     void beforeConvertSeesFilledEntity() {
         var cbs = new MeiliEntityCallbacks();
         final PojoBook[] seen = new PojoBook[1];
@@ -155,13 +170,13 @@ class DefaultMeiliSearchOperationsAuditTest {
         assertThat(seen[0].updatedAt).isNotNull();
         ArgumentCaptor<String> body = ArgumentCaptor.forClass(String.class);
         verify(gw).updateDocuments(eq("audit_pojo"), body.capture());
-        // 序列化写入的值与回调观察到的填充值一致
+        // the serialized value matches the filled value observed by the callback
         assertThat(OffsetDateTime.parse(parse(body.getValue()).get("createdAt").asText()))
                 .isEqualTo(seen[0].createdAt);
     }
 
     @Test
-    @DisplayName("saveAll 逐实体独立填充：每个返回实例各自带时间戳")
+    @DisplayName("saveAll fills each entity independently: every returned instance carries its own timestamps")
     void saveAllFillsEachEntity() {
         List<RecBook> saved = ops.saveAll(List.of(
                 new RecBook(9L, "a", null, 0L), new RecBook(10L, "b", null, 0L)));
@@ -180,7 +195,7 @@ class DefaultMeiliSearchOperationsAuditTest {
     }
 
     @Test
-    @DisplayName("读路径不触碰审计字段：findById 原样返回文档中的旧时间戳，无任何写请求")
+    @DisplayName("Read path never touches audit fields: findById returns the stored old timestamps verbatim, with no write request")
     void findByIdKeepsStoredAuditValues() {
         when(gw.fetchRawDocument("audit_pojo", "1")).thenReturn(Optional.of(
                 "{\"id\":1,\"title\":\"a\",\"createdAt\":\"2000-01-01T00:00:00Z\","
@@ -192,7 +207,7 @@ class DefaultMeiliSearchOperationsAuditTest {
     }
 
     @Test
-    @DisplayName("deleteById 不触碰审计字段：仅走删除通道，无文档写请求")
+    @DisplayName("deleteById never touches audit fields: only the delete channel runs, no document write")
     void deleteByIdNeverWritesDocuments() {
         when(gw.deleteDocument("audit_pojo", "1")).thenReturn(2);
         ops.deleteById(1L, PojoBook.class);
@@ -210,7 +225,7 @@ class DefaultMeiliSearchOperationsAuditTest {
         try {
             return M.readTree(json);
         } catch (Exception e) {
-            throw new AssertionError("非法 JSON: " + json, e);
+            throw new AssertionError("invalid JSON: " + json, e);
         }
     }
 }

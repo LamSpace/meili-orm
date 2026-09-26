@@ -6,17 +6,18 @@
     <parent><groupId>io.github.lamspace</groupId><artifactId>meili-orm</artifactId><version>1.0-SNAPSHOT</version></parent>
     <artifactId>meili-orm-serializer-jackson3</artifactId>
     <name>meili-orm-serializer-jackson3</name>
-    <description>meili-orm 可选 Jackson 3 序列化模块：Boot 4 代应用加入依赖即接管文档序列化；主工程其余模块零 Jackson 3 编译依赖。</description>
+    <description>Optional meili-orm Jackson 3 serializer module: adding the dependency hands document serialization over to Jackson 3 in Boot 4 applications; the rest of the build keeps zero Jackson 3 compile dependencies.</description>
     <dependencyManagement>
         <dependencies>
-            <!-- 全工程唯一以 Boot 4 为编译基线的产品模块：tools.jackson 坐标仅由该代 BOM
-                 管理（例外理由与升级义务见 docs/boot3-to-boot4.md）。 -->
+            <!-- The only product module compiled against the Boot 4 baseline: tools.jackson
+                 coordinates are managed solely by that generation's BOM (rationale and upgrade
+                 duties are documented in docs/boot3-to-boot4.md). -->
             <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-dependencies</artifactId><version>4.0.3</version><type>pom</type><scope>import</scope></dependency>
         </dependencies>
     </dependencyManagement>
     <dependencies>
         <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-core</artifactId></dependency>
-        <!-- 排序锚点：@AutoConfiguration(before=MeiliDataAutoConfiguration) 引用的装配类在 autoconfigure。 -->
+        <!-- Ordering anchor: the auto-configuration class referenced by @AutoConfiguration(before=...) lives in meili-orm-spring-boot-autoconfigure. -->
         <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-spring-boot-autoconfigure</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-autoconfigure</artifactId></dependency>
         <dependency><groupId>tools.jackson.core</groupId><artifactId>jackson-databind</artifactId></dependency>

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.testcontainers;
 
 import io.github.lamspace.meili.autoconfigure.MeiliConnectionDetails;
@@ -6,25 +21,30 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 
 /**
- * 退避场景宿主：在桥接之外声明用户自有 {@link MeiliConnectionDetails} bean，
- * 用户 bean 的连接信息必须最终到达 Config。
+ * Backoff-scenario host: declares a user-owned {@link MeiliConnectionDetails} bean in addition
+ * to the bridge; the user bean's connection information must ultimately reach the Config.
  *
- * <p>索引初始化关闭：本场景不发起任何真机读写，只需装配结果可断言。
+ * <p>Index initialization is off: this scenario performs no real read/write, it only needs the
+ * wiring result to be assertable.
  */
 @SpringBootConfiguration
 @EnableAutoConfiguration
 class BridgeBackoffApp {
 
-    /** 用户 bean 的固定 URL，与服务容器地址明显不同，便于断言取舍。 */
+    /**
+     * Fixed URL of the user bean, clearly different from the service container address
+     * so assertions can tell the winner.
+     */
     static final String USER_URL = "http://user-provided.example:1";
 
-    /** 用户 bean 的固定密钥。 */
+    /** Fixed API key of the user bean. */
     static final String USER_KEY = "user-key";
 
     /**
-     * 用户自有连接详情：按自动配置契约应使属性实现退避，并使服务连接桥接同样退避。
+     * User-owned connection details: per the auto-configuration contract this must make the
+     * properties-based implementation back off, and the service-connection bridge too.
      *
-     * @return 固定连接信息的用户实现
+     * @return the user implementation supplying the fixed connection information
      */
     @Bean
     MeiliConnectionDetails userMeiliConnectionDetails() {

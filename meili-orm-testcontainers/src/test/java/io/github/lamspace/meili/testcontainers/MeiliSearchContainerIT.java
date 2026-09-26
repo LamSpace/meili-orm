@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,19 +25,22 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * 真机 IT：默认容器健康就绪与镜像/密钥覆盖在活的 MeiliSearch 实例上成立。
+ * Real-machine IT: default-container health readiness and image/key overrides hold against
+ * live MeiliSearch instances.
  *
- * <p>判定面：{@code /health} 返回 200 即就绪（容器等待条件），受保护端点按所配
- * master key 认证（正确密钥 200、错误密钥 403）证明密钥确实注入。两个场景各自
- * 起停一次性容器，Ryuk 负责回收。
+ * <p>Verdict surface: {@code /health} returning 200 means ready (the container wait
+ * condition), and protected endpoints authenticate against the configured master key (200
+ * with the right key, 403 with the wrong one), proving the key really was injected. Each
+ * scenario starts and stops its own throwaway container; Ryuk reclaims them.
  */
 class MeiliSearchContainerIT {
 
-    /** JDK HTTP 客户端：不引入额外测试依赖即可断言健康与认证行为。 */
+    /** JDK HTTP client: asserts health and authentication behavior without extra test dependencies. */
     private static final HttpClient HTTP = HttpClient.newHttpClient();
 
     /**
-     * 场景"默认容器健康就绪"：就绪后 URL 可达健康端点，认证使用所配 master key。
+     * Scenario "default container becomes healthy": once ready the URL serves the health
+     * endpoint and authentication uses the configured master key.
      */
     @Test
     void defaultContainerBecomesHealthyAndAuthenticatesWithMasterKey() {
@@ -36,8 +54,9 @@ class MeiliSearchContainerIT {
     }
 
     /**
-     * 场景"覆盖生效"：显式镜像构造路径与自定义密钥在活实例上被服务端行为证实
-     * （自定义 key 通过认证、默认 key 被拒）。
+     * Scenario "overrides take effect": the explicit-image construction path and a custom key
+     * are confirmed by server behavior on a live instance (custom key authenticates, default
+     * key is rejected).
      */
     @Test
     void overriddenImageAndKeyTakeEffectOnLiveContainer() {
@@ -55,15 +74,15 @@ class MeiliSearchContainerIT {
     }
 
     /**
-     * 发送 GET 并返回响应状态码。
+     * Sends a GET and returns the response status code.
      *
-     * @param container 目标容器（保证请求期间存活）
-     * @param url       完整请求 URL
-     * @param apiKey    Bearer 密钥；{@code null} 表示不携带认证头
-     * @return HTTP 状态码
+     * @param container target container (kept alive for the duration of the request)
+     * @param url       full request URL
+     * @param apiKey    bearer key; {@code null} means no authorization header
+     * @return the HTTP status code
      */
     private static int status(MeiliSearchContainer container, String url, String apiKey) {
-        assertThat(container.isRunning()).as("容器须处于运行态").isTrue();
+        assertThat(container.isRunning()).as("container must be running").isTrue();
         HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(url)).GET();
         if (apiKey != null) {
             request.header("Authorization", "Bearer " + apiKey);

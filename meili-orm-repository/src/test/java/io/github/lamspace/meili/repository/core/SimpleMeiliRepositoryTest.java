@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,8 +51,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 /**
- * L1：{@link SimpleMeiliRepository} 对 {@link MeiliSearchOperations} 的委托契约——
- * 路由落点、批量删除逐条计数、fetch 上限 WARN、Pageable 换算与估算总数语义。
+ * L1: the delegation contract of {@link SimpleMeiliRepository} onto
+ * {@link MeiliSearchOperations} — routing targets, per-item counting on batch deletes, the
+ * fetch-ceiling WARN, Pageable conversion and estimated-total semantics.
  */
 class SimpleMeiliRepositoryTest {
 
@@ -63,7 +79,7 @@ class SimpleMeiliRepositoryTest {
         }
     }
 
-    /** 嵌套类型，验证 Pageable sort 的点路径桥接。 */
+    /** Nested type, verifies dotted-path bridging of Pageable sort properties. */
     static class Author {
         @MeiliField(filterable = true, sortable = true)
         String city;
@@ -163,7 +179,7 @@ class SimpleMeiliRepositoryTest {
             assertThat(appender.list)
                     .anySatisfy(e -> {
                         assertThat(e.getLevel()).isEqualTo(Level.WARN);
-                        assertThat(e.getFormattedMessage()).contains("maxTotalHits").contains("截断");
+                        assertThat(e.getFormattedMessage()).contains("maxTotalHits").contains("truncated");
                     });
         } finally {
             logger.detachAppender(appender);
@@ -189,7 +205,7 @@ class SimpleMeiliRepositoryTest {
 
     @Test
     void pageableBrowseTranslatesToPageModeWithBridgedSort() {
-        // estimatedTotalHits=100 避开 PageImpl 的页覆盖钳制（offset+pageSize 必须 ≤ total 才透传）
+        // estimatedTotalHits=100 dodges PageImpl's page-coverage clamp (offset+pageSize must stay ≤ total to pass through)
         String raw = "{\"hits\":[{\"id\":1,\"book_title\":\"三体\",\"genre\":\"科幻\",\"price\":59.0}],"
                 + "\"estimatedTotalHits\":100,\"page\":3,\"hitsPerPage\":20,\"totalPages\":5}";
         when(ops.search(any(MeiliQuery.class), org.mockito.ArgumentMatchers.eq(Book.class)))
@@ -208,7 +224,7 @@ class SimpleMeiliRepositoryTest {
     }
 
     @Test
-    @DisplayName("Pageable sort 属性经投影名桥：author.city → author.city，改名属性落投影名")
+    @DisplayName("Pageable sort properties bridge through projection names: author.city → author.city, renamed properties land on their projection name")
     void pageableSortBridgesNestedAndRenamedPaths() {
         SimpleMeiliRepository<BookWithAuthor, Long> nested = new SimpleMeiliRepository<>(
                 ops, MeiliPersistentEntity.of(BookWithAuthor.class));
@@ -223,7 +239,7 @@ class SimpleMeiliRepositoryTest {
     }
 
     @Test
-    @DisplayName("未知 Pageable sort 属性：启动查询即抛可定位错误")
+    @DisplayName("Unknown Pageable sort property: the query throws a locatable error right away")
     void pageableUnknownPropertyRejected() {
         assertThatThrownBy(() -> repo.findAll(PageRequest.of(0, 10, Sort.by("nope"))))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -232,7 +248,7 @@ class SimpleMeiliRepositoryTest {
     }
 
     @Test
-    @DisplayName("响应无总数时以命中数兜底 Page 总数（DEBUG 记录，不伪装精确）")
+    @DisplayName("Response without a total falls back to the hit count as Page total (logged at DEBUG, never faked as exact)")
     void missingTotalsFallBackToHitsSize() {
         String raw = "{\"hits\":[{\"id\":1,\"book_title\":\"x\",\"genre\":\"g\",\"price\":1.0}]}";
         when(ops.search(any(MeiliQuery.class), org.mockito.ArgumentMatchers.eq(Book.class)))
@@ -243,7 +259,7 @@ class SimpleMeiliRepositoryTest {
     }
 
     @Test
-    @DisplayName("PageImpl 页覆盖钳制为 commons 固有语义：估算总数小于 offset+页内容时必须抬高以覆盖当前页")
+    @DisplayName("PageImpl's page-coverage clamp is inherent commons semantics: an estimated total below offset+page content must be raised to cover the current page")
     void pageImplClampsTotalToCoverCurrentPage() {
         String raw = "{\"hits\":[{\"id\":1,\"book_title\":\"x\",\"genre\":\"g\",\"price\":1.0}],"
                 + "\"estimatedTotalHits\":45,\"page\":3,\"hitsPerPage\":20}";
@@ -251,7 +267,7 @@ class SimpleMeiliRepositoryTest {
                 .thenReturn(MeiliSearchResult.from(raw, Book.class,
                         new Jackson2DocumentSerializer(new ObjectMapper())));
         Page<Book> page = repo.findAll(PageRequest.of(2, 20));
-        assertThat(page.getTotalElements()).isEqualTo(41); // 40 + 命中数 1，非实现缺陷
+        assertThat(page.getTotalElements()).isEqualTo(41); // 40 + 1 hit, not an implementation defect
     }
 
     @Test

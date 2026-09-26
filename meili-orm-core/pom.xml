@@ -6,12 +6,12 @@
     <parent><groupId>io.github.lamspace</groupId><artifactId>meili-orm</artifactId><version>1.0-SNAPSHOT</version></parent>
     <artifactId>meili-orm-core</artifactId>
     <name>meili-orm-core</name>
-    <description>meili-orm 核心：注解映射、实体元模型、序列化抽象、查询 IR、Settings 投影、Operations。零 Spring 依赖。</description>
+    <description>meili-orm core: annotation mapping, entity metamodel, serialization abstraction, query IR, settings projection and templated operations. Zero Spring dependencies.</description>
     <dependencies>
         <dependency><groupId>com.meilisearch.sdk</groupId><artifactId>meilisearch-java</artifactId></dependency>
         <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-databind</artifactId></dependency>
         <dependency><groupId>com.fasterxml.jackson.datatype</groupId><artifactId>jackson-datatype-jsr310</artifactId></dependency>
-        <!-- okhttp 5.x Maven 空壳对策：显式引入 JVM 类构件（docs/spikes.md M0.2 实证） -->
+        <!-- Workaround for the empty okhttp 5.x Maven shell: depend on the JVM artifact explicitly (verified empirically). -->
         <dependency><groupId>com.squareup.okhttp3</groupId><artifactId>okhttp-jvm</artifactId></dependency>
         <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId></dependency>
         <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
@@ -26,13 +26,13 @@
             <executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions></plugin>
         <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId>
             <executions><execution><goals><goal>test-jar</goal></goals></execution></executions></plugin>
-        <!-- spring-data-commons 隔离护栏：仅 meili-orm-repository 模块允许依赖 commons。 -->
+        <!-- spring-data-commons isolation guard: only meili-orm-repository may depend on commons. -->
         <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-enforcer-plugin</artifactId><version>3.5.0</version>
             <executions><execution><id>ban-spring-data</id><goals><goal>enforce</goal></goals>
                 <configuration><rules><bannedDependencies>
                     <excludes><exclude>org.springframework.data:*</exclude></excludes>
                     <searchTransitive>true</searchTransitive>
-                    <message>隔离纪律破坏：本模块 classpath 出现 org.springframework.data 坐标（commons 唯一合法落点为 meili-orm-repository）</message>
+                    <message>Isolation discipline violated: org.springframework.data coordinates found on this module classpath (meili-orm-repository is the only allowed home for commons)</message>
                 </bannedDependencies></rules><fail>true</fail></configuration>
             </execution></executions></plugin>
     </plugins></build>

@@ -1,21 +1,38 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core;
 
 import com.meilisearch.sdk.Client;
 import com.meilisearch.sdk.Config;
 
 /**
- * MeiliSearch 真容器集成测试基类：子类经由 {@link #client()} 获得指向共享容器的
- * 已配置 SDK 客户端，无需自行拼装连接参数。
+ * Base class for MeiliSearch real-container integration tests: subclasses obtain a
+ * configured SDK client pointing at the shared container via {@link #client()},
+ * without assembling connection parameters themselves.
  *
- * <p>无状态、无线程约束；每次调用返回新的 {@code Client} 实例（构造零网络开销），
- * 指向同一容器。依赖 core 模块 test 作用域的 Testcontainers 与本机 Docker。</p>
+ * <p>Stateless, no threading constraints; each call returns a new {@code Client} instance
+ * (construction costs no network I/O) pointing at the same container. Depends on the core
+ * module's test-scoped Testcontainers and a local Docker daemon.</p>
  */
 public abstract class AbstractMeiliIntegrationTest {
 
     /**
-     * 构造指向共享容器的 SDK 客户端（默认 GsonJsonHandler 装配）。
+     * Builds an SDK client pointing at the shared container (default GsonJsonHandler wiring).
      *
-     * @return 以容器 URL 与测试 master key 配置的 {@link Client}
+     * @return a {@link Client} configured with the container URL and the test master key
      */
     protected static Client client() {
         return new Client(new Config(MeiliContainer.url(), MeiliContainer.MASTER_KEY));

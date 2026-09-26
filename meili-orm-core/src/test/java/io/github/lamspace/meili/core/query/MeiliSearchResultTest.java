@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,7 +25,7 @@ import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** {@link MeiliSearchResult} 信封解析与 hits 无损反序列化契约测试。 */
+/** Contract tests for {@link MeiliSearchResult} envelope parsing and lossless hits deserialization. */
 class MeiliSearchResultTest {
 
     record Book(Long id, String title) {}
@@ -23,11 +38,11 @@ class MeiliSearchResultTest {
             + "\"facetDistribution\":{\"genre\":{\"科幻\":1}},\"facetStats\":{\"price\":{\"min\":59.0,\"max\":59.0}}}";
 
     @Test
-    @DisplayName("hits 经序列化器无损；信封字段完整")
+    @DisplayName("hits stay lossless through the serializer; envelope fields complete")
     void parsesEnvelopeAndTypedHitsLossless() {
         var r = MeiliSearchResult.from(RAW, Book.class, SER);
         assertThat(r.getHits()).singleElement().satisfies(b -> {
-            assertThat(b.id()).isEqualTo(9007199254740993L); // Long 逐位无损
+            assertThat(b.id()).isEqualTo(9007199254740993L); // Long bit-exact
             assertThat(b.title()).isEqualTo("三体");
         });
         assertThat(r.getEstimatedTotalHits()).isEqualTo(1L);
@@ -41,7 +56,7 @@ class MeiliSearchResultTest {
     }
 
     @Test
-    @DisplayName("缺失的信封键按 null 呈现（非分页响应无 totalPages 等）")
+    @DisplayName("Absent envelope keys surface as null (non-paginated responses have no totalPages etc.)")
     void absentEnvelopeFieldsAreNull() {
         var r = MeiliSearchResult.from("{\"hits\":[]}", Book.class, SER);
         assertThat(r.getHits()).isEmpty();
@@ -54,7 +69,7 @@ class MeiliSearchResultTest {
     }
 
     @Test
-    @DisplayName("分页形态响应：page 系字段与 total 系字段并存")
+    @DisplayName("Paginated response shape: page-family and total-family fields coexist")
     void paginatedEnvelopeFields() {
         var r = MeiliSearchResult.from(
                 "{\"hits\":[],\"page\":2,\"hitsPerPage\":10,\"totalPages\":5,\"totalHits\":42}",

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -7,7 +22,7 @@ import io.github.lamspace.meili.core.exception.MeiliMappingException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** {@link MeiliEntityCallbacks} 匹配、顺序与注册校验契约测试。 */
+/** Contract tests for {@link MeiliEntityCallbacks} matching, ordering and registration validation. */
 class MeiliEntityCallbacksTest {
 
     record Note(Long id, String text) {}
@@ -17,7 +32,7 @@ class MeiliEntityCallbacksTest {
     static class Child extends SuperNote {}
 
     @Test
-    @DisplayName("匿名类经反射解析泛型实参；同类型多回调按注册顺序链式执行")
+    @DisplayName("Anonymous classes resolve generic arguments via reflection; multiple callbacks for one type chain in registration order")
     void appliesMatchingCallbacksInRegistrationOrder() {
         var cbs = new MeiliEntityCallbacks();
         cbs.register(new BeforeConvertCallback<Note>() {
@@ -32,7 +47,7 @@ class MeiliEntityCallbacksTest {
     }
 
     @Test
-    @DisplayName("父类型回调对子类型实体生效")
+    @DisplayName("A callback bound to a supertype applies to subtype entities")
     void superclassCallbackApplies() {
         var cbs = new MeiliEntityCallbacks();
         cbs.register(SuperNote.class, (BeforeConvertCallback<SuperNote>) (e, idx) -> e);
@@ -40,7 +55,7 @@ class MeiliEntityCallbacksTest {
     }
 
     @Test
-    @DisplayName("AfterLoad 以改写后的 raw JSON 传递到反序列化前")
+    @DisplayName("AfterLoad hands the rewritten raw JSON to deserialization")
     void afterLoadTransformsRawJson() {
         var cbs = new MeiliEntityCallbacks();
         cbs.register(Note.class, (AfterLoadCallback<Note>) (json, idx) -> json.replace("\"x\"", "\"y\""));
@@ -56,7 +71,7 @@ class MeiliEntityCallbacksTest {
     }
 
     @Test
-    @DisplayName("泛型实参不可解析的注册（raw 实现类）当场拒绝")
+    @DisplayName("Registration with an unresolvable generic argument (raw implementation class) is rejected on the spot")
     void unresolvedGenericRejectedAtRegistration() {
         MeiliCallback raw = new RawConverter();
         assertThatThrownBy(() -> new MeiliEntityCallbacks().register(raw))
@@ -71,7 +86,7 @@ class MeiliEntityCallbacksTest {
     }
 
     @Test
-    @DisplayName("none() 空注册表全点透传且计数为零")
+    @DisplayName("none() empty registry passes every hook through with a zero count")
     void nonePassesThrough() {
         var cbs = MeiliEntityCallbacks.none();
         Note n = new Note(1L, "t");

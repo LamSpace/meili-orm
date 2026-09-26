@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.core.internal;
 
 import com.meilisearch.sdk.SearchRequest;
@@ -94,7 +109,8 @@ public final class SdkQueryTranslator {
         boolean hasDsl = query.getFilterDsl() != null;
         boolean hasGroups = !query.getFilterGroups().isEmpty();
         if (hasDsl && hasGroups) {
-            throw new MeiliOrmException("filter 互斥：filter/filterAdd DSL 与 filterGroup 分组不可混用");
+            throw new MeiliOrmException("filter conflict:"
+                    + " filter/filterAdd DSL cannot be mixed with filterGroup");
         }
         if (hasDsl) {
             req.setFilter(new String[]{query.getFilterDsl()});
@@ -115,7 +131,8 @@ public final class SdkQueryTranslator {
         boolean offsetMode = query.getLimit() != null || query.getOffset() != null;
         boolean pageMode = query.getPage() != null || query.getHitsPerPage() != null;
         if (offsetMode && pageMode) {
-            throw new MeiliOrmException("分页模式互斥：limit/offset 与 page/hitsPerPage 不可混设");
+            throw new MeiliOrmException("pagination conflict:"
+                    + " limit/offset cannot be mixed with page/hitsPerPage");
         }
         if (query.getLimit() != null) {
             req.setLimit(query.getLimit());
@@ -195,7 +212,7 @@ public final class SdkQueryTranslator {
             String key = e.getKey();
             Object value = e.getValue();
             if (staged.contains(key)) {
-                throw new MeiliOrmException("raw() 键 " + key + " 与显式设置的 IR 字段冲突");
+                throw new MeiliOrmException("raw() key " + key + " conflicts with an explicitly set IR field");
             }
             switch (key) {
                 case "q" -> req.setQ(asString(key, value));
@@ -232,7 +249,7 @@ public final class SdkQueryTranslator {
                 case "rankingScoreThreshold" -> req.setRankingScoreThreshold(asDouble(key, value));
                 case "vector" -> req.setVector(asVector(key, value));
                 case "hybrid" -> req.setHybrid(asHybrid(key, value));
-                default -> throw new MeiliOrmException("raw() 未知键: " + key);
+                default -> throw new MeiliOrmException("unknown raw() key: " + key);
             }
         }
     }
@@ -367,7 +384,7 @@ public final class SdkQueryTranslator {
      * @return the exception to throw
      */
     private static MeiliOrmException badType(String key, Object value) {
-        return new MeiliOrmException("raw() 键 " + key + " 的值类型不支持: "
+        return new MeiliOrmException("unsupported value type for raw() key " + key + ": "
                 + (value == null ? "null" : value.getClass().getName()));
     }
 

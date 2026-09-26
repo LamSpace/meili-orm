@@ -1,8 +1,24 @@
-/**
- * meili-orm Repository 层：Spring Data 风格的声明式仓库访问。
+/*
+ * Copyright 2026 the original author or authors.
  *
- * <p>本模块是全工程唯一依赖 {@code spring-data-commons} 的产品模块；全部数据通路委托
- * {@link io.github.lamspace.meili.core.operations.MeiliSearchOperations}，实体读写与
- * 序列化语义以 core 元模型为唯一权威。应用显式引入本坐标即启用仓库自动配置。
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * meili-orm Repository layer: Spring Data-style declarative repository access.
+ *
+ * <p>This module is the only artifact in the project that depends on {@code spring-data-commons};
+ * all data paths delegate to {@link io.github.lamspace.meili.core.operations.MeiliSearchOperations},
+ * and entity read/write plus serialization semantics take the core metamodel as the single source
+ * of truth. Explicitly adding this artifact to an application enables repository auto-configuration.
  */
 package io.github.lamspace.meili.repository;

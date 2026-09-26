@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.example.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -9,24 +24,24 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 /**
- * 演示实体：一页覆盖全部映射面。
+ * Demo entity: a single class covering the full mapping surface.
  *
- * <p>角色声明即 settings 投影（不标注=不声明）：{@code book_title}/{@code overview}
- * 进 searchableAttributes（显式 order 在前）、{@code author.city}/{@code tags}/
- * {@code genre}/{@code price} 进 filterableAttributes（嵌套点路径展平）、
- * {@code price}/{@code publishedAt} 进 sortableAttributes。rankingRules 与中文
- * stopwords 由 {@code meili/books.json} 透传，与投影合并时透传优先。
- * {@code internalNote} 经 {@code @JsonIgnore} 整体不落文档。
+ * <p>Role declarations are the settings projection (unannotated = undeclared): {@code book_title}/
+ * {@code overview} go to searchableAttributes (explicit order first), {@code author.city}/{@code tags}/
+ * {@code genre}/{@code price} go to filterableAttributes (nested dotted paths flattened),
+ * {@code price}/{@code publishedAt} go to sortableAttributes. rankingRules and the Chinese
+ * stopwords pass through from {@code meili/books.json} and take precedence when merged with the
+ * projection. {@code internalNote} is omitted from the document entirely via {@code @JsonIgnore}.
  *
- * @param id             主键（Long，超 2^53 探针值验证无损）
- * @param title          书名，文档字段名 book_title，搜索权重第一
- * @param overview       简介，次级搜索字段
- * @param author         作者嵌套对象（city 参与 filterable 投影）
- * @param tags           标签数组，filterable
- * @param genre          题材，filterable 兼 facet 演示
- * @param price          定价，filterable + sortable
- * @param publishedAt    首发时间，sortable
- * @param internalNote   内部备注，不写入 MeiliSearch 文档
+ * @param id             primary key (Long; losslessness verified with a probe value above 2^53)
+ * @param title          book title, document field name book_title, top search weight
+ * @param overview       synopsis, secondary search field
+ * @param author         nested author object (city participates in the filterable projection)
+ * @param tags           tag array, filterable
+ * @param genre          genre, filterable and facet demo
+ * @param price          list price, filterable + sortable
+ * @param publishedAt    first publication time, sortable
+ * @param internalNote   internal note, never written to the MeiliSearch document
  */
 @MeiliDocument(indexName = "books")
 @MeiliSetting(settingPath = "classpath:meili/books.json")

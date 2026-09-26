@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,17 +41,18 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 /**
- * L1：仓库方法继承 Operations 的全部横切语义（spec"委托链路透明"场景）——
- * BeforeConvert 修改落在发出文档、AfterConvert 修改落在返回实体、wait-task 开关生效。
+ * L1: repository methods inherit every cross-cutting semantic of Operations (the
+ * "delegation chain is transparent" scenario) — BeforeConvert mutations land in the emitted
+ * document, AfterConvert mutations land in the returned entity, the wait-task switch applies.
  */
 class MeiliRepositoryLifecycleTest {
 
     @MeiliDocument(indexName = "cb_books")
     public static class Book {
-        /** 主键。 */
+        /** Primary key. */
         @MeiliId
         public Long id;
-        /** 标题。 */
+        /** Title. */
         public String title;
 
         Book() {
@@ -48,7 +64,7 @@ class MeiliRepositoryLifecycleTest {
         }
     }
 
-    /** 纯 CRUD 夹具仓库。 */
+    /** Pure-CRUD fixture repository. */
     public interface BookRepo extends MeiliRepository<Book, Long> {
     }
 
@@ -72,8 +88,8 @@ class MeiliRepositoryLifecycleTest {
 
         ArgumentCaptor<String> json = ArgumentCaptor.forClass(String.class);
         verify(gw).updateDocuments(eq("cb_books"), json.capture());
-        assertThat(json.getValue()).contains("三体!");          // BeforeConvert 生效
-        verify(gw).awaitTask(eq(7), eq(Duration.ofSeconds(5))); // wait-task=true 生效
+        assertThat(json.getValue()).contains("三体!");          // BeforeConvert applied
+        verify(gw).awaitTask(eq(7), eq(Duration.ofSeconds(5))); // wait-task=true applied
     }
 
     @Test

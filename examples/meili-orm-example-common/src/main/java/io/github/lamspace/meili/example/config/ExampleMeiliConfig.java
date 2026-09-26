@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.example.config;
 
 import io.github.lamspace.meili.core.event.BeforeConvertCallback;
@@ -6,37 +21,40 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * 演示装配：生命周期回调四件套之 BeforeConvertCallback 的实战形态。
+ * Demo wiring: the practical shape of BeforeConvertCallback, one of the four lifecycle callbacks.
  *
- * <p>声明为 bean 即被 meili-orm 自动配置的回调注册表收集，在每次写路径序列化前
- * 触发——此处规整书名前后空白，展示"不改业务调用点即可插入横切行为"。
+ * <p>Declaring it as a bean lets meili-orm's auto-configured callback registry collect it and
+ * trigger it before every write-path serialization — here it trims the book title's surrounding
+ * whitespace, demonstrating how cross-cutting behavior is inserted without touching business
+ * call sites.
  */
 @Configuration(proxyBeanMethods = false)
 public class ExampleMeiliConfig {
 
     /**
-     * 配置类由容器实例化；全部行为在 {@code @Bean} 方法中。
+     * The configuration class is instantiated by the container; all behavior lives in the {@code @Bean} methods.
      */
     public ExampleMeiliConfig() {
     }
 
     /**
-     * 写前回调 bean：去除书名首尾空白。
+     * Pre-write callback bean: strips leading and trailing whitespace from the book title.
      *
-     * <p>以命名类而非 lambda 声明：回调注册表从实现类的泛型签名解析目标实体，
-     * lambda 实例的泛型实参被 JVM 擦除后不可解析（见限制清单）。
+     * <p>Declared as a named class rather than a lambda: the callback registry resolves the target
+     * entity from the implementation class's generic signature, and a lambda instance's generic
+     * type argument is erased by the JVM and unresolvable (see the limitations list).
      *
-     * @return 作用于 {@link Book} 的转换前回调
+     * @return the before-convert callback acting on {@link Book}
      */
     @Bean
     BeforeConvertCallback<Book> trimBookTitle() {
         return new TrimBookTitle();
     }
 
-    /** 书名规整实现：record 不可变，命中时重建返回。 */
+    /** Title-trimming implementation: the record is immutable, so a matching title is rebuilt and returned. */
     static final class TrimBookTitle implements BeforeConvertCallback<Book> {
 
-        /** 无状态实现；目标实体类型由类声明的泛型实参承载。 */
+        /** Stateless implementation; the target entity type is carried by the class declaration's generic type argument. */
         TrimBookTitle() {
         }
 

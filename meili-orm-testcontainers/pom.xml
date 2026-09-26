@@ -6,7 +6,7 @@
     <parent><groupId>io.github.lamspace</groupId><artifactId>meili-orm</artifactId><version>1.0-SNAPSHOT</version></parent>
     <artifactId>meili-orm-testcontainers</artifactId>
     <name>meili-orm-testcontainers</name>
-    <description>meili-orm Testcontainers 集成：类型化 MeiliSearch 服务容器与 Spring Boot 服务连接桥接（仅产出 MeiliConnectionDetails）。同一 jar 兼容 Boot 3.5.x 与 4.x。</description>
+    <description>meili-orm Testcontainers integration: typed Meilisearch service container plus a Spring Boot service-connection bridge (produces MeiliConnectionDetails only). One jar for Boot 3.5.x and 4.x.</description>
     <dependencies>
         <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-spring-boot-autoconfigure</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-autoconfigure</artifactId></dependency>
@@ -20,13 +20,13 @@
     <build><plugins>
         <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId>
             <executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions></plugin>
-        <!-- spring-data-commons 隔离护栏：仅 meili-orm-repository 模块允许依赖 commons。 -->
+        <!-- spring-data-commons isolation guard: only meili-orm-repository may depend on commons. -->
         <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-enforcer-plugin</artifactId><version>3.5.0</version>
             <executions><execution><id>ban-spring-data</id><goals><goal>enforce</goal></goals>
                 <configuration><rules><bannedDependencies>
                     <excludes><exclude>org.springframework.data:*</exclude></excludes>
                     <searchTransitive>true</searchTransitive>
-                    <message>隔离纪律破坏：本模块 classpath 出现 org.springframework.data 坐标（commons 唯一合法落点为 meili-orm-repository）</message>
+                    <message>Isolation discipline violated: org.springframework.data coordinates found on this module classpath (meili-orm-repository is the only allowed home for commons)</message>
                 </bannedDependencies></rules><fail>true</fail></configuration>
             </execution></executions></plugin>
     </plugins></build>

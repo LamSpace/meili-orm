@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.repository.spike;
 
 import java.lang.reflect.Field;
@@ -11,16 +26,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * spike 原型：自研派生查询方法名解析器（结构桥路线被 commons 4.0 的
- * {@code Part.getProperty()} 返回类型代际迁移证伪后的替代形态）。
- * 语法（动词/By/top/OrderBy/And/Or/Not/关键字尾缀）自研，属性段用实体反射字典
- * 做最长前缀切分（不支持缩写）；语义仍由 {@link SpikePropertyResolver} 落 core 投影名。
+ * spike prototype: hand-rolled derived-query method-name parser (the shape taken after the
+ * structural-bridge route was disproven by the {@code Part.getProperty()} return-type
+ * generation migration in commons 4.0). The grammar (verb/By/top/OrderBy/And/Or/Not/keyword
+ * suffixes) is hand-rolled; property segments are split by longest-prefix matching against the
+ * entity's reflection dictionary (abbreviations are not supported); semantics are still
+ * projected to core document names by {@link SpikePropertyResolver}.
  */
 final class SpikeNameParser {
 
-    /** 关键字 → 内部规范名；按长度降序尝试剥离。 */
+    /** keyword → canonical internal name; stripped longest-first by length. */
     private static final Map<String, String> SUFFIX_KEYWORDS = new HashMap<>();
-    /** 不支持面关键字（v1 直接拒绝）。 */
+    /** Out-of-scope keywords (rejected outright in v1). */
     private static final List<String> UNSUPPORTED =
             List.of("StartingWith", "EndingWith", "RegularExpression", "IsNotNull", "IsNull",
                     "IsNotEmpty", "IsEmpty", "Exists", "IgnoreCase");
@@ -49,31 +66,31 @@ final class SpikeNameParser {
     private SpikeNameParser() {
     }
 
-    /** 一个条件子句。 */
+    /** One condition clause. */
     record Clause(boolean or, boolean negate, String keyword, List<String> chain) {
     }
 
-    /** 一个排序子句。 */
+    /** One order clause. */
     record Order(List<String> chain, boolean asc) {
     }
 
-    /** 解析结果。 */
+    /** Parse result. */
     record Parsed(Integer maxResults, boolean distinct, List<Clause> clauses, List<Order> orders) {
     }
 
     /**
-     * 解析派生查询方法名。
+     * Parses a derived-query method name.
      *
-     * @param domainType 实体类（属性字典来源）
-     * @param methodName 仓库接口方法名
-     * @return 结构化解析结果
-     * @throws IllegalArgumentException 语法非法或属性段无法解析
-     * @throws UnsupportedOperationException v1 不支持关键字
+     * @param domainType entity class (source of the property dictionary)
+     * @param methodName repository interface method name
+     * @return structured parse result
+     * @throws IllegalArgumentException malformed grammar or an unresolvable property segment
+     * @throws UnsupportedOperationException v1-unsupported keyword
      */
     static Parsed parse(Class<?> domainType, String methodName) {
         Matcher m = METHOD.matcher(methodName);
         if (!m.matches() || m.group(4) == null) {
-            throw new IllegalArgumentException("方法名无法解析: " + methodName);
+            throw new IllegalArgumentException("Unparseable method name: " + methodName);
         }
         Integer top = null;
         if (m.group(1) != null) {
@@ -116,7 +133,7 @@ final class SpikeNameParser {
         return out;
     }
 
-    /** 按大写 And/Or 定界切分（保持出现顺序）。 */
+    /** Splits on uppercase And/Or delimiters (preserving occurrence order). */
     private static List<String> splitDelimited(String criteria) {
         List<String> parts = new ArrayList<>();
         int start = 0;
@@ -138,7 +155,7 @@ final class SpikeNameParser {
         return parts;
     }
 
-    /** 子句后的连接词（and 默认；or 影响下一子句）。 */
+    /** Connector after a clause (and by default; or affects the next clause). */
     private static boolean isOrSeparated(String criteria, String seg) {
         int idx = criteria.indexOf(seg) + seg.length();
         return idx < criteria.length() && criteria.regionMatches(idx, "Or", 0, 2);
@@ -163,12 +180,12 @@ final class SpikeNameParser {
     private static void rejectUnsupported(String seg) {
         for (String kw : UNSUPPORTED) {
             if (seg.endsWith(kw) && seg.length() > kw.length()) {
-                throw new UnsupportedOperationException("v1 不支持关键字: " + kw + "（方法名片段 " + seg + "）");
+                throw new UnsupportedOperationException("v1 does not support keyword: " + kw + " (method-name segment " + seg + ")");
             }
         }
     }
 
-    /** 属性字典最长前缀切分：AuthorCity → [author, city]；缩写不支持。 */
+    /** Longest-prefix dictionary split: AuthorCity → [author, city]; abbreviations are not supported. */
     private static List<String> segment(Class<?> type, String path) {
         List<String> chain = new ArrayList<>();
         Class<?> current = type;
@@ -183,7 +200,7 @@ final class SpikeNameParser {
                 }
             }
             if (match == null) {
-                throw new IllegalArgumentException("无法解析属性段（不支持缩写）: " + path
+                throw new IllegalArgumentException("Cannot resolve property segment (abbreviations are not supported): " + path
                         + " @ " + current.getSimpleName());
             }
             chain.add(match.getName());
@@ -193,7 +210,7 @@ final class SpikeNameParser {
         return chain;
     }
 
-    /** 当前类型可查询字段集合（含被排除字段以便给出精确错误）。 */
+    /** Queryable fields of the current type (excluded fields are kept so errors stay precise). */
     private static List<Field> candidates(Class<?> type) {
         List<Field> out = new ArrayList<>();
         for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {

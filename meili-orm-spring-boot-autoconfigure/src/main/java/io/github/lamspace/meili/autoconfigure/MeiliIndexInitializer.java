@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.lamspace.meili.autoconfigure;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -139,7 +154,7 @@ public final class MeiliIndexInitializer implements SmartInitializingSingleton {
             Class<?> previous = byIndex.putIfAbsent(meta.getIndexName(), type);
             if (previous != null) {
                 throw new MeiliMappingException("indexName \"" + meta.getIndexName()
-                        + "\" 被多个实体声明: " + previous.getName() + " 与 " + type.getName());
+                        + "\" is declared by multiple entities: " + previous.getName() + " and " + type.getName());
             }
         }
         return byIndex;
@@ -161,16 +176,16 @@ public final class MeiliIndexInitializer implements SmartInitializingSingleton {
                 taskUid = gateway.updateSettings(indexUid, projected.toJson());
             }
             gateway.awaitTask(taskUid, waitTimeout);
-            log.info("索引 {} 已创建并同步投影 settings（task {}）", indexUid, taskUid);
+            log.info("Index {} created with projected settings synced (task {})", indexUid, taskUid);
             return;
         }
         if (!projected.hasAny()) {
-            log.debug("索引 {} 已存在且实体未声明 settings，零交互", indexUid);
+            log.debug("Index {} already exists and its entity declares no settings; no interaction", indexUid);
             return;
         }
         List<String> drifted = diff(projected, gateway.getSettings(indexUid));
         if (drifted.isEmpty()) {
-            log.debug("索引 {} settings 与投影一致", indexUid);
+            log.debug("Index {} settings match the projection", indexUid);
             return;
         }
         handleDrift(indexUid, projected, drifted);
@@ -191,7 +206,7 @@ public final class MeiliIndexInitializer implements SmartInitializingSingleton {
             want = MAPPER.readTree(projected.toJson());
             have = MAPPER.readTree(currentSettings);
         } catch (Exception e) {
-            throw new MeiliMappingException("settings diff 解析失败", e);
+            throw new MeiliMappingException("Failed to parse settings for diffing", e);
         }
         List<String> drifted = new ArrayList<>();
         Iterator<Map.Entry<String, JsonNode>> fields = want.fields();
@@ -247,28 +262,31 @@ public final class MeiliIndexInitializer implements SmartInitializingSingleton {
      */
     private void handleDrift(String indexUid, ProjectedSettings projected, List<String> drifted) {
         if (drift == MeiliProperties.Drift.FAIL) {
-            throw new MeiliMappingException("settings 漂移且 on-settings-drift=fail: index="
-                    + indexUid + " 漂移键=" + drifted);
+            throw new MeiliMappingException("settings drift with on-settings-drift=fail: index="
+                    + indexUid + " driftedKeys=" + drifted);
         }
         if (mode == MeiliProperties.AutoInit.CREATE_IF_MISSING) {
             if (drift == MeiliProperties.Drift.APPLY) {
-                log.warn("索引 {} 漂移键 {}：auto-init=create-if-missing 下 apply 被抑制，不推送 settings",
-                        indexUid, drifted);
+                log.warn("Index {} drifted keys {}: apply suppressed under auto-init=create-if-missing, "
+                        + "settings not pushed", indexUid, drifted);
             } else {
-                log.warn("索引 {} 漂移键 {}：auto-init=create-if-missing 只报告不写入", indexUid, drifted);
+                log.warn("Index {} drifted keys {}: auto-init=create-if-missing reports only, never writes",
+                        indexUid, drifted);
             }
             return;
         }
         if (drift == MeiliProperties.Drift.WARN) {
-            log.warn("索引 {} settings 漂移，on-settings-drift=warn 不写入，漂移键 {}", indexUid, drifted);
+            log.warn("Index {} settings drift with on-settings-drift=warn, no write, drifted keys {}",
+                    indexUid, drifted);
             return;
         }
         if (drifted.stream().anyMatch(REBUILD_KEYS::contains)) {
-            log.warn("索引 {} 的漂移涉及 {} 之一，服务端将全量重建该索引，任务可能长时间运行，漂移键 {}",
+            log.warn("Drift on index {} touches one of {}, the server will fully rebuild the index, "
+                            + "the task may run for a long time, drifted keys {}",
                     indexUid, REBUILD_KEYS, drifted);
         }
         int taskUid = gateway.updateSettings(indexUid, projected.toJson());
         gateway.awaitTask(taskUid, waitTimeout);
-        log.info("索引 {} settings 已按投影更新（task {}）", indexUid, taskUid);
+        log.info("Index {} settings updated per projection (task {})", indexUid, taskUid);
     }
 }

@@ -6,13 +6,13 @@
     <parent><groupId>io.github.lamspace</groupId><artifactId>meili-orm-examples</artifactId><version>1.0-SNAPSHOT</version></parent>
     <artifactId>meili-orm-example-boot4</artifactId>
     <name>meili-orm-example-boot4</name>
-    <description>Boot 4.0.3 演示启动壳：仅启动类与配置，业务全部复用 example-common（同一份字节码换代运行）。</description>
+    <description>Boot 4.0.3 demo launcher shell: only the application class and configuration; all business code is reused from example-common (the same bytecode running on the other Boot generation).</description>
     <properties>
         <spring-boot.app.version>4.0.3</spring-boot.app.version>
     </properties>
     <dependencyManagement>
         <dependencies>
-            <!-- 子模块首位 import 覆盖继承的 3.5.16 基线：本壳 classpath 恒为 Boot 4.0.3 代。 -->
+            <!-- Imported first in this module to override the inherited 3.5.16 baseline: this shell's classpath is always the Boot 4.0.3 generation. -->
             <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-dependencies</artifactId><version>${spring-boot.app.version}</version><type>pom</type><scope>import</scope></dependency>
         </dependencies>
     </dependencyManagement>
