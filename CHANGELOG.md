@@ -22,7 +22,8 @@ once released.
   maintainer dependency-upgrade checklist) and this `CHANGELOG.md`, both bilingual.
 - Badges: license, CI status, Java baseline, Spring Boot generations, Meilisearch server
   generation.
-- README "Project Structure" section cataloguing every top-level directory and build module.
+- README "Project Structure" section presenting the repository as an annotated directory tree
+  (top-level directories and build modules).
 
 ### Changed
 
