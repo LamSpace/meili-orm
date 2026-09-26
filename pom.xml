@@ -14,6 +14,7 @@
         <module>meili-orm-spring-boot-autoconfigure</module>
         <module>spring-boot-starter-meili-orm</module>
         <module>meili-orm-serializer-jackson3</module>
+        <module>meili-orm-repository</module>
         <module>it</module>
         <module>examples</module>
     </modules>
@@ -43,6 +44,7 @@
             <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-core</artifactId><version>${project.version}</version><type>test-jar</type></dependency>
             <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-spring-boot-autoconfigure</artifactId><version>${project.version}</version></dependency>
             <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-serializer-jackson3</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-repository</artifactId><version>${project.version}</version></dependency>
         </dependencies>
     </dependencyManagement>
     <build>

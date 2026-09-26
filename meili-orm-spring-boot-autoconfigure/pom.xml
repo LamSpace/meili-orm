@@ -30,5 +30,14 @@
             </annotationProcessorPaths></configuration></plugin>
         <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId>
             <executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions></plugin>
+        <!-- spring-data-commons 隔离护栏：仅 meili-orm-repository 模块允许依赖 commons。 -->
+        <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-enforcer-plugin</artifactId><version>3.5.0</version>
+            <executions><execution><id>ban-spring-data</id><goals><goal>enforce</goal></goals>
+                <configuration><rules><bannedDependencies>
+                    <excludes><exclude>org.springframework.data:*</exclude></excludes>
+                    <searchTransitive>true</searchTransitive>
+                    <message>隔离纪律破坏：本模块 classpath 出现 org.springframework.data 坐标（commons 唯一合法落点为 meili-orm-repository）</message>
+                </bannedDependencies></rules><fail>true</fail></configuration>
+            </execution></executions></plugin>
     </plugins></build>
 </project>

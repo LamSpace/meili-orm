@@ -12,4 +12,15 @@
         <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-core</artifactId></dependency>
         <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-spring-boot-autoconfigure</artifactId></dependency>
     </dependencies>
+    <build><plugins>
+        <!-- spring-data-commons 隔离护栏：starter 聚合不得传递 commons（仓库能力为 opt-in 坐标）。 -->
+        <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-enforcer-plugin</artifactId><version>3.5.0</version>
+            <executions><execution><id>ban-spring-data</id><goals><goal>enforce</goal></goals>
+                <configuration><rules><bannedDependencies>
+                    <excludes><exclude>org.springframework.data:*</exclude></excludes>
+                    <searchTransitive>true</searchTransitive>
+                    <message>隔离纪律破坏：本模块 classpath 出现 org.springframework.data 坐标（commons 唯一合法落点为 meili-orm-repository）</message>
+                </bannedDependencies></rules><fail>true</fail></configuration>
+            </execution></executions></plugin>
+    </plugins></build>
 </project>
