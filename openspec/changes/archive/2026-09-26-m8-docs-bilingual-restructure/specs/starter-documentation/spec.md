@@ -32,7 +32,7 @@
 
 ### Requirement: 内部过程材料隔离
 
-非交付过程材料 SHALL 集中于 `docs/internal/`：初始设计文档（现仓库根）、实施计划（现 `docs/superpowers/plans/`）、spike 实证档案（现 `docs/spikes.md`）、上游 issue 草稿（现 `docs/upstream-okhttp-injection.md`，仅留档不提交），目录内 `README.md` 一句话声明其"非用户交付面"性质。交付集全部文档 SHALL NOT 以 `docs/internal/` 材料为阅读前提、SHALL NOT 出现内部过程代号引用（设计文档节号、里程碑/任务代号等）；原引用处（如限制清单对 spike 记录的指针）以自洽语句承载——实测结论与哨兵测试名可在交付文档内直接成立，无需跳转。
+非交付过程材料 SHALL 集中于 `docs/internal/`：初始设计文档、实施计划、spike 实证档案、上游 issue 草稿（仅留档不提交），目录内 `README.md` 一句话声明其"非用户交付面"性质；上述材料 SHALL NOT 散落于仓库根或 `docs/` 交付面。交付集全部文档 SHALL NOT 以 `docs/internal/` 材料为阅读前提、SHALL NOT 出现内部过程代号引用（设计文档节号、里程碑/任务代号等）；原引用处（如限制清单对 spike 记录的指针）以自洽语句承载——实测结论与哨兵测试名可在交付文档内直接成立，无需跳转。
 
 #### Scenario: 交付文档无内部依赖
 

@@ -4,7 +4,7 @@
 
 - [x] 1.1 `git mv` 四份过程材料入 `docs/internal/`（根设计文档、`docs/superpowers/plans/…m0-m3.md`、`docs/spikes.md`、`docs/upstream-okhttp-injection.md`，保留原文件名），新建 `docs/internal/README.md` 一句声明非交付面，verify：原路径不存在、internal 下齐备、`git log --follow` 历史可追溯
 - [x] 1.2 建立镜像骨架：`docs/zh-CN/` 目录；verify：`ls docs/` 下无交付文档滞留 internal、目录空位就绪
-- [ ] 1.3 应用远程仓库 About（手工，Web UI）：Description 与 Topics 按 design D6 定稿文本设置，verify：仓库页 About 显示描述与 topics 列表（留应用记录于本条勾选注记）
+- [x] 1.3 应用远程仓库 About（手工，Web UI）：Description 与 Topics 按 design D6 定稿文本设置，verify：仓库页 About 显示描述与 topics 列表（已应用——GitHub API 实测 description 逐字=D6 文本、topics=12 项全数在册）
 
 ## 2. README 双语重写
 
@@ -30,4 +30,4 @@
 - [x] 5.2 全仓 md 内链/外链逐条可达性检查（迁移与重写后断链排查），verify：无 404/相对路径失效（全相对链脚本核验全通过；两处页面内锚点 #-build--test/#-构建与测试 为 GitHub emoji 标题合法 slug；徽章外链 curl 200）
 - [x] 5.3 spec 场景逐条核对：镜像完整性、幻影徽章缺席、源码构建安装实测（干净环境 clone→`mvn -s <自己的 settings> install`→最小装配工程编译通过）、两语锚点一致、升级义务落点唯一；verify：五组判定通过——镜像完整性 9/9、幻影徽章缺席、源码构建安装实测（2026-09-26 复录即走 clone→install→装配路径）、两语锚点一致、升级义务落点唯一
 - [x] 5.4 门禁与回归：`bash scripts/check-source-citations.sh` 绿（md 不在门禁内但不得引入新违规引用），根 reactor 不受文档变更影响复确认；verify：脚本零退出（reactor 无文档外输入变化，m7 终局全绿仍成立）
-- [ ] 5.5 归档注记：本变更归档同步 `starter-documentation` 主 spec 时，其 Purpose 文本（"中文文档集契约"）须一并改为双语集表述（主 spec Purpose 不随 delta 流转，归档时手工修订）；verify：归档后主 spec Purpose 与需求语言契约一致
+- [x] 5.5 归档注记：本变更归档同步 `starter-documentation` 主 spec 时，其 Purpose 文本（"中文文档集契约"）须一并改为双语集表述（主 spec Purpose 不随 delta 流转，归档时手工修订）；verify：归档后主 spec Purpose 与需求语言契约一致（归档同步时 Purpose 已改为双语集表述，旧"中文文档集契约"字样随 delta 落地）
