@@ -16,8 +16,8 @@
 
 ## 3. 文档状态修正与上游草稿
 
-- [ ] 3.1 设计文档 `2026-09-19-meili-orm-starter-design.md` 三处修正：头部"状态：待终审"改为"已定稿（2026-09-26）"；§9 D2/D3/D4 行补拍板结论（D2 定稿、D3 确认、D4 是）；§2.4 现状行刷新为当前模块结构（core/autoconfigure/starter/jackson3/repository/it×2/examples×3）。验证：全文 grep 无"待终审"残留；现状行与根 pom `<modules>` 一致。
-- [ ] 3.2 新建 `docs/upstream-okhttp-injection.md`：英文 issue 草稿（标题、0.21.0 构造面实证、OkHttpClient/Builder 注入点诉求、超时不可配影响、可提供的最小复现），仅引用公开事实与 docs/spikes.md 既有结论。验证：文件存在、通读可直接粘贴提交；不含内部过程材料与代号（人工对照 + `bash scripts/check-source-citations.sh` 零退出兜底）。
+- [x] 3.1 设计文档 `2026-09-19-meili-orm-starter-design.md` 三处修正：头部"状态：待终审"改为"已定稿（2026-09-26）"；§9 D2/D3/D4 行补拍板结论（D2 定稿、D3 确认、D4 是）；§2.4 现状行刷新为当前模块结构（core/autoconfigure/starter/jackson3/repository/it×2/examples×3）。验证：全文 grep 无"待终审"残留；现状行与根 pom `<modules>` 一致。
+- [x] 3.2 新建 `docs/upstream-okhttp-injection.md`：英文 issue 草稿（标题、0.21.0 构造面实证、OkHttpClient/Builder 注入点诉求、超时不可配影响、可提供的最小复现），仅引用公开事实与 docs/spikes.md 既有结论。验证：文件存在、通读可直接粘贴提交；不含内部过程材料与代号（人工对照 + `bash scripts/check-source-citations.sh` 零退出兜底）。
 
 ## 4. 集成验证
 

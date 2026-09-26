@@ -1,6 +1,6 @@
 # meili-orm：MeiliSearch Spring Boot Starter 设计文档与实施路线图
 
-- 状态：待终审
+- 状态：已定稿（2026-09-26 终审通过；D1–D4 拍板记录见 §9）
 - 日期：2026-09-19
 - 作者：lam + Claude（brainstorming 产出）
 - 决策基线：功能边界 = 核心三件套 + 索引自动初始化/Settings 同步（首版）+ Repository（后置里程碑）；不做响应式；序列化 = 可插拔接口、Jackson 默认；Boot 兼容 = 方案 A（单代码库双兼容 + IT 矩阵护栏）
@@ -93,7 +93,7 @@ Boot 3→4 的演进事实（决定我们兼容策略）：
 | Maven | 3.9.16，**所有命令必须 `-s /home/lam/repo/settings.xml`，禁止使用默认配置** |
 | 本地仓库 | `/home/lam/repo`（已缓存 Boot 4.0.3 / spring-data-commons 4.0.3 / spring-data-elasticsearch 6.0.3 / elasticsearch-java 9.2.5；**无 Boot 3.x 产物**，it-boot3 首跑需联网拉取） |
 | MeiliSearch | Docker 镜像 `getmeili/meilisearch:v1.49.0`，当前**无运行容器**（7700 未监听） |
-| 现状（M0 落地后更新） | 聚合多模块骨架已建（core / autoconfigure / starter，`maven.compiler.release=17`、依赖钉版）；OpenSpec 已启用；git 仓库已建立并推送 `github.com/LamSpace/meili-orm`（master） |
+| 现状（M4 收口后更新） | 全 reactor 14 模块落地（core / autoconfigure / starter / serializer-jackson3 / repository / it 三矩阵 / examples 三件），`mvn clean verify` 全绿；OpenSpec 已启用，M0–M4 变更归档、主 specs 20 能力；git 仓库推送 `github.com/LamSpace/meili-orm`（master）；CI 通道已建立（`.github/workflows/verify.yml` 全量验证 + 门禁） |
 
 ---
 
@@ -407,14 +407,14 @@ M0 spike 输出要求：spikeA（JsonHandler 注入兼容性）、spikeB（raw�
 
 ---
 
-## 9. 待终审决策（文档批准前需拍板）
+## 9. 终审决策记录（已拍板）
 
-| # | 决策 | 建议 |
+| # | 决策 | 结论 |
 |---|---|---|
 | D1 | 当前目录**非 git 仓库**：是否 `git init` 并把本设计文档作为首个提交？ | **已实施**：git init 完成，首提交含本文档，远程 `github.com/LamSpace/meili-orm`（master） |
-| D2 | 坐标/命名：groupId `io.github.lamspace`、包根 `io.github.lamspace.meili`、starter 名 `spring-boot-starter-meili-orm` | 如无异议即定稿 |
-| D3 | v1 排除项（§1.2 表：SpEL 动态索引名、@Version、响应式等）确认 | 建议确认 |
-| D4 | 文档语言：正文中文，API javadoc 英文 | 建议是 |
+| D2 | 坐标/命名：groupId `io.github.lamspace`、包根 `io.github.lamspace.meili`、starter 名 `spring-boot-starter-meili-orm` | **已定稿（2026-09-26）**：实现与发布坐标与此一致 |
+| D3 | v1 排除项（§1.2 表：SpEL 动态索引名、@Version、响应式等）确认 | **已确认（2026-09-26）**：排除项维持；其中"审计"一项按"归入 M4 之后再评估"到期评估后另行立项落地，不再属排除面 |
+| D4 | 文档语言：正文中文，API javadoc 英文 | **已确认（2026-09-26）**：现状即如此执行 |
 
 ---
 
