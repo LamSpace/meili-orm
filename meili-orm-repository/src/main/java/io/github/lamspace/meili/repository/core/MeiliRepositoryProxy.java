@@ -5,6 +5,7 @@ import io.github.lamspace.meili.core.mapping.MeiliMappingContext;
 import io.github.lamspace.meili.core.mapping.MeiliPersistentEntity;
 import io.github.lamspace.meili.core.operations.MeiliSearchOperations;
 import io.github.lamspace.meili.repository.MeiliRepository;
+import io.github.lamspace.meili.repository.query.MeiliAnnotatedQueries;
 import io.github.lamspace.meili.repository.query.MeiliDerivedQueries;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -115,6 +116,9 @@ public final class MeiliRepositoryProxy implements InvocationHandler {
      */
     private static MethodInvoker invokerFor(Method m, MeiliPersistentEntity entity,
                                             MeiliSearchOperations operations) {
+        if (m.isAnnotationPresent(io.github.lamspace.meili.repository.MeiliQuery.class)) {
+            return MeiliAnnotatedQueries.bootstrap(m, entity, operations)::invoke;
+        }
         return MeiliDerivedQueries.bootstrap(m, entity, operations)::invoke;
     }
 
