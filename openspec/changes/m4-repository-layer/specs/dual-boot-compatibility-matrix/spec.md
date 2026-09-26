@@ -4,7 +4,7 @@
 
 ### Requirement: 矩阵版本哨兵
 
-两模块的 IT SHALL 各含运行时版本哨兵断言：`SpringBootVersion.getVersion()` 分别以 `3.`、`4.` 开头；repository 启用后追加 `SpringDataPackageVersion.getVersion()` 断言——boot3 侧以 `3.5.` 开头、boot4 侧以 `4.0.` 开头（证明两代 commons 运行时各自成立）；哨兵失败信息 SHALL 可定位为"矩阵版本钉定漂移"而非普通断言失败。
+两模块的 IT SHALL 各含运行时版本哨兵断言：`SpringBootVersion.getVersion()` 分别以 `3.`、`4.` 开头；repository 启用后追加 commons 代结构哨兵——以两代间唯一存在性差异的类 `org.springframework.data.core.PropertyPath`（仅 commons 4.x 存在，spike 实证）做 `Class.forName` 存在性断言（boot3 侧期望不存在、boot4 侧期望存在）；commons 制品未暴露公开版本类，结构断言即两代运行时的判证；哨兵失败信息 SHALL 可定位为"矩阵版本钉定漂移"而非普通断言失败。
 
 #### Scenario: 钉定漂移即红
 

@@ -1,0 +1,24 @@
+=== 5.2 矩阵源码双份核对（仅哨兵期望值差异）===
+18c18
+<  * 双代矩阵仓库用例：commons 3.5.13（Boot 3.5 代）运行时下，starter 装配 + repository 模块
+---
+>  * 双代矩阵仓库用例：commons 4.0.3（Boot 4 代）运行时下，starter 装配 + repository 模块
+21c21
+<  * <p>与 {@code it-boot4} 同名文件除两个哨兵期望值外逐字节一致（矩阵源码双份复制规则）。
+---
+>  * <p>与 {@code it-boot3} 同名文件除两个哨兵期望值外逐字节一致（矩阵源码双份复制规则）。
+27c27
+<     private static final String EXPECTED_BOOT_MAJOR = "3.";
+---
+>     private static final String EXPECTED_BOOT_MAJOR = "4.";
+30c30
+<     private static final boolean EXPECT_GENERATION_4 = false;
+---
+>     private static final boolean EXPECT_GENERATION_4 = true;
+(diff exit=1)
+MatrixBook.java identical
+MatrixBookRepository.java identical
+=== boot3 运行 ===
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.301 s -- in io.github.lamspace.meili.it.MeiliRepositoryMatrixIT
+=== boot4 运行 ===
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.392 s -- in io.github.lamspace.meili.it.MeiliRepositoryMatrixIT

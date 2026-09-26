@@ -22,6 +22,8 @@
         <dependency><groupId>org.testcontainers</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
         <!-- 派生查询语法/属性桥常哨兵源所用 commons 域面（本模块解析为 Boot 4 代 commons）。 -->
         <dependency><groupId>org.springframework.data</groupId><artifactId>spring-data-commons</artifactId><scope>test</scope></dependency>
+        <!-- 矩阵仓库用例：opt-in 坐标显式引入（starter 聚合面零变化）。 -->
+        <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-repository</artifactId><version>${project.version}</version><scope>test</scope></dependency>
     </dependencies>
     <build><plugins>
         <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId>

@@ -34,8 +34,8 @@
 
 ## 5. 双代矩阵（L4）
 
-- [ ] 5.1 it-boot3/it-boot4 各加 repository 测试依赖与 `MeiliRepositoryIT`（源码复制式，除哨兵外逐字节一致）：save→派生（等值/IN/Between/Containing/OrderBy）→分页→`@MeiliQuery`→deleteById 真机往返，两代命中集合与顺序一致断言；哨兵追加 `SpringDataPackageVersion`（boot3 侧 `3.5.`、boot4 侧 `4.0.`）；验证：`mvn -s /home/lam/repo/settings.xml -q -pl it/meili-orm-it-boot3,it/meili-orm-it-boot4 -am verify` 双绿
-- [ ] 5.2 diff 核对两模块 IT 源文件（仅哨兵期望值差异）；验证：diff 输出归档到本 change 目录
+- [x] 5.1 it-boot3/it-boot4 各加 repository 测试依赖与 `MeiliRepositoryIT`（源码复制式，除哨兵外逐字节一致）：save→派生（等值/IN/Between/Containing/OrderBy）→分页→`@MeiliQuery`→deleteById 真机往返，两代命中集合与顺序一致断言；哨兵追加 commons 结构断言（`org.springframework.data.core.PropertyPath` 存在性：boot3 侧不存在、boot4 侧存在；commons 无公开版本类，见 5.2 记录）；验证：`mvn -s /home/lam/repo/settings.xml -q -pl it/meili-orm-it-boot3,it/meili-orm-it-boot4 -am verify` 双绿
+- [x] 5.2 diff 核对两模块 IT 源文件（仅哨兵期望值差异）；验证：diff 输出归档到本 change 目录
 
 ## 6. 文档（starter-documentation）
 
