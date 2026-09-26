@@ -104,6 +104,7 @@ public interface BookRepository extends MeiliRepository<Book, Long> {
 | 生命周期回调 | `BeforeConvert` / `AfterSave` / `AfterLoad` / `AfterConvert` 四件套，声明 bean 即生效 |
 | 可插拔序列化 | `MeiliDocumentSerializer` 接口；默认 Jackson 2 实现；Boot 4 场景可加 `meili-orm-serializer-jackson3` 模块接管 |
 | Repository 层（opt-in） | 显式引入 `meili-orm-repository` 坐标即得 `MeiliRepository`：CRUD、方法名派生查询（等值/IN/区间/比较/布尔/Not/Containing→全文/OrderBy/TopN/分页）、`@MeiliQuery` 注解查询、启动期投影名桥+角色预检 fail-fast；starter 聚合不含该坐标，`meili.repositories.enabled` 默认开 |
+| Testcontainers 集成（opt-in） | 显式引入 `meili-orm-testcontainers` 坐标即得 `MeiliSearchContainer` 类型化容器（钉版 v1.49.0、`/health` 就绪等待、镜像/密钥可覆盖）与 `@ServiceConnection` 一行注解桥接（仅产 `MeiliConnectionDetails`，用户自有 bean 时桥接退避；Boot 3.5.x/4.x 双代支持）；starter 聚合不含该坐标，详见 [Testcontainers 集成](docs/testcontainers.md) |
 | 双代兼容护栏 | `it-boot3`（3.5.16）/ `it-boot4`（4.0.3）常驻编译运行矩阵 + 版本哨兵（含 commons 结构哨兵） |
 | 异常体系 | `MeiliOrmException` 根；`MeiliMappingException`（启动期 fail-fast）/ `MeiliIndexAccessException`（服务端错误透传 code）/ `MeiliTaskTimeoutException` |
 
@@ -156,4 +157,5 @@ mvn -s /home/lam/repo/settings.xml clean verify
 - [映射指南](docs/mapping-guide.md)：注解 → MeiliSearch 概念/settings 对照、投影管线、回调
 - [限制清单](docs/limitations.md)：已实证限制与 workaround
 - [Boot 3 → 4 升级说明](docs/boot3-to-boot4.md)：双代兼容策略、Jackson3 可选模块、依赖升级检查清单
+- [Testcontainers 集成](docs/testcontainers.md)：类型化容器、`@ServiceConnection` 一行注解、手工桥接样例、双代支持矩阵
 - [Spike 结论](docs/spikes.md)：读写通道架构决策的实证记录（JsonHandler 不兼容、raw 通道精度契约）

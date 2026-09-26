@@ -22,7 +22,7 @@
 
 ## Impact
 
-- **代码**：新模块 `meili-orm-testcontainers`（根 pom `<modules>` 追加）；core / autoconfigure / starter / repository / jackson3 零改动。
+- **代码**：新模块 `meili-orm-testcontainers`（根 pom `<modules>` 追加）；`MeiliConnectionDetails` seam 加 1 行 `extends` Boot 的 `ConnectionDetails` 标记接口（服务连接工厂泛型界要求，行为零变化，boot3 桥接形态拍板）；core / starter / repository / jackson3 零改动。
 - **测试**：模块自身 L2（桥接 bean 产出）+ L4 双代真机 IT（若 spike 走 (a) 则双变体各测；(c) 降级则单代容器 IT + 样例）。
 - **构建/发布**：新模块属产品面（可发布坐标），Javadoc 与引用门禁生效；不引入 spring-data-commons。
 - **网络**：Boot 4 侧 testcontainers 支持构件本地仓库缺席，首跑需联网拉取（同 it-boot3 首拉先例）。

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>io.github.lamspace</groupId><artifactId>meili-orm</artifactId><version>1.0-SNAPSHOT</version></parent>
+    <artifactId>meili-orm-testcontainers</artifactId>
+    <name>meili-orm-testcontainers</name>
+    <description>meili-orm Testcontainers 集成：类型化 MeiliSearch 服务容器与 Spring Boot 服务连接桥接（仅产出 MeiliConnectionDetails）。同一 jar 兼容 Boot 3.5.x 与 4.x。</description>
+    <dependencies>
+        <dependency><groupId>io.github.lamspace</groupId><artifactId>meili-orm-spring-boot-autoconfigure</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-autoconfigure</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-testcontainers</artifactId></dependency>
+        <dependency><groupId>org.testcontainers</groupId><artifactId>testcontainers</artifactId></dependency>
+        <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.assertj</groupId><artifactId>assertj-core</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.testcontainers</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+    </dependencies>
+    <build><plugins>
+        <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId>
+            <executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions></plugin>
+        <!-- spring-data-commons 隔离护栏：仅 meili-orm-repository 模块允许依赖 commons。 -->
+        <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-enforcer-plugin</artifactId><version>3.5.0</version>
+            <executions><execution><id>ban-spring-data</id><goals><goal>enforce</goal></goals>
+                <configuration><rules><bannedDependencies>
+                    <excludes><exclude>org.springframework.data:*</exclude></excludes>
+                    <searchTransitive>true</searchTransitive>
+                    <message>隔离纪律破坏：本模块 classpath 出现 org.springframework.data 坐标（commons 唯一合法落点为 meili-orm-repository）</message>
+                </bannedDependencies></rules><fail>true</fail></configuration>
+            </execution></executions></plugin>
+    </plugins></build>
+</project>
