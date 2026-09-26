@@ -1,173 +1,121 @@
-# meili-orm 限制清单
+[中文](zh-CN/limitations.md)
 
-每条都是已实证的行为边界（对应测试/哨兵标注在括号内），并给出 workaround。
-承诺范围之外的能力见 README「非目标」。
+# meili-orm Limitations
 
-## 1. 连接/读超时不可配置
+Every item below is an empirically verified behavioral boundary (the test or sentinel that pins it is named in parentheses), and each carries a workaround. For capabilities outside the promised scope, see the [Non-Goals](../README.md) section in the README.
 
-官方 SDK 的 `Config` 在构造期自建 OkHttpClient，超时与连接池**没有注入口**
-（对 meilisearch-java 0.21.0 的构造面实测复核；源码直读 + spike 记录见 docs/spikes.md）。
+## 1. Connection and read timeouts are not configurable
 
-**Workaround**：需要精细网络控制时，自行构造 `com.meilisearch.sdk.Client` bean
-（meili-orm 的自动配置 `@ConditionalOnMissingBean` 会让位给用户 Client），或向 SDK
-上游提注入 OkHttpClient 的 feature request。
+The official SDK's `Config` builds its own `OkHttpClient` at construction time, and there is **no injection point** for timeouts or connection pooling. This was re-verified against the meilisearch-java 0.21.0 constructor surface by direct source reading: none of the `Config` constructors accepts an HTTP client.
 
-## 2. count 语义：整索引计数
+**Workaround**: if you need fine-grained network control, construct a `com.meilisearch.sdk.Client` bean yourself — meili-orm's auto-configuration is guarded by `@ConditionalOnMissingBean` and yields to a user-supplied `Client`. Alternatively, file a feature request upstream asking the SDK to accept an injected `OkHttpClient`.
 
-`operations.count(Type)` 直连 `GET /indexes/{uid}/stats` 取 `numberOfDocuments`，
-**不支持带 filter 的计数**（`POST documents/fetch` 的 total 语义在该端点不存在）。
+## 2. Count semantics: whole-index counting
 
-另注：`GET documents/count` 路由在钉版服务端代际实测被 `documents/{id}` 捕获为
-`document_not_found` 而不可用，故走 stats——该事实由真机 IT 覆盖。
+`operations.count(Type)` calls `GET /indexes/{uid}/stats` directly and returns `numberOfDocuments`. **Filtered counting is not supported** — the `total` semantics of `POST documents/fetch` simply do not exist on that endpoint.
 
-**Workaround**：带条件计数用 `search`（空 `q` + filter，offset 分页 `limit(1)`，
-勿设 page/hitsPerPage——两套分页混用会被查询 IR 拒绝）读 `getEstimatedTotalHits()`。
+Also note: on the pinned server generation, the `GET documents/count` route is unusable — the request is swallowed by the `documents/{id}` route and answered as `document_not_found`, which is why counts go through `stats` instead. A live-server integration test pins this fact.
 
-## 3. multiSearch v1 串行执行
+**Workaround**: for conditional counts, run `search` with an empty `q` plus a filter and offset paging via `limit(1)` (do not set `page`/`hitsPerPage` — mixing the two paging models is rejected by the query IR), then read `getEstimatedTotalHits()`.
 
-`multiSearch(List<MeiliQuery>, Type)` 逐条委托 `search`，无并发（javadoc 已标注）。
-结果顺序与入参查询顺序一致。
+## 3. multiSearch executes serially in v1
 
-**Workaround**：调用方并行化，或等后续版本提供批量端点适配。
+`multiSearch(List<MeiliQuery>, Type)` delegates to `search` one query at a time, with no concurrency (as noted in the javadoc). Result order matches the order of the input queries.
 
-## 4. Boot 4 下默认序列化通道是"自建 Jackson 2 实例"
+**Workaround**: parallelize at the call site, or wait for a batched-endpoint adapter in a later version.
 
-meili-orm 主模块序列化基于 Jackson 2；Boot 4 应用的容器 ObjectMapper 默认是 Jackson 3，
-此时默认实现找不到 Jackson 2 容器 bean，**自建实例**——行为正确，但用户在 Boot 4 上
-对 Jackson 2 的全局定制不会自动传导（Boot 3 上容器 Jackson 2 mapper 会被优先采用）。
+## 4. On Boot 4 the default serialization channel is a self-built Jackson 2 instance
 
-**Workaround**：需要 Jackson 3 语义（接管容器 ObjectMapper）时加依赖
-`io.github.lamspace:meili-orm-serializer-jackson3`（"加依赖即接管"，见
-[boot3-to-boot4.md](boot3-to-boot4.md)）；或自行注册 `MeiliDocumentSerializer` bean，
-自动配置整体让位。
+Core serialization in meili-orm is built on Jackson 2. A Boot 4 application's container `ObjectMapper` defaults to Jackson 3, so the default implementation finds no Jackson 2 container bean and **builds its own instance**. Behavior is correct either way, but your global Jackson 2 customizations on Boot 4 are not propagated automatically (on Boot 3, the container's Jackson 2 mapper is picked up in preference).
 
-## 5. 写操作默认异步：写后不立即可查
+**Workaround**: for Jackson 3 semantics (taking over the container `ObjectMapper`), add the dependency `io.github.lamspace:meili-orm-serializer-jackson3` — "add the dependency, it takes over"; see [boot3-to-boot4.md](boot3-to-boot4.md). Alternatively, register your own `MeiliDocumentSerializer` bean and the auto-configuration yields entirely.
 
-MeiliSearch 全部写操作（文档/settings/索引增删）是异步任务，立即返回 taskUid。
-`meili.wait-task=false`（默认）时 `save` 返回不代表可检索。
+## 5. Writes are asynchronous by default: not queryable immediately
 
-**Workaround**：开 `meili.wait-task=true`（"写后可查"语义，超时 `meili.wait-timeout`），
-或保存后显式 `operations.awaitTask(taskUid)`（返回任务 uid 的 API：`createIndex` /
-`applySettings`；`awaitTask` 超时抛 `MeiliTaskTimeoutException`）。
+Every Meilisearch write (documents, settings, index creation/deletion) is an asynchronous task that returns a `taskUid` immediately. With `meili.wait-task=false` (the default), `save` returning does not mean the document is searchable.
 
-## 6. 修改 filterable/sortable 触发服务端全量重建
+**Workaround**: turn on `meili.wait-task=true` for write-then-read semantics (bounded by `meili.wait-timeout`), or call `operations.awaitTask(taskUid)` explicitly after saving. The APIs that return a task uid are `createIndex` / `applySettings`; `awaitTask` throws `MeiliTaskTimeoutException` on timeout.
 
-settings 中 `filterableAttributes` / `sortableAttributes` 变更会让 MeiliSearch **重建
-整个索引**：数据量大时任务分钟级起步。`sync-settings + apply` 检出涉这些键的漂移时会
-输出明确的代价 WARN，但不拦截执行。
+## 6. Changing filterable/sortable triggers a full server-side rebuild
 
-**Workaround**：日常用默认 `create-if-missing`（对已存在索引只报告不写入）；需要变更
-角色时选迁移窗口显式切 `sync-settings + apply` 并配 `wait-timeout` 放宽；不可接受
-重建抖动的环境用 `fail` 策略把漂移变成启动门禁，人工走迁移脚本处置。
+A change to `filterableAttributes` / `sortableAttributes` in settings makes Meilisearch **rebuild the entire index**: on large datasets the task takes minutes or more. `sync-settings + apply` detects drift involving these keys and prints an explicit cost WARN, but it does not block execution.
 
-## 7. 回调 bean 不能用 lambda 声明泛型目标类型
+**Workaround**: day to day, keep the default `create-if-missing` (for an existing index it only reports drift, never writes); when a role change is genuinely needed, pick a migration window, switch to `sync-settings + apply` explicitly, and relax `wait-timeout`; in environments that cannot tolerate rebuild jitter, use the `fail` policy to turn drift into a startup gate and apply the change through a manual migration script.
 
-回调注册表从实现类的**泛型签名**解析目标实体；lambda 实例的类型参数被 JVM 擦除，
-注册即抛 `MeiliMappingException`（启动期暴露，非静默失效）。
+## 7. Callback beans cannot express the target type with a lambda
 
-**Workaround**：以命名类或匿名内部类实现四件套接口（推荐，见映射指南示例）；确需
-lambda 时用 `MeiliEntityCallbacks.register(Book.class, (BeforeConvertCallback<Book>) ...)`
-显式传实体类型并自行注册进 registry。
+The callback registry resolves the target entity from the **generic signature** of the implementation class. A lambda's type parameters are erased by the JVM, so registering one throws `MeiliMappingException` at startup — a loud failure, never a silent no-op.
 
-## 8. 服务端数值语义的精度边界（f64 操作面）
+**Workaround**: implement the four callback interfaces with a named class or an anonymous inner class (recommended; see the examples in the [mapping guide](mapping-guide.md)). If a lambda is truly needed, use `MeiliEntityCallbacks.register(Book.class, (BeforeConvertCallback<Book>) ...)` to pass the entity type explicitly and register into the registry yourself.
 
-文档存储与回显保真：主键/数值原样写读经 raw 通道逐位无损（`9007199254740993` 由哨兵
-IT 常驻验证）。但 MeiliSearch 对数值字段的**排序、过滤比较与 facets 统计按浮点语义**
-工作（服务端文档声明约 15 位有效十进制）：超大整数参与 sort/range-filter 时的边界
-行为由服务端决定，不受 meili-orm 控制。
+## 8. Precision boundary of server-side numeric semantics (the f64 surface)
 
-**Workaround**：金额等十进制敏感值用 Double 可精确表达的量级或字符串字段承载；
-超大整数主键仅做等值定位（本库主键路径无损），不作为 range 排序键。
+Storage and echo-back are faithful: primary keys and numeric values written and read through the raw channel survive bit for bit — the sentinel IT `SpikeBRawJacksonPrecisionIT` keeps `9007199254740993` under permanent verification. But Meilisearch's **sorting, filter comparisons, and facet statistics work on float semantics** (server documentation states about 15 significant decimal digits): boundary behavior when very large integers take part in sort or range-filter is decided by the server and is outside meili-orm's control.
 
-## 9. SDK 传递依赖进入应用 classpath
+**Workaround**: carry decimal-sensitive values such as money either in a magnitude `Double` can represent exactly or in string fields; use oversized integer primary keys for equality lookups only (the primary-key path in this library is lossless), never as a range or sort key.
 
-meilisearch-java 以 `api` 作用域传递 okhttp（5.3.2；其 Maven 构件的 JVM 类在
-`okhttp-jvm`，本工程已显式处理空壳问题）、okio、gson（2.13.2）。与宿主应用的
-okhttp3/gson 版本治理可能冲突。
+## 9. The SDK's transitive dependencies land on the application classpath
 
-**Workaround**：常规 ` <exclusions>` 处理或 dependencyManagement 统一钉版。
-**不要**排除 gson——SDK 内部模型解析固定依赖默认 `GsonJsonHandler`（spikeA 实证：
-自定义 JsonHandler 与 SDK 内部 typed 模型不兼容，实体通道已全量走 raw 字符串，
-但 SDK 自身环节仍用 Gson）。
+meilisearch-java brings okhttp (5.3.2), okio, and gson (2.13.2) onto the classpath in `api` scope — and the okhttp 5.3.2 Maven artifact is a metadata-only shell whose JVM classes live in `okhttp-jvm` (this project already handles that empty-shell problem explicitly). These can collide with the host application's okhttp3/gson version governance.
 
-## 10. 索引删除/文档删除同样受异步任务模型约束
+**Workaround**: the usual `<exclusions>` or a `dependencyManagement` pin. **Do not** exclude gson — the SDK's internal model parsing depends on the default `GsonJsonHandler`, as the sentinel IT `SpikeAJsonHandlerIT` verified empirically: a custom `JsonHandler` is incompatible with the SDK's internal typed models. meili-orm's own entity channel goes entirely through raw strings, but the SDK's internal steps still use Gson.
 
-`deleteIndex` / `deleteAll` / `deleteById` 返回即受理完成、未终态。`wait-task=true`
-时上述方法内部等待；否则用 `awaitTask`。
+## 10. Index and document deletion obey the same async task model
+
+`deleteIndex` / `deleteAll` / `deleteById` return when the request is accepted, not when the task reaches a terminal state. With `wait-task=true` these methods wait internally; otherwise use `awaitTask`.
 
 ---
 
-# Repository 层
+## Repository layer
 
-## 11. `Page.getTotalElements()` 是估算值
+## 11. `Page.getTotalElements()` is an estimate
 
-MeiliSearch 检索响应给出的是 `estimatedTotalHits`/`totalHits`（视服务端配置其一），
-不是精确总数；`Page` 的分页总页数据此计算。另注意 commons `PageImpl` 的固有语义：
-总数会被抬高到"至少覆盖当前页"（`offset + 本页条数` 更大时）。需要精确计数用
-`count()`（stats 通道，整索引）。
+Meilisearch search responses report `estimatedTotalHits`/`totalHits` (whichever the server configuration produces), not an exact total, and `Page`'s paging data is computed from it. On top of that, commons `PageImpl` has its own inherent semantics: the total is raised to at least cover the current page (when offset + hits on this page is larger). Use `count()` (the stats channel, whole index) for an exact count.
 
-**workaround**：面向用户展示"约 N 条/更多"文案；精确需求走 `count()` 或业务侧计数。
+**Workaround**: render user-facing copy as "about N results / more"; route exact requirements through `count()` or application-side counting.
 
-## 12. `findAll()` / `findAll(Sort)` 受 maxTotalHits 截断
+## 12. `findAll()` / `findAll(Sort)` are truncated by maxTotalHits
 
-documents/fetch 通道单次读取上限为索引 `pagination.maxTotalHits`（默认 1000）。
-仓库实现取满即记 WARN 声明"可能截断"，不会静默假称全量。
+The documents/fetch channel reads at most the index's `pagination.maxTotalHits` (default 1000) in a single pass. When the repository implementation fills that ceiling it logs a WARN declaring the result may be truncated — it never silently claims to have returned everything.
 
-**workaround**：全量遍历用分页游标（`findAll(PageRequest.of(n, size))`）或
-`DocumentsFetchQuery` 直连 Operations。
+**Workaround**: for full traversal, page with a cursor (`findAll(PageRequest.of(n, size))`) or drive `DocumentsFetchQuery` directly through Operations.
 
-## 13. `…Containing` / `…Like` 是全文近似，不是子串匹配
+## 13. `…Containing` / `…Like` are full-text approximations, not substring matches
 
-MeiliSearch 无子串 DSL，仓库将其渲染为全文 `q=值` + `attributesToSearchOn=[属性]`：
-命中受分词、typo 容忍与 rankingRules 影响（如 `findByTitleContaining("三体")` 走全文
-通道），与 Java `String.contains` 语义不完全一致；Like 的通配符在 v1 被忽略。
+Meilisearch has no substring DSL, so the repository layer renders these as a full-text `q=<value>` plus `attributesToSearchOn=[property]`. Hits are shaped by tokenization, typo tolerance, and rankingRules — e.g. `findByTitleContaining("三体")` goes through the full-text channel — so the result does not match Java's `String.contains` semantics. Like wildcards are ignored in v1.
 
-**workaround**：需要确定性前/后缀匹配的服务端能力（BEGINS WITH 等）不在 v1 支持面；
-用 Operations 手写 `MeiliQuery` 或应用侧二次过滤。
+**Workaround**: deterministic prefix/suffix matching requires server-side facilities of the BEGINS WITH kind, which are outside v1's support surface; hand-write a `MeiliQuery` through Operations, or post-filter application-side.
 
-## 14. `deleteAll(Iterable)` / `deleteAllById(Iterable)` 逐条请求
+## 14. `deleteAll(Iterable)` / `deleteAllById(Iterable)` send one request per element
 
-v1 每条删除一个请求（每个一条任务），大批量删除成本高。
+In v1 each element is its own delete request (and its own task), so bulk deletion is expensive.
 
-**workaround**：整索引清空用 `deleteAll()`；批量需求关注后续版本网关批量化。
+**Workaround**: to clear a whole index use `deleteAll()`; watch for gateway batching in a later release.
 
-## 15. 派生查询关键字为子集，且角色预检只看实体声明
+## 15. Derived-query keywords are a subset, and the role pre-check looks only at entity declarations
 
-不支持：`StartingWith`/`EndingWith`/`Regex`/`Null`/`Empty`/`Exists`/`IgnoreCase`、
-`Distinct` 修饰符、**属性缩写**、count/exists/delete 派生、DTO 投影、`Stream` 返回
-（完整清单与替代写法见映射指南）。filter/sort 目标属性必须在实体上声明
-`@MeiliField(filterable/sortable/searchable)`，仅经 `@MeiliSetting` 透传声明的角色
-**不满足预检**（启动失败，消息会提示这一点）——实体声明是唯一判定源。
+Not supported: `StartingWith`/`EndingWith`/`Regex`/`Null`/`Empty`/`Exists`/`IgnoreCase`; the `Distinct` modifier; **abbreviated property names**; count/exists/delete derivations; DTO projection; `Stream` returns (the [mapping guide](mapping-guide.md) has the full list and alternative spellings). A filter/sort target property must be declared on the entity with `@MeiliField(filterable/sortable/searchable)`; a role that exists only via `@MeiliSetting` pass-through **does not satisfy the pre-check** — startup fails, and the failure message says exactly this. The entity declaration is the single source of truth for the pre-check.
 
-**workaround**：透传场景请同时补字段注解（两份声明一致是刻意的冗余检查）；
-超出子集的条件用 `@MeiliQuery` 手写。
+**Workaround**: in pass-through scenarios, declare both sides — field annotation and settings pass-through agreeing is a deliberate redundancy check. Anything beyond the supported subset goes through a hand-written `@MeiliQuery`.
 
-## 16. 方法名条件与 `@MeiliQuery` 共存时仅排序/top 来自方法名
+## 16. With `@MeiliQuery` present, only ordering/top-N come from the method name
 
-注解声明后，方法名中其余条件段被忽略（启动 WARN 列出），静默共存可能导致
-"改了注解忘了改名"的分叉。
+Once the annotation declares the query, the remaining condition segments in the method name are ignored (a startup WARN lists them). The silent coexistence can drift into "edited the annotation, forgot the method name".
 
-**workaround**：注解方法请把方法名条件段删净，只保留 `OrderBy`/`Top` 后缀。
+**Workaround**: on annotated methods, strip the condition segments out of the name entirely and keep only the `OrderBy`/`Top` suffixes.
 
 ---
 
-# 实体审计
+## Entity auditing
 
-## 17. created 为空值填充的近似语义，不判定服务端存在性
+## 17. created uses fill-if-absent semantics and never judges server-side existence
 
-MeiliSearch 无服务端时间戳，upsert 也无"插入 vs 更新"的可判定性（同主键覆盖，无
-ETag/seq 等价物）。`@CreatedDate` 因此按"现值为空才填充"实现（对象 `null`、原始 `long`
-的 `0` 哨兵）：客户端新建但携带非空 created 值的实体，即便服务端其实是新行，该值也
-原样写入、不被改写；已带值的实体再次保存同样保留原 created
-（`DefaultMeiliSearchOperationsAuditTest` / `MeiliAuditIT` 逐条验证该语义）。
+Meilisearch has no server-side timestamps, and an upsert offers no way to tell "insert" from "update" (the same primary key simply overwrites; there is no ETag/sequence-number equivalent). `@CreatedDate` is therefore implemented as "populate only when the current value is empty" (a `null` object, or the `0` sentinel for a primitive `long`): an entity built on the client that carries a non-empty created value gets that value written as-is and never rewritten — even when the row is genuinely new on the server — and re-saving an entity that already carries a value keeps the original created (`DefaultMeiliSearchOperationsAuditTest` / `MeiliAuditIT` verify this clause by clause).
 
-**workaround**：需要严格"首次写入"语义时在业务侧构造判定（仅创建路径设置审计字段），
-或引入外部行版本号自行比对。
+**Workaround**: for strict "first write" semantics, make the determination on the business side (set audit fields only on the create path), or introduce an external row version and compare.
 
-## 18. 无 createdBy 类审计语义
+## 18. No createdBy-style auditing
 
-不提供 `@CreatedBy` / `@LastModifiedBy` / `AuditorAware` 等价物：库内没有认证上下文
-输入源，"操作人"无法在客户端写入路径内判定，不臆造。时间戳审计即 v1 审计的全部。
+There is no `@CreatedBy` / `@LastModifiedBy` / `AuditorAware` equivalent: the library has no authentication-context input source, and "who acted" cannot be determined within a client-side write path, so we do not invent one. Timestamp auditing is the entirety of v1 auditing.
 
-**workaround**：应用侧在 `BeforeConvertCallback` 中填充自有操作人字段——回调执行时
-审计填充已完成，看到的是最终时间值。
+**Workaround**: populate your own operator fields in a `BeforeConvertCallback` on the application side — callbacks run after audit population has completed, so they see the final timestamp values.

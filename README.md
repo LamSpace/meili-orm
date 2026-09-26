@@ -1,14 +1,42 @@
 # meili-orm
 
-MeiliSearch 官方 Java SDK（`com.meilisearch.sdk:meilisearch-java`）之上的类 Spring Data
-Elasticsearch 风格 Spring Boot Starter：注解声明式映射、settings 投影自动同步、模板化
-Operations、自动配置——**同一个 jar 同时兼容 Spring Boot 3.5.x 与 4.x**。
+[中文](README.zh-CN.md)
 
-- 构建 JDK 25，字节码基线 Java 17（`maven.compiler.release=17`）
-- MeiliSearch 服务端：v1.x；集成测试与演示钉 **v1.49.0**
-- 许可证：Apache License 2.0
+A Spring Data Elasticsearch–style **Spring Boot starter for [Meilisearch](https://www.meilisearch.com/)**,
+built on top of the official Java SDK (`com.meilisearch.sdk:meilisearch-java`):
+annotation-driven mapping, automatic settings projection, templated operations and
+auto-configuration — **one jar serving both Spring Boot 3.5.x and 4.x**.
 
-## 装配
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![CI](https://github.com/LamSpace/meili-orm/actions/workflows/verify.yml/badge.svg)](https://github.com/LamSpace/meili-orm/actions/workflows/verify.yml)
+[![Java](https://img.shields.io/badge/Java-17%2B-orange)](#-build--test)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x%20%7C%204.x-brightgreen)](docs/boot3-to-boot4.md)
+[![Meilisearch](https://img.shields.io/badge/Meilisearch-v1.x-ff59a1)](https://www.meilisearch.com/docs)
+
+## TL;DR
+
+Annotate a record, inject `MeiliSearchOperations`, search. The starter projects your field-role
+annotations into Meilisearch settings at startup, keeps SDK types out of your business code,
+loses no `Long` primary-key precision (raw JSON channel), and runs on one artifact across two
+Spring Boot generations.
+
+**Why not the plain SDK?** The SDK gives you HTTP bindings; it does not give you entity mapping,
+settings management, task-aware write semantics, or Spring wiring. **Why not
+`spring-data-meilisearch`?** That community project re-implements Spring Data internals; meili-orm
+mirrors the Spring Data Elasticsearch *programming model* (Operations template + optional
+repository layer) while staying a third-party starter with a smaller contract surface.
+
+## 📦 Install
+
+> **Not yet published to Maven Central.** Until the first release, install from source:
+
+```bash
+git clone https://github.com/LamSpace/meili-orm.git
+cd meili-orm
+mvn -DskipTests install
+```
+
+Then add the starter:
 
 ```xml
 <dependency>
@@ -18,16 +46,16 @@ Operations、自动配置——**同一个 jar 同时兼容 Spring Boot 3.5.x �
 </dependency>
 ```
 
-三行配置即用：
+Three lines of configuration:
 
 ```yaml
 meili:
   url: http://localhost:7700
   api-key: masterKey-xxxxxxxx
-  wait-task: true          # 写后可查（写操作默认异步任务）
+  wait-task: true          # write-then-read consistency (Meilisearch writes are async tasks)
 ```
 
-## 用起来
+## 🚀 Quick Start
 
 ```java
 @MeiliDocument(indexName = "books")
@@ -40,10 +68,10 @@ public record Book(
 
 @Service
 class BookService {
-    private final MeiliSearchOperations operations;      // 自动配置注入
+    private final MeiliSearchOperations operations;      // auto-configured
 
     void importOne(Book book) {
-        operations.save(book);                           // upsert；wait-task 下返回即可查
+        operations.save(book);                           // upsert; queryable on return under wait-task
     }
 
     List<Book> search(String q) {
@@ -52,112 +80,127 @@ class BookService {
                 .sort("price:asc")
                 .page(1).hitsPerPage(10)
                 .facets("genre"), Book.class)
-                .getHits();                              // Long 主键逐位无损（raw 通道）
+                .getHits();                              // Long primary keys bit-exact (raw channel)
     }
 }
 ```
 
-启动期 `IndexInitializer` 按 `meili.index.auto-init` 自动建索引并推送注解投影出的
-settings；漂移处置策略见[映射指南](docs/mapping-guide.md)。
+At startup, `IndexInitializer` creates the index and pushes the annotation-projected settings
+according to `meili.index.auto-init`; drift policies are covered in the
+[mapping guide](docs/mapping-guide.md).
 
-### Repository 风格访问（opt-in 坐标）
+### 🗂 Repository-style access (opt-in coordinate)
 
-模板 Operations 之外，显式加入仓库坐标（**不在 starter 聚合内**，按需引入）：
+Beyond the template, add the repository artifact explicitly (**not aggregated by the starter**):
 
 ```xml
 <dependency>
     <groupId>io.github.lamspace</groupId>
     <artifactId>meili-orm-repository</artifactId>
-    <version><!-- 与其余 meili-orm 坐标同版 --></version>
+    <version><!-- same version as the other meili-orm coordinates --></version>
 </dependency>
 ```
 
-接口即注册（应用包下自动扫描；亦可 `@EnableMeiliRepositories` 指定包）：
+Declare an interface and it becomes a bean (auto-scanned under your application package;
+or point at packages with `@EnableMeiliRepositories`):
 
 ```java
 public interface BookRepository extends MeiliRepository<Book, Long> {
 
-    List<Book> findByGenreAndPriceGreaterThan(String genre, Double min);  // 派生 → filter DSL
+    List<Book> findByGenreAndPriceGreaterThan(String genre, Double min);  // derived → filter DSL
 
-    List<Book> findByTitleContaining(String t);                            // → 全文 q + 限定属性
+    List<Book> findByTitleContaining(String t);                            // → full-text q + scoped attributes
 
-    Page<Book> findPageByGenreOrderByPriceAsc(String genre, Pageable pg);  // 分页（总数为估算值）
+    Page<Book> findPageByGenreOrderByPriceAsc(String genre, Pageable pg);  // paging (totals are estimates)
 
-    @MeiliQuery(filter = "price BETWEEN :lo AND :hi")                      // 注解逃生舱
+    @MeiliQuery(filter = "price BETWEEN :lo AND :hi")                      // annotation escape hatch
     List<Book> inRange(@Param("lo") Double lo, @Param("hi") Double hi);
 }
 ```
 
-方法名的属性名按实体投影规则桥接（`title` → `book_title`）；filter/sort 目标属性必须
-已声明对应角色，否则**启动即失败**并给出修复指引。关键字支持/不支持全表、角色预检细则
-见[映射指南](docs/mapping-guide.md)，语义边界见[限制清单](docs/limitations.md)第 11–16 条。
+Property names in method names are bridged through the entity projection (`title` → `book_title`);
+filter/sort targets must declare the corresponding role, otherwise startup **fails fast** with a
+fix hint. The full keyword table and preflight rules are in the
+[mapping guide](docs/mapping-guide.md); semantic boundaries in [limitations](docs/limitations.md)
+items 11–16.
 
-## 功能面
+## ✨ Features
 
-| 能力 | 说明 |
-|---|---|
-| 注解映射 | `@MeiliDocument` / `@MeiliId` / `@MeiliField`（角色声明）/ `@CreatedDate` / `@LastModifiedDate`（时间戳审计，见功能表下一行）/ `@MeiliSetting`（settings 透传），字段排除用 Jackson `@JsonIgnore` |
-| Settings 投影 | "映射"的落地形态：角色注解 → searchable/filterable/sortable/displayedAttributes；铁律**不标注=不声明** |
-| 索引自动初始化 | `auto-init=none / create-if-missing / sync-settings` × `on-settings-drift=warn / apply / fail` |
-| 模板 Operations | `save / saveAll / findById / findAll / deleteById / deleteAll / count`；`search / multiSearch`；`indexExists / createIndex / deleteIndex / applySettings`；`awaitTask / getTask` |
-| 强类型查询 IR | `MeiliQuery`（filter DSL/filterGroup、sort、limit-offset 与 page-hitsPerPage 两套分页、facets、matchingStrategy、distinct、hybrid、`raw` 逃生舱），SDK 类型不泄漏进业务代码 |
-| 生命周期回调 | `BeforeConvert` / `AfterSave` / `AfterLoad` / `AfterConvert` 四件套，声明 bean 即生效 |
-| 时间戳审计 | `@CreatedDate`（空值填充近似）/ `@LastModifiedDate`（每次覆盖）；六类型许可集（`Instant`/三时间类型/`long`/`Long`）非法类型启动失败；POJO 就地写回、record 重建；填充恒先于 `BeforeConvertCallback`；边界见限制清单第 17–18 条 |
-| 可插拔序列化 | `MeiliDocumentSerializer` 接口；默认 Jackson 2 实现；Boot 4 场景可加 `meili-orm-serializer-jackson3` 模块接管 |
-| Repository 层（opt-in） | 显式引入 `meili-orm-repository` 坐标即得 `MeiliRepository`：CRUD、方法名派生查询（等值/IN/区间/比较/布尔/Not/Containing→全文/OrderBy/TopN/分页）、`@MeiliQuery` 注解查询、启动期投影名桥+角色预检 fail-fast；starter 聚合不含该坐标，`meili.repositories.enabled` 默认开 |
-| Testcontainers 集成（opt-in） | 显式引入 `meili-orm-testcontainers` 坐标即得 `MeiliSearchContainer` 类型化容器（钉版 v1.49.0、`/health` 就绪等待、镜像/密钥可覆盖）与 `@ServiceConnection` 一行注解桥接（仅产 `MeiliConnectionDetails`，用户自有 bean 时桥接退避；Boot 3.5.x/4.x 双代支持）；starter 聚合不含该坐标，详见 [Testcontainers 集成](docs/testcontainers.md) |
-| 双代兼容护栏 | `it-boot3`（3.5.16）/ `it-boot4`（4.0.3）常驻编译运行矩阵 + 版本哨兵（含 commons 结构哨兵） |
-| 异常体系 | `MeiliOrmException` 根；`MeiliMappingException`（启动期 fail-fast）/ `MeiliIndexAccessException`（服务端错误透传 code）/ `MeiliTaskTimeoutException` |
-
-### 非目标（本版明确不做）
-
-响应式（MeiliSearch SDK 为同步阻塞）、`@Version` 乐观锁、per-field 类型 mapping /
-analyzer、nested 关联查询、SpEL 动态索引名、审计操作人（`@CreatedBy`/`@LastModifiedBy`）
-与可插拔时钟（v1 时间戳审计为写路径系统时钟填充，见功能表）、连接/读超时配置项（SDK
-硬约束，见限制清单）。
-
-## 配置属性
-
-| 属性 | 默认 | 说明 |
+| Capability | In one line | Details |
 |---|---|---|
-| `meili.enabled` | `true` | 总开关 |
-| `meili.url` | `http://localhost:7700` | 服务地址 |
-| `meili.api-key` | 空 | master key 或 API key |
-| `meili.wait-task` | `false` | 写操作同步等待任务终态 |
-| `meili.wait-timeout` | `5s` | 单次任务等待上限 |
-| `meili.client-agents` | `meili-orm` | User-Agent 附加标识列表（`;` 分隔，追加在 SDK 自身版本 token 之后；配空值回退纯 SDK 默认） |
-| `meili.index.auto-init` | `create-if-missing` | 建索引/同步策略（`none` / `create-if-missing` / `sync-settings`） |
-| `meili.index.on-settings-drift` | `warn` | 漂移处置（`warn` / `apply` / `fail`；仅 `sync-settings` 会真正写入） |
-| `meili.repositories.enabled` | `true` | 引入 `meili-orm-repository` 坐标后是否自动扫描注册仓库接口 |
+| Annotation mapping | `@MeiliDocument` / `@MeiliId` / `@MeiliField` roles / `@MeiliSetting` passthrough; `@JsonIgnore` for exclusion | [mapping guide](docs/mapping-guide.md) |
+| Settings projection | Field roles → searchable/filterable/sortable/displayed arrays; iron rule *no annotation = no declaration* | [mapping guide](docs/mapping-guide.md) |
+| Index auto-initialization | `auto-init=none / create-if-missing / sync-settings` × `on-settings-drift=warn / apply / fail` | [mapping guide](docs/mapping-guide.md) |
+| Templated operations | Documents CRUD, search/multiSearch, index & settings management, task awaiting | javadoc of `MeiliSearchOperations` |
+| Typed query IR | `MeiliQuery`: filter DSL + groups, sort, two paging styles, facets, hybrid, `raw` escape hatch — no SDK leakage | javadoc of `MeiliQuery` |
+| Lifecycle callbacks | `BeforeConvert` / `AfterSave` / `AfterLoad` / `AfterConvert`, declared beans take effect | [mapping guide](docs/mapping-guide.md) |
+| Timestamp auditing | `@CreatedDate` (fill-if-empty) / `@LastModifiedDate` (always); illegal types fail startup | [limitations](docs/limitations.md) items 17–18 |
+| Pluggable serialization | `MeiliDocumentSerializer` interface; Jackson 2 default; optional Jackson 3 module for Boot 4 | [Boot 3 → 4 guide](docs/boot3-to-boot4.md) |
+| Repository layer (opt-in) | `MeiliRepository` with CRUD, derived queries, `@MeiliQuery`, startup role preflight | [mapping guide](docs/mapping-guide.md) |
+| Testcontainers integration (opt-in) | Typed `MeiliSearchContainer` + `@ServiceConnection` bridge for integration tests | [testcontainers guide](docs/testcontainers.md) |
+| Dual-generation guardrails | Compile-and-run matrices pinning Boot 3.5.16 / 4.0.3 plus version sentinels | [Boot 3 → 4 guide](docs/boot3-to-boot4.md) |
+| Exception model | `MeiliOrmException` root; mapping errors fail fast; server error codes passed through | javadoc of `core.exception` |
 
-有意不提供 `connect-timeout` / `socket-timeout`：官方 SDK 的 `Config` 内部自建
-OkHttpClient、无注入口（见[限制清单](docs/limitations.md)）。
+### 🚫 Non-goals (explicitly out of scope)
 
-## 演示
+Reactive support (the Meilisearch Java SDK is synchronous/blocking), `@Version` optimistic
+locking, per-field type mapping / analyzers, nested relation queries, SpEL dynamic index names,
+audit principals (`@CreatedBy`/`@LastModifiedBy`) and pluggable clocks, and connect/read timeout
+properties (hard SDK constraint — see [limitations](docs/limitations.md)).
 
-`examples/` 下两个 demo（Boot 3.5.16 / 4.0.3 共用同一套业务字节码）覆盖导入、检索
-（q+filter+sort+分页+facet）、单读、删除、回调与 raw 逃生舱全场景，一键流程与实测
-curl 输出见 [examples/README.md](examples/README.md)。
+## ⚙️ Configuration
 
-## 构建与测试
+| Property | Default | Notes |
+|---|---|---|
+| `meili.enabled` | `true` | Master switch |
+| `meili.url` | `http://localhost:7700` | Server URL |
+| `meili.api-key` | (empty) | Master key or API key |
+| `meili.wait-task` | `false` | Block writes until the task reaches a terminal state |
+| `meili.wait-timeout` | `5s` | Per-task wait budget |
+| `meili.client-agents` | `meili-orm` | Extra User-Agent tokens (`;` separated, appended after the SDK's own version token; empty falls back to the SDK default) |
+| `meili.index.auto-init` | `create-if-missing` | `none` / `create-if-missing` / `sync-settings` |
+| `meili.index.on-settings-drift` | `warn` | `warn` / `apply` / `fail` (only `sync-settings` ever writes) |
+| `meili.repositories.enabled` | `true` | Scan/register repositories once the opt-in coordinate is present |
+
+There are deliberately no `connect-timeout` / `socket-timeout` properties: the official SDK's
+`Config` builds its own OkHttpClient with no injection point
+([limitations](docs/limitations.md) item 1).
+
+## 🎮 Demos
+
+Two runnable examples under [`examples/`](examples/README.md) (Boot 3.5.16 and 4.0.3 shells sharing
+one business codebase) cover import, full search (q + filter + sort + paging + facets), single read,
+delete, callbacks and the raw escape hatch — one-command flow and live curl transcripts in the
+[examples README](examples/README.md).
+
+## 🧪 Build & Test
 
 ```bash
-mvn -s /home/lam/repo/settings.xml clean verify
+mvn clean verify
 ```
 
-> `-s /home/lam/repo/settings.xml` 为本机 Maven 仓库配置（镜像/本地库路径），换机器时
-> 替换为自己的 settings 路径；本仓库 `.mvn/maven.config` 亦提供同路径兜底。
+Prerequisites: a running Docker daemon and the `getmeili/meilisearch:v1.49.0` image locally —
+core/autoconfigure/matrix integration tests run against a real server via Testcontainers (without
+Docker the ITs fail fast with a recognizable error). The full build also enforces three gates:
+private-member Javadoc completeness, an internal-citation scanner, and Apache-2.0 license headers
+on every Java file. Maintainers' machine-specific Maven settings (mirrors/local repo layout) are
+described in [CONTRIBUTING](CONTRIBUTING.md).
 
-前置：Docker 守护进程可用 + 本地存在 `getmeili/meilisearch:v1.49.0` 镜像（core/autoconfigure
-/双矩阵的集成测试经 Testcontainers 直连真实服务端；缺 Docker 时 IT 快速失败且错误可辨识）。
-全量构建同时执行 Javadoc 完整度门禁（含私有成员）与源码引用门禁。
-同一套验证已接入 CI：`.github/workflows/verify.yml` 在 master 推送与拉取请求上以带 Docker 的
-执行器跑全 reactor `clean verify`（显式 `-s ci/settings.xml`）并复跑源码引用门禁。
+## 📚 Documentation
 
-## 文档
+- [Mapping guide](docs/mapping-guide.md) — annotations → Meilisearch concepts/settings, projection pipeline, callbacks, derived queries
+- [Limitations](docs/limitations.md) — 18 evidenced behavioral boundaries, each with a workaround
+- [Boot 3 → 4 upgrade guide](docs/boot3-to-boot4.md) — dual-generation compatibility strategy and the Jackson 3 module
+- [Testcontainers integration](docs/testcontainers.md) — typed container, `@ServiceConnection`, manual bridge
+- [Examples](examples/README.md) — runnable demos with live transcripts
+- Chinese documentation: [README.zh-CN.md](README.zh-CN.md) · [docs/zh-CN/](docs/zh-CN/)
 
-- [映射指南](docs/mapping-guide.md)：注解 → MeiliSearch 概念/settings 对照、投影管线、回调
-- [限制清单](docs/limitations.md)：已实证限制与 workaround
-- [Boot 3 → 4 升级说明](docs/boot3-to-boot4.md)：双代兼容策略、Jackson3 可选模块、依赖升级检查清单
-- [Testcontainers 集成](docs/testcontainers.md)：类型化容器、`@ServiceConnection` 一行注解、手工桥接样例、双代支持矩阵
-- [Spike 结论](docs/spikes.md)：读写通道架构决策的实证记录（JsonHandler 不兼容、raw 通道精度契约）
+## 🤝 Contributing
+
+Build commands, the three build gates and the source-language/licensing conventions are documented
+in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## ⚖️ License
+
+[Apache License 2.0](LICENSE). Built on the official
+[meilisearch-java](https://github.com/meilisearch/meilisearch-java) SDK.
