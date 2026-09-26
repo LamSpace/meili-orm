@@ -94,3 +94,57 @@ okhttp3/gson 版本治理可能冲突。
 
 `deleteIndex` / `deleteAll` / `deleteById` 返回即受理完成、未终态。`wait-task=true`
 时上述方法内部等待；否则用 `awaitTask`。
+
+---
+
+# Repository 层
+
+## 11. `Page.getTotalElements()` 是估算值
+
+MeiliSearch 检索响应给出的是 `estimatedTotalHits`/`totalHits`（视服务端配置其一），
+不是精确总数；`Page` 的分页总页数据此计算。另注意 commons `PageImpl` 的固有语义：
+总数会被抬高到"至少覆盖当前页"（`offset + 本页条数` 更大时）。需要精确计数用
+`count()`（stats 通道，整索引）。
+
+**workaround**：面向用户展示"约 N 条/更多"文案；精确需求走 `count()` 或业务侧计数。
+
+## 12. `findAll()` / `findAll(Sort)` 受 maxTotalHits 截断
+
+documents/fetch 通道单次读取上限为索引 `pagination.maxTotalHits`（默认 1000）。
+仓库实现取满即记 WARN 声明"可能截断"，不会静默假称全量。
+
+**workaround**：全量遍历用分页游标（`findAll(PageRequest.of(n, size))`）或
+`DocumentsFetchQuery` 直连 Operations。
+
+## 13. `…Containing` / `…Like` 是全文近似，不是子串匹配
+
+MeiliSearch 无子串 DSL，仓库将其渲染为全文 `q=值` + `attributesToSearchOn=[属性]`：
+命中受分词、typo 容忍与 rankingRules 影响（如 `findByTitleContaining("三体")` 走全文
+通道），与 Java `String.contains` 语义不完全一致；Like 的通配符在 v1 被忽略。
+
+**workaround**：需要确定性前/后缀匹配的服务端能力（BEGINS WITH 等）不在 v1 支持面；
+用 Operations 手写 `MeiliQuery` 或应用侧二次过滤。
+
+## 14. `deleteAll(Iterable)` / `deleteAllById(Iterable)` 逐条请求
+
+v1 每条删除一个请求（每个一条任务），大批量删除成本高。
+
+**workaround**：整索引清空用 `deleteAll()`；批量需求关注后续版本网关批量化。
+
+## 15. 派生查询关键字为子集，且角色预检只看实体声明
+
+不支持：`StartingWith`/`EndingWith`/`Regex`/`Null`/`Empty`/`Exists`/`IgnoreCase`、
+`Distinct` 修饰符、**属性缩写**、count/exists/delete 派生、DTO 投影、`Stream` 返回
+（完整清单与替代写法见映射指南）。filter/sort 目标属性必须在实体上声明
+`@MeiliField(filterable/sortable/searchable)`，仅经 `@MeiliSetting` 透传声明的角色
+**不满足预检**（启动失败，消息会提示这一点）——实体声明是唯一判定源。
+
+**workaround**：透传场景请同时补字段注解（两份声明一致是刻意的冗余检查）；
+超出子集的条件用 `@MeiliQuery` 手写。
+
+## 16. 方法名条件与 `@MeiliQuery` 共存时仅排序/top 来自方法名
+
+注解声明后，方法名中其余条件段被忽略（启动 WARN 列出），静默共存可能导致
+"改了注解忘了改名"的分叉。
+
+**workaround**：注解方法请把方法名条件段删净，只保留 `OrderBy`/`Top` 后缀。

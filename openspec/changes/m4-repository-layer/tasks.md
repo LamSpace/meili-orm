@@ -39,9 +39,9 @@
 
 ## 6. 文档（starter-documentation）
 
-- [ ] 6.1 `docs/mapping-guide.md` 增"派生查询与注解查询"章：关键字支持/不支持两清单（与 3.2/3.5 实现逐字一致）、投影名桥接规则、`@MeiliQuery` 模板语法与转义规则、角色预检修复指引示例；验证：按指南任一行写方法名跑 L1 可复算；不支持清单一侧确实启动报错
-- [ ] 6.2 `docs/limitations.md` + README 限制小节追加 Repository 六条（估算总数/maxTotalHits 截断/Containing 近似/逐条批量删/关键字子集与预检/无投影、Stream、异步），各给 workaround；README 装配小节加 repository 坐标与仓库样例（明示"不在 starter 内"）；`docs/boot3-to-boot4.md` 升级清单纳入 commons 钉版（三类→四类）与 repository 两代兼容面说明；验证：清单逐条对照测试/代码事实无超售
-- [ ] 6.3 citation/javadoc 门禁自查：新模块 src/main 与 pom `<description>` 过 `bash scripts/check-source-citations.sh --selftest` 与全量扫描零命中；验证：脚本零退出
+- [x] 6.1 `docs/mapping-guide.md` 增"派生查询与注解查询"章：关键字支持/不支持两清单（与 3.2/3.5 实现逐字一致）、投影名桥接规则、`@MeiliQuery` 模板语法与转义规则、角色预检修复指引示例；验证：按指南任一行写方法名跑 L1 可复算；不支持清单一侧确实启动报错
+- [x] 6.2 `docs/limitations.md` + README 限制小节追加 Repository 六条（估算总数/maxTotalHits 截断/Containing 近似/逐条批量删/关键字子集与预检/无投影、Stream、异步），各给 workaround；README 装配小节加 repository 坐标与仓库样例（明示"不在 starter 内"）；`docs/boot3-to-boot4.md` 升级清单纳入 commons 钉版（三类→四类）与 repository 两代兼容面说明；验证：清单逐条对照测试/代码事实无超售
+- [x] 6.3 citation/javadoc 门禁自查：新模块 src/main 与 pom `<description>` 过 `bash scripts/check-source-citations.sh --selftest` 与全量扫描零命中；验证：脚本零退出
 
 ## 7. 集成核对（出口）
 

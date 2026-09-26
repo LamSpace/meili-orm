@@ -136,3 +136,96 @@ class BookCallbacks {
 - 显式 `searchableOrder` 重复；
 - 透传文件缺失、非 JSON 对象、含白名单外键；
 - 回调 bean 无法解析目标实体泛型（lambda 形态）。
+
+---
+
+## Repository 层：派生查询与 `@MeiliQuery`
+
+> 能力为 opt-in：应用显式引入 `meili-orm-repository` 坐标即自动启用（无需注解）；
+> 亦可 `@EnableMeiliRepositories` 显式指定扫描包。开关属性 `meili.repositories.enabled`（默认 true）。
+
+### 方法名语法
+
+```
+<动词>[Top<N>|First<N>][Distinct]By<条件链>[OrderBy<属性>(Asc|Desc)[And…]]
+```
+
+动词支持 `find` / `read` / `get` / `retrieve`（及其扩展形态如 `findPageBy…`）；
+`count…By` / `exists…By` / `delete…By` 派生 **不支持**。条件链以大写 `And` / `Or` 定界，
+`And` 优先级高于 `Or`（渲染时 OR 组自动加括号）。
+
+### 关键字对照表（支持面）
+
+| 方法名片段 | 渲染结果 | 参数 |
+|---|---|---|
+| `…Equals` / `…Is` / 裸属性 | `path = 值` | 1 |
+| `…Not`（属性后） | `path != 值` | 1 |
+| `Not…`（属性前） | `NOT (path = 值)` | 1 |
+| `…In` | `path IN [v1, v2]`（空集合直接返回空结果，不发请求） | 1（集合/数组） |
+| `…Between` | `path BETWEEN a AND b`（双端闭区间） | 2 |
+| `…GreaterThan` / `…After` | `path > 值` | 1 |
+| `…GreaterThanEqual` | `path >= 值` | 1 |
+| `…LessThan` / `…Before` | `path < 值` | 1 |
+| `…LessThanEqual` | `path <= 值` | 1 |
+| `…True` / `…False` | `path = true` / `path = false` | 0 |
+| `…Containing` / `…Like` | 全文 `q=值` + `attributesToSearchOn=[path]`（Like 通配符忽略，等价 Containing；一个方法至多一个） | 1 |
+| `findTop<N>` / `findFirst<N>` | `limit(N)`（与 `Pageable` 共存时以分页为准并 WARN） | — |
+| `OrderBy…Asc/Desc` | `sort("path:asc|desc")`，其后追加 `Pageable`/`Sort` 的排序 | — |
+
+字符串值一律渲染为**转义后的双引号字面量**（`"` 与 `\` 加反斜杠）；数值/布尔裸写；
+`LocalDate`/`LocalDateTime`/`OffsetDateTime`/`Instant` 按 ISO 文本裸写。方法参数为 `null`
+的条件值直接报错（不支持可选条件）。
+
+### 不支持面（启动期即报错，消息含方法名）
+
+`StartingWith`、`EndingWith`、`RegularExpression`、`IsNull`、`IsNotNull`、`IsEmpty`、
+`IsNotEmpty`、`Exists`、`IgnoreCase`、`Distinct` 修饰符（distinct 需指定属性，请用
+`@MeiliQuery(distinct=…)`）、**属性缩写**（如 `findByAdrCity`——按实体字段字典最长前缀
+切分，不猜缩写）、集合/对象属性上的等值条件、DTO 投影与 `Stream` 返回类型。
+
+返回类型支持 `List<T>`、`Optional<T>`（多命中取首条并记 DEBUG）、`Page<T>`（必须带
+`Pageable` 参数；`getTotalElements()` 为服务端估算值，且 `PageImpl` 有"总数至少覆盖当前页"
+的固有钳制行为）。
+
+### 投影名桥接（方法名属性 → 文档字段）
+
+条件与排序中的属性链按**实体 Java 字段字典**逐段最长前缀切分（`AuthorCity` →
+`author` → `city`），每段落名为 core 元模型的投影路径：`@MeiliField(name="book_title")`
+使 `findByTitle…` 渲染 `book_title = …`；嵌套对象渲染点路径（`author.city`）。
+`@JsonIgnore` 字段、`static` 字段、未知属性、聚合属性作条件目标，一律启动失败并定位方法。
+
+### 启动期角色预检
+
+| 条件族 | 要求实体声明 |
+|---|---|
+| 进入 filter 的属性（等值/IN/区间/比较/布尔/NOT） | `@MeiliField(filterable = true)` |
+| 进入 sort 的属性（`OrderBy`） | `@MeiliField(sortable = true)` |
+| `Containing`/`Like` 目标属性 | `@MeiliField(searchable = true)` |
+
+任一缺失 → 启动失败（`MeiliMappingException`），消息给出两条修复路径：字段注解补声明，
+或经 `@MeiliSetting` 透传在服务端声明。**预检判定源恒为实体声明**——透传 JSON 声明的角色
+不进入预检输入（防实体与服务端静默分叉；若仅经透传声明，请同时补字段注解）。
+主键属性上的条件豁免 filterable 预检（服务端按主键可寻址）。
+
+### `@MeiliQuery` 注解查询
+
+```java
+@MeiliQuery(q = ":keyword", filter = "genre = :genre AND price > ?0", distinct = "authorId")
+List<Book> brutal(@Param("genre") String genre, Double minPrice, @Param("keyword") String kw,
+                  Pageable pageable);
+```
+
+- 占位符三形态：`?N`（只数"值参数"，`Pageable`/`Sort` 参数不参与）、`:name`
+  （`@Param` 或编译参数名）、`#{…}` 原生 SpEL（变量以 `#name` / `#argN` 引用）。
+- `filter` 模板中 String 值自动包引号并转义——模板作者**不写引号**（`genre = :g`），
+  参数值无法改变 DSL 结构；数值/布尔裸渲染；`q` 模板中的值原样作为全文文本。
+- `distinct` 只接受字面量投影路径（不接受占位符）。
+- 与派生共存时注解短路方法名条件：`OrderBy` 与 `TopN` 仍取方法名，其余条件段忽略并启动 WARN。
+- 启动期校验：模板非空、占位符可绑定、`filter` 括号配对；服务端 DSL 语法错误按
+  `MeiliIndexAccessException` 透传。
+
+### 无界读与批量删
+
+`findAll()` / `findAll(Sort)` 走 documents/fetch 通道，受索引 `pagination.maxTotalHits`
+（默认 1000）上限：恰好取满即记 WARN 声明可能截断。`deleteAll(Iterable)` /
+`deleteAllById(Iterable)` 逐条单文档删除（每实体一个请求）。

@@ -60,6 +60,38 @@ class BookService {
 启动期 `IndexInitializer` 按 `meili.index.auto-init` 自动建索引并推送注解投影出的
 settings；漂移处置策略见[映射指南](docs/mapping-guide.md)。
 
+### Repository 风格访问（opt-in 坐标）
+
+模板 Operations 之外，显式加入仓库坐标（**不在 starter 聚合内**，按需引入）：
+
+```xml
+<dependency>
+    <groupId>io.github.lamspace</groupId>
+    <artifactId>meili-orm-repository</artifactId>
+    <version><!-- 与其余 meili-orm 坐标同版 --></version>
+</dependency>
+```
+
+接口即注册（应用包下自动扫描；亦可 `@EnableMeiliRepositories` 指定包）：
+
+```java
+public interface BookRepository extends MeiliRepository<Book, Long> {
+
+    List<Book> findByGenreAndPriceGreaterThan(String genre, Double min);  // 派生 → filter DSL
+
+    List<Book> findByTitleContaining(String t);                            // → 全文 q + 限定属性
+
+    Page<Book> findPageByGenreOrderByPriceAsc(String genre, Pageable pg);  // 分页（总数为估算值）
+
+    @MeiliQuery(filter = "price BETWEEN :lo AND :hi")                      // 注解逃生舱
+    List<Book> inRange(@Param("lo") Double lo, @Param("hi") Double hi);
+}
+```
+
+方法名的属性名按实体投影规则桥接（`title` → `book_title`）；filter/sort 目标属性必须
+已声明对应角色，否则**启动即失败**并给出修复指引。关键字支持/不支持全表、角色预检细则
+见[映射指南](docs/mapping-guide.md)，语义边界见[限制清单](docs/limitations.md)第 11–16 条。
+
 ## 功能面
 
 | 能力 | 说明 |
@@ -71,7 +103,8 @@ settings；漂移处置策略见[映射指南](docs/mapping-guide.md)。
 | 强类型查询 IR | `MeiliQuery`（filter DSL/filterGroup、sort、limit-offset 与 page-hitsPerPage 两套分页、facets、matchingStrategy、distinct、hybrid、`raw` 逃生舱），SDK 类型不泄漏进业务代码 |
 | 生命周期回调 | `BeforeConvert` / `AfterSave` / `AfterLoad` / `AfterConvert` 四件套，声明 bean 即生效 |
 | 可插拔序列化 | `MeiliDocumentSerializer` 接口；默认 Jackson 2 实现；Boot 4 场景可加 `meili-orm-serializer-jackson3` 模块接管 |
-| 双代兼容护栏 | `it-boot3`（3.5.16）/ `it-boot4`（4.0.3）常驻编译运行矩阵 + 版本哨兵 |
+| Repository 层（opt-in） | 显式引入 `meili-orm-repository` 坐标即得 `MeiliRepository`：CRUD、方法名派生查询（等值/IN/区间/比较/布尔/Not/Containing→全文/OrderBy/TopN/分页）、`@MeiliQuery` 注解查询、启动期投影名桥+角色预检 fail-fast；starter 聚合不含该坐标，`meili.repositories.enabled` 默认开 |
+| 双代兼容护栏 | `it-boot3`（3.5.16）/ `it-boot4`（4.0.3）常驻编译运行矩阵 + 版本哨兵（含 commons 结构哨兵） |
 | 异常体系 | `MeiliOrmException` 根；`MeiliMappingException`（启动期 fail-fast）/ `MeiliIndexAccessException`（服务端错误透传 code）/ `MeiliTaskTimeoutException` |
 
 ### 非目标（本版明确不做）
@@ -91,6 +124,7 @@ analyzer、nested 关联查询、SpEL 动态索引名、审计回调、连接/�
 | `meili.wait-timeout` | `5s` | 单次任务等待上限 |
 | `meili.index.auto-init` | `create-if-missing` | 建索引/同步策略（`none` / `create-if-missing` / `sync-settings`） |
 | `meili.index.on-settings-drift` | `warn` | 漂移处置（`warn` / `apply` / `fail`；仅 `sync-settings` 会真正写入） |
+| `meili.repositories.enabled` | `true` | 引入 `meili-orm-repository` 坐标后是否自动扫描注册仓库接口 |
 
 有意不提供 `connect-timeout` / `socket-timeout`：官方 SDK 的 `Config` 内部自建
 OkHttpClient、无注入口（见[限制清单](docs/limitations.md)）。
