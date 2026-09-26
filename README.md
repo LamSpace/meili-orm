@@ -1,19 +1,19 @@
-# meili-orm
+# Meili-ORM
+
+<div align="center">
+
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE) [![CI](https://github.com/LamSpace/meili-orm/actions/workflows/verify.yml/badge.svg)](https://github.com/LamSpace/meili-orm/actions/workflows/verify.yml) [![Java](https://img.shields.io/badge/Java-17%2B-orange)](#-build--test) [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x%20%7C%204.x-brightgreen)](docs/boot3-to-boot4.md) [![Meilisearch](https://img.shields.io/badge/Meilisearch-v1.x-ff59a1)](https://www.meilisearch.com/docs)
 
 [中文](README.zh-CN.md)
+
+</div>
 
 A Spring Data Elasticsearch–style **Spring Boot starter for [Meilisearch](https://www.meilisearch.com/)**,
 built on top of the official Java SDK (`com.meilisearch.sdk:meilisearch-java`):
 annotation-driven mapping, automatic settings projection, templated operations and
 auto-configuration — **one jar serving both Spring Boot 3.5.x and 4.x**.
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![CI](https://github.com/LamSpace/meili-orm/actions/workflows/verify.yml/badge.svg)](https://github.com/LamSpace/meili-orm/actions/workflows/verify.yml)
-[![Java](https://img.shields.io/badge/Java-17%2B-orange)](#-build--test)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x%20%7C%204.x-brightgreen)](docs/boot3-to-boot4.md)
-[![Meilisearch](https://img.shields.io/badge/Meilisearch-v1.x-ff59a1)](https://www.meilisearch.com/docs)
-
-## TL;DR
+## ⚡ At a Glance
 
 Annotate a record, inject `MeiliSearchOperations`, search. The starter projects your field-role
 annotations into Meilisearch settings at startup, keeps SDK types out of your business code,
@@ -22,7 +22,7 @@ Spring Boot generations.
 
 **Why not the plain SDK?** The SDK gives you HTTP bindings; it does not give you entity mapping,
 settings management, task-aware write semantics, or Spring wiring. **Why not
-`spring-data-meilisearch`?** That community project re-implements Spring Data internals; meili-orm
+`spring-data-meilisearch`?** That community project re-implements Spring Data internals; Meili-ORM
 mirrors the Spring Data Elasticsearch *programming model* (Operations template + optional
 repository layer) while staying a third-party starter with a smaller contract surface.
 
@@ -172,6 +172,30 @@ Two runnable examples under [`examples/`](examples/README.md) (Boot 3.5.16 and 4
 one business codebase) cover import, full search (q + filter + sort + paging + facets), single read,
 delete, callbacks and the raw escape hatch — one-command flow and live curl transcripts in the
 [examples README](examples/README.md).
+
+## 📁 Project Structure
+
+A multi-module Maven reactor (root `pom.xml` `<modules>`). The repo slug stays lowercase
+`meili-orm`; "Meili-ORM" is the display name. Six artifacts are published; everything else is
+build-only or tooling.
+
+| Path | Kind | What it holds |
+|---|---|---|
+| `meili-orm-core/` | published | Annotation mapping, entity metamodel, serialization abstraction, typed query IR (`MeiliQuery`), settings projection, templated `Operations` — zero Spring dependencies |
+| `meili-orm-spring-boot-autoconfigure/` | published | Spring Boot auto-configuration: client wiring, index auto-init and settings sync. One jar for Boot 3.5.x and 4.x |
+| `spring-boot-starter-meili-orm/` | published | Starter aggregate: core + autoconfigure + the Boot base starter |
+| `meili-orm-serializer-jackson3/` | published · opt-in | Jackson 3 serializer module for Boot 4 |
+| `meili-orm-repository/` | published · opt-in | Spring Data-style declarative repositories; the only module on `spring-data-commons`. Not aggregated by the starter |
+| `meili-orm-testcontainers/` | published · opt-in | Typed Meilisearch container + `@ServiceConnection` bridge for integration tests |
+| `it/` | build-only | **Integration-test** compatibility matrix (`boot3` / `boot4` / `boot4-jackson3` submodules); no published artifacts. The name means "integration tests", not the English pronoun |
+| `examples/` | build-only | Dual-generation demos: shared `meili-orm-example-common` + `boot3` / `boot4` launcher shells |
+| `docs/` | docs | Guides (`mapping-guide`, `limitations`, `boot3-to-boot4`, `testcontainers`), `zh-CN/` mirrors, `internal/` design records |
+| `openspec/` | internal | Spec-driven change management (`specs/`, `changes/`) |
+| `scripts/` | tooling | Build-gate helper (`check-source-citations.sh`) |
+| `ci/` | tooling | CI-only Maven `settings.xml` |
+| `etc/` | tooling | Build resources: `license-header.txt` template for the license gate |
+| `.github/` | tooling | GitHub Actions workflow (`verify.yml`) |
+| `.mvn/` | tooling | Maven CLI defaults (`maven.config`) |
 
 ## 🧪 Build & Test
 

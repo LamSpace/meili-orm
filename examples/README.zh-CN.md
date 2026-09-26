@@ -1,6 +1,6 @@
 [English](README.md)
 
-# meili-orm 演示工程
+# Meili-ORM 演示工程
 
 同一套业务代码（`meili-orm-example-common`）分别运行在 Boot 3.5.16 与 Boot 4.0.3 两个启动壳里，
 演示注解映射、settings 投影同步、生命周期回调、raw 逃生舱与双代兼容。Starter 本体的文档见

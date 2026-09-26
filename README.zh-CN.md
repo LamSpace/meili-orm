@@ -1,19 +1,19 @@
-# meili-orm
+# Meili-ORM
+
+<div align="center">
+
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE) [![CI](https://github.com/LamSpace/meili-orm/actions/workflows/verify.yml/badge.svg)](https://github.com/LamSpace/meili-orm/actions/workflows/verify.yml) [![Java](https://img.shields.io/badge/Java-17%2B-orange)](#-构建与测试) [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x%20%7C%204.x-brightgreen)](docs/zh-CN/boot3-to-boot4.md) [![Meilisearch](https://img.shields.io/badge/Meilisearch-v1.x-ff59a1)](https://www.meilisearch.com/docs)
 
 [English](README.md)
+
+</div>
 
 构建于 Meilisearch 官方 Java SDK（`com.meilisearch.sdk:meilisearch-java`）之上的、
 类 Spring Data Elasticsearch 风格的 **Meilisearch Spring Boot Starter**：注解声明式映射、
 settings 投影自动同步、模板化 Operations、自动配置——**同一个 jar 同时兼容 Spring Boot
 3.5.x 与 4.x**。
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![CI](https://github.com/LamSpace/meili-orm/actions/workflows/verify.yml/badge.svg)](https://github.com/LamSpace/meili-orm/actions/workflows/verify.yml)
-[![Java](https://img.shields.io/badge/Java-17%2B-orange)](#-构建与测试)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x%20%7C%204.x-brightgreen)](docs/zh-CN/boot3-to-boot4.md)
-[![Meilisearch](https://img.shields.io/badge/Meilisearch-v1.x-ff59a1)](https://www.meilisearch.com/docs)
-
-## 一句话定位
+## ⚡ 一览
 
 给实体标上注解、注入 `MeiliSearchOperations`，即可检索。Starter 在启动期把字段角色注解
 投影为 Meilisearch settings，把 SDK 类型挡在业务代码之外，`Long` 主键逐位无损
@@ -21,7 +21,7 @@ settings 投影自动同步、模板化 Operations、自动配置——**同一�
 
 **为什么不用裸 SDK？** SDK 给的是 HTTP 绑定，不给实体映射、settings 管理、任务感知的写语义
 和 Spring 装配。**为什么不选 `spring-data-meilisearch`？** 那个社区项目重新实现了 Spring Data
-内部机制；meili-orm 对齐 Spring Data Elasticsearch 的*编程模型*（Operations 模板 + 可选
+内部机制；Meili-ORM 对齐 Spring Data Elasticsearch 的*编程模型*（Operations 模板 + 可选
 repository 层），同时保持三方 starter 的更小契约面。
 
 ## 📦 装配
@@ -164,6 +164,29 @@ nested 关联查询、SpEL 动态索引名、审计操作人（`@CreatedBy`/`@La
 [`examples/`](examples/README.zh-CN.md) 下两个演示工程（Boot 3.5.16 / 4.0.3 两个启动壳共用同一套
 业务代码）覆盖导入、全链路检索（q + filter + sort + 分页 + facet）、单读、删除、回调与 raw
 逃生舱——一键流程与真机 curl 转录见[演示工程说明](examples/README.zh-CN.md)。
+
+## 📁 项目结构
+
+多模块 Maven reactor（根 `pom.xml` 的 `<modules>`）。仓库 slug 保持小写 `meili-orm`，
+"Meili-ORM" 为展示名。六个构件对外发布，其余为仅构建或工具目录。
+
+| 目录 | 性质 | 内容 |
+|---|---|---|
+| `meili-orm-core/` | 发布 | 注解映射、实体元模型、序列化抽象、强类型查询 IR（`MeiliQuery`）、settings 投影、模板化 `Operations`——零 Spring 依赖 |
+| `meili-orm-spring-boot-autoconfigure/` | 发布 | Spring Boot 自动配置：客户端装配、索引初始化与 settings 同步。一份 jar 兼容 Boot 3.5.x 与 4.x |
+| `spring-boot-starter-meili-orm/` | 发布 | starter 聚合：core + autoconfigure + Boot base starter |
+| `meili-orm-serializer-jackson3/` | 发布 · 可选 | 面向 Boot 4 的 Jackson 3 序列化模块 |
+| `meili-orm-repository/` | 发布 · 可选 | 类 Spring Data 声明式仓库；唯一依赖 `spring-data-commons` 的模块，不被 starter 聚合 |
+| `meili-orm-testcontainers/` | 发布 · 可选 | 类型化 Meilisearch 容器 + `@ServiceConnection` 集成测试桥接 |
+| `it/` | 仅构建 | **集成测试**兼容矩阵（`boot3` / `boot4` / `boot4-jackson3` 子模块），不发布构件。目录名取 integration tests 首字母，非英文代词 it |
+| `examples/` | 仅构建 | 双代演示：共享 `meili-orm-example-common` + `boot3` / `boot4` 启动壳 |
+| `docs/` | 文档 | 各指南（`mapping-guide`、`limitations`、`boot3-to-boot4`、`testcontainers`）、`zh-CN/` 镜像、`internal/` 设计留档 |
+| `openspec/` | 内部 | spec 驱动的变更管理（`specs/`、`changes/`） |
+| `scripts/` | 工具 | 构建门禁脚本（`check-source-citations.sh`） |
+| `ci/` | 工具 | CI 专用 Maven `settings.xml` |
+| `etc/` | 工具 | 构建资源：license 门禁模板 `license-header.txt` |
+| `.github/` | 工具 | GitHub Actions 工作流（`verify.yml`） |
+| `.mvn/` | 工具 | Maven 命令行默认配置（`maven.config`） |
 
 ## 🧪 构建与测试
 

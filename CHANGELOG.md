@@ -22,6 +22,7 @@ once released.
   maintainer dependency-upgrade checklist) and this `CHANGELOG.md`, both bilingual.
 - Badges: license, CI status, Java baseline, Spring Boot generations, Meilisearch server
   generation.
+- README "Project Structure" section cataloguing every top-level directory and build module.
 
 ### Changed
 
@@ -30,6 +31,10 @@ once released.
   *data* semantics are preserved; see `CONTRIBUTING.md`).
 - README install section now states the publishing truth explicitly: artifacts are not yet
   on Maven Central; install from source. Message wording is not part of the API contract.
+- Display-name convention adopted: prose and titles read "Meili-ORM" while the lowercase
+  `meili-orm` stays the repo, artifact, package and config-prefix slug. The README badge row
+  moves to a centered strip under the title, and the summary heading gains a matching icon
+  (English "At a Glance", Chinese "一览").
 
 ### Removed
 

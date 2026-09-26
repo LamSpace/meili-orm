@@ -1,6 +1,6 @@
 [中文](README.zh-CN.md)
 
-# meili-orm demo projects
+# Meili-ORM demo projects
 
 The same business code (`meili-orm-example-common`) runs in two startup shells — Boot 3.5.16 and
 Boot 4.0.3 — demonstrating annotation mapping, settings projection sync, lifecycle callbacks, the

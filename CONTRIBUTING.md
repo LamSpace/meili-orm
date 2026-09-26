@@ -1,4 +1,4 @@
-# Contributing to meili-orm
+# Contributing to Meili-ORM
 
 [中文](CONTRIBUTING.zh-CN.md)
 

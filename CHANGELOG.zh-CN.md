@@ -19,6 +19,7 @@
 - `CONTRIBUTING.md`（构建命令、三道门禁、源码语言约定、维护者依赖升级清单）与本
   `CHANGELOG.md`，均为双语。
 - 徽章：许可证、CI 状态、Java 基线、Spring Boot 双代、Meilisearch 服务端代际。
+- README 新增「项目结构」小节，逐一说明顶层目录与构建模块。
 
 ### 变更
 
@@ -26,6 +27,9 @@
   （承担测试/演示**数据**语义的中文字面量按约定保留，见 `CONTRIBUTING.md`）。
 - README 装配小节明示发布状态：构件尚未上架 Maven Central，从源码安装。消息文本不属于
   API 契约。
+- 确立展示名约定：正文与标题用 "Meili-ORM"，小写 `meili-orm` 仍作仓库、构件、包名与配置前缀
+  slug；README 徽章移到标题下方居中一行；概述小标题补图标统一命名（英文 "At a Glance"、中文
+  「一览」）。
 
 ### 移除
 

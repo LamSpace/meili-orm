@@ -7,7 +7,7 @@
     <artifactId>meili-orm</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>meili-orm</name>
+    <name>Meili-ORM</name>
     <description>Meilisearch Spring Boot starter: annotation-driven mapping, settings projection and templated operations (compatible with Spring Boot 3.5.x and 4.x).</description>
     <url>https://github.com/LamSpace/meili-orm</url>
     <licenses>

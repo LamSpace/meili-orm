@@ -1,4 +1,4 @@
-# 参与 meili-orm 贡献
+# 参与 Meili-ORM 贡献
 
 [English](CONTRIBUTING.md)
 
