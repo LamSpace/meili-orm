@@ -21,4 +21,4 @@
 
 ## 4. 集成验证
 
-- [ ] 4.1 全 reactor 出口核对：`mvn -s /home/lam/repo/settings.xml -q clean verify` 全绿（含双矩阵与全部 IT）、`bash scripts/check-source-citations.sh --selftest` 与脚本本体零退出、`openspec validate m5-starter-hardening --type change` 通过。验证：三条命令输出原文留痕于提交说明。
+- [x] 4.1 全 reactor 出口核对：`mvn -s /home/lam/repo/settings.xml -q clean verify` 全绿（含双矩阵与全部 IT）、`bash scripts/check-source-citations.sh --selftest` 与脚本本体零退出、`openspec validate m5-starter-hardening --type change` 通过。验证：三条命令输出原文留痕于提交说明。
