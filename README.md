@@ -179,23 +179,36 @@ A multi-module Maven reactor (root `pom.xml` `<modules>`). The repo slug stays l
 `meili-orm`; "Meili-ORM" is the display name. Six artifacts are published; everything else is
 build-only or tooling.
 
-| Path | Kind | What it holds |
-|---|---|---|
-| `meili-orm-core/` | published | Annotation mapping, entity metamodel, serialization abstraction, typed query IR (`MeiliQuery`), settings projection, templated `Operations` — zero Spring dependencies |
-| `meili-orm-spring-boot-autoconfigure/` | published | Spring Boot auto-configuration: client wiring, index auto-init and settings sync. One jar for Boot 3.5.x and 4.x |
-| `spring-boot-starter-meili-orm/` | published | Starter aggregate: core + autoconfigure + the Boot base starter |
-| `meili-orm-serializer-jackson3/` | published · opt-in | Jackson 3 serializer module for Boot 4 |
-| `meili-orm-repository/` | published · opt-in | Spring Data-style declarative repositories; the only module on `spring-data-commons`. Not aggregated by the starter |
-| `meili-orm-testcontainers/` | published · opt-in | Typed Meilisearch container + `@ServiceConnection` bridge for integration tests |
-| `it/` | build-only | **Integration-test** compatibility matrix (`boot3` / `boot4` / `boot4-jackson3` submodules); no published artifacts. The name means "integration tests", not the English pronoun |
-| `examples/` | build-only | Dual-generation demos: shared `meili-orm-example-common` + `boot3` / `boot4` launcher shells |
-| `docs/` | docs | Guides (`mapping-guide`, `limitations`, `boot3-to-boot4`, `testcontainers`), `zh-CN/` mirrors, `internal/` design records |
-| `openspec/` | internal | Spec-driven change management (`specs/`, `changes/`) |
-| `scripts/` | tooling | Build-gate helper (`check-source-citations.sh`) |
-| `ci/` | tooling | CI-only Maven `settings.xml` |
-| `etc/` | tooling | Build resources: `license-header.txt` template for the license gate |
-| `.github/` | tooling | GitHub Actions workflow (`verify.yml`) |
-| `.mvn/` | tooling | Maven CLI defaults (`maven.config`) |
+```text
+meili-orm/                                # Maven reactor root (slug lowercase; display name "Meili-ORM")
+├── meili-orm-core/                       # published — mapping, query IR, settings, Operations (no Spring)
+├── meili-orm-spring-boot-autoconfigure/  # published — Boot auto-config, index init & settings sync
+├── spring-boot-starter-meili-orm/        # published — core + autoconfigure + Boot base starter
+├── meili-orm-serializer-jackson3/        # published (opt-in) — Jackson 3 serializer for Boot 4
+├── meili-orm-repository/                 # published (opt-in) — declarative repositories
+├── meili-orm-testcontainers/             # published (opt-in) — typed container + service-connection
+├── it/                                   # build-only — integration-test matrix (not the pronoun)
+│   ├── meili-orm-it-boot3/               # pinned Spring Boot 3.5.x run
+│   ├── meili-orm-it-boot4/               # pinned Spring Boot 4.x run
+│   └── meili-orm-it-boot4-jackson3/      # Boot 4 + Jackson 3 module run
+├── examples/                             # build-only — dual-generation runnable demos
+│   ├── meili-orm-example-common/         # shared Book/Author code + REST controller
+│   ├── meili-orm-example-boot3/          # Boot 3.5.x launcher shell
+│   └── meili-orm-example-boot4/          # Boot 4.x launcher shell
+├── docs/                                 # English guides + zh-CN/ mirrors + internal/ records
+│   ├── *.md                              # mapping-guide · limitations · boot3-to-boot4 · testcontainers
+│   ├── zh-CN/                            # Chinese mirrors
+│   └── internal/                         # non-deliverable design records
+├── openspec/                             # spec-driven change management
+│   ├── specs/                            # current capability specs
+│   └── changes/                          # in-flight + archived change records
+├── scripts/                              # build-gate helpers (check-source-citations.sh)
+├── ci/                                   # CI-only Maven settings.xml
+├── etc/                                  # build resources — license-header.txt (license gate)
+├── .github/                              # GitHub Actions
+│   └── workflows/verify.yml              # CI workflow
+└── .mvn/                                 # Maven CLI defaults (maven.config)
+```
 
 ## 🧪 Build & Test
 

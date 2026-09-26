@@ -170,23 +170,36 @@ nested 关联查询、SpEL 动态索引名、审计操作人（`@CreatedBy`/`@La
 多模块 Maven reactor（根 `pom.xml` 的 `<modules>`）。仓库 slug 保持小写 `meili-orm`，
 "Meili-ORM" 为展示名。六个构件对外发布，其余为仅构建或工具目录。
 
-| 目录 | 性质 | 内容 |
-|---|---|---|
-| `meili-orm-core/` | 发布 | 注解映射、实体元模型、序列化抽象、强类型查询 IR（`MeiliQuery`）、settings 投影、模板化 `Operations`——零 Spring 依赖 |
-| `meili-orm-spring-boot-autoconfigure/` | 发布 | Spring Boot 自动配置：客户端装配、索引初始化与 settings 同步。一份 jar 兼容 Boot 3.5.x 与 4.x |
-| `spring-boot-starter-meili-orm/` | 发布 | starter 聚合：core + autoconfigure + Boot base starter |
-| `meili-orm-serializer-jackson3/` | 发布 · 可选 | 面向 Boot 4 的 Jackson 3 序列化模块 |
-| `meili-orm-repository/` | 发布 · 可选 | 类 Spring Data 声明式仓库；唯一依赖 `spring-data-commons` 的模块，不被 starter 聚合 |
-| `meili-orm-testcontainers/` | 发布 · 可选 | 类型化 Meilisearch 容器 + `@ServiceConnection` 集成测试桥接 |
-| `it/` | 仅构建 | **集成测试**兼容矩阵（`boot3` / `boot4` / `boot4-jackson3` 子模块），不发布构件。目录名取 integration tests 首字母，非英文代词 it |
-| `examples/` | 仅构建 | 双代演示：共享 `meili-orm-example-common` + `boot3` / `boot4` 启动壳 |
-| `docs/` | 文档 | 各指南（`mapping-guide`、`limitations`、`boot3-to-boot4`、`testcontainers`）、`zh-CN/` 镜像、`internal/` 设计留档 |
-| `openspec/` | 内部 | spec 驱动的变更管理（`specs/`、`changes/`） |
-| `scripts/` | 工具 | 构建门禁脚本（`check-source-citations.sh`） |
-| `ci/` | 工具 | CI 专用 Maven `settings.xml` |
-| `etc/` | 工具 | 构建资源：license 门禁模板 `license-header.txt` |
-| `.github/` | 工具 | GitHub Actions 工作流（`verify.yml`） |
-| `.mvn/` | 工具 | Maven 命令行默认配置（`maven.config`） |
+```text
+meili-orm/                                # 仓库根 · 多模块 Maven reactor（slug 小写；展示名 "Meili-ORM"）
+├── meili-orm-core/                       # 发布 — 映射、查询 IR、settings 投影、模板 Operations（零 Spring）
+├── meili-orm-spring-boot-autoconfigure/  # 发布 — Boot 自动配置、索引初始化与 settings 同步
+├── spring-boot-starter-meili-orm/        # 发布 — starter：core + autoconfigure + Boot base
+├── meili-orm-serializer-jackson3/        # 发布（可选）— 面向 Boot 4 的 Jackson 3 序列化
+├── meili-orm-repository/                 # 发布（可选）— 声明式仓库层
+├── meili-orm-testcontainers/             # 发布（可选）— 类型化容器 + service-connection 桥接
+├── it/                                   # 仅构建 — 集成测试兼容矩阵（非英文代词 it）
+│   ├── meili-orm-it-boot3/               # Boot 3.5.x 常驻运行
+│   ├── meili-orm-it-boot4/               # Boot 4.x 常驻运行
+│   └── meili-orm-it-boot4-jackson3/      # Boot 4 + Jackson 3 运行
+├── examples/                             # 仅构建 — 双代可运行演示
+│   ├── meili-orm-example-common/         # 共享 Book/Author 代码 + REST 控制器
+│   ├── meili-orm-example-boot3/          # Boot 3.5.x 启动壳
+│   └── meili-orm-example-boot4/          # Boot 4.x 启动壳
+├── docs/                                 # 英文指南 + zh-CN/ 镜像 + internal/ 留档
+│   ├── *.md                              # 映射指南 · 限制清单 · boot3-to-boot4 · testcontainers
+│   ├── zh-CN/                            # 中文镜像
+│   └── internal/                         # 非交付设计留档
+├── openspec/                             # spec 驱动的变更管理
+│   ├── specs/                            # 当前能力规范
+│   └── changes/                          # 进行中与已归档变更记录
+├── scripts/                              # 构建门禁脚本（check-source-citations.sh）
+├── ci/                                   # CI 专用 Maven settings.xml
+├── etc/                                  # 构建资源 — license-header.txt（license 门禁模板）
+├── .github/                              # GitHub Actions
+│   └── workflows/verify.yml              # CI 工作流
+└── .mvn/                                 # Maven 命令行默认（maven.config）
+```
 
 ## 🧪 构建与测试
 
