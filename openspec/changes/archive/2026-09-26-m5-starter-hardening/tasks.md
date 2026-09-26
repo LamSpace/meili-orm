@@ -12,7 +12,8 @@
 - [x] 2.1 提交 `ci/settings.xml`：无凭据、无镜像覆盖的最小显式 settings。验证：本机执行 `mvn -s ci/settings.xml -q validate` 成功（离线模式 `--offline -s ci/settings.xml validate` 亦通过，证无远程仓库改写）。
 - [x] 2.2 新建 `.github/workflows/verify.yml`：push(master)+pull_request 触发、`ubuntu-latest`、`setup-java`（最高可用 LTS JDK + `cache: maven`）、步骤 `mvn -s ci/settings.xml -B clean verify` → `bash scripts/check-source-citations.sh --selftest` → `bash scripts/check-source-citations.sh`，`timeout-minutes: 60`。验证：workflow 文件内不出现任何 `/home/lam` 类绝对路径与凭据（grep 核对），YAML 语法本地解析通过。
 - [x] 2.3 README 构建说明处补一句 CI 事实（push/PR 触发全量验证）。验证：README 相关段落读后自洽，与实际 workflow 文件名一致。
-- [ ] 2.4 推送后观察首轮 Actions 运行结论；若 Testcontainers 拉镜像或耗时超预算，按设计 D4 备选拆 job 并记录。验证：CI 上一轮全绿运行记录（链接/截图写入提交说明或 PR 描述）。
+- [x] 2.4 推送后观察首轮 Actions 运行结论；若 Testcontainers 拉镜像或耗时超预算，按设计 D4 备选拆 job 并记录。验证：CI 上一轮全绿运行记录（链接/截图写入提交说明或 PR 描述）。
+  - 完成记录（2026-09-26）：推送 `a842daf` 后首轮 verify 运行全绿 https://github.com/LamSpace/meili-orm/actions/runs/36239473862 （job `verify` success，全步骤通过，总耗时约 3 分钟，Testcontainers 拉镜像与耗时均在预算内，备选拆 job 不启用）。
 
 ## 3. 文档状态修正与上游草稿
 
