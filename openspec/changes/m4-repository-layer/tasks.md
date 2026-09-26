@@ -9,11 +9,11 @@
 
 ## 2. 装配层：接口、工厂与自动配置（repository-layer）
 
-- [ ] 2.1 `MeiliRepository<T,ID>`（extends Crud+ListPagingAndSorting）与 `SimpleMeiliRepository`：save/saveAll/findById/existsById/count/deleteById/delete/deleteAll(Class)/findAll() 截断+WARN/findAll(Pageable) 估算总数/deleteAll(Iterable) 逐条；验证：mock `MeiliSearchOperations` 的 L1 委托断言全绿（含截断 WARN、逐条 N 请求计数、In 空集合不属本组）
+- [x] 2.1 `MeiliRepository<T,ID>`（extends Crud+ListPagingAndSorting）与 `SimpleMeiliRepository`：save/saveAll/findById/existsById/count/deleteById/delete/deleteAll(Class)/findAll() 截断+WARN/findAll(Pageable) 估算总数/deleteAll(Iterable) 逐条；验证：mock `MeiliSearchOperations` 的 L1 委托断言全绿（含截断 WARN、逐条 N 请求计数、In 空集合不属本组）
 - [x] 2.2 `EntityInformation` 适配（读 core 元模型 `@MeiliId`）+ `MeiliRepositoryFactory` + `MeiliRepositoryFactoryBean`；验证：工厂直接构造仓库实例的 L1 测试（主键类型一致、代理单例）
 - [x] 2.3 `@EnableMeiliRepositories` + Registrar + `MeiliRepositoryConfigurationExtension`（含扩展点识别 `MeiliRepository` 子接口）；验证：纯 Spring 上下文测试——注解扫描出仓库 bean、无注解时不注册
 - [x] 2.4 `MeiliRepositoriesAutoConfiguration`（条件链：`@ConditionalOnClass(MeiliRepository)`、`@ConditionalOnBean(MeiliSearchOperations)`、`meili.repositories.enabled` matchIfMissing、用户 `RepositoryFactoryBean` back-off）+ 模块自带 `AutoConfiguration.imports` + `additional-spring-configuration-metadata.json`；验证：L2 `ApplicationContextRunner` 断言——启用/开关退避/用户工厂 back-off/无 operations 整体静默退避/imports 逐行 `Class.forName` 可加载
-- [ ] 2.5 委托透明语义：回调链与 `wait-task` 经仓库生效的 L1+真机断言（`BeforeConvertCallback` 修改落到发出文档；`wait-task=true` 时 save 后可查）；验证：对应测试绿
+- [x] 2.5 委托透明语义：回调链与 `wait-task` 经仓库生效的 L1+真机断言（`BeforeConvertCallback` 修改落到发出文档；`wait-task=true` 时 save 后可查）；验证：对应测试绿
 - [x] 2.6 提交本组：conventional commit（feat(repository): 接口/工厂/自动配置）
 
 ## 3. 派生查询：桥接、翻译与启动预检（repository-derived-queries）
@@ -45,5 +45,5 @@
 
 ## 7. 集成核对（出口）
 
-- [ ] 7.1 全 reactor 出口：`mvn -s /home/lam/repo/settings.xml clean verify` 全绿（新模块 + 既有 spike 哨兵 + 双矩阵含 Repository IT + examples 零扰动）；`dependency:tree` 复核 starter 无 commons、repository 钉 3.5.13；验证：命令输出留档，specs 三份新能力逐 Requirement 打勾核对表写入本 change 目录
-- [ ] 7.2 提交出口记录（docs/openspec：核对表与 spike 结论），并确认 design D-2 已按 spike 实际结果落稿（若走了薄变体/路线 b，本 change 工件同步修订后再归档）
+- [x] 7.1 全 reactor 出口：`mvn -s /home/lam/repo/settings.xml clean verify` 全绿（新模块 + 既有 spike 哨兵 + 双矩阵含 Repository IT + examples 零扰动）；`dependency:tree` 复核 starter 无 commons、repository 钉 3.5.13；验证：命令输出留档，specs 三份新能力逐 Requirement 打勾核对表写入本 change 目录
+- [x] 7.2 提交出口记录（docs/openspec：核对表与 spike 结论），并确认 design D-2 已按 spike 实际结果落稿（若走了薄变体/路线 b，本 change 工件同步修订后再归档）
