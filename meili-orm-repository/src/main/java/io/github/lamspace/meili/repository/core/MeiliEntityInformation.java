@@ -51,6 +51,9 @@ public final class MeiliEntityInformation<T, ID> implements EntityInformation<T,
      * Finds the declared type of the single {@code @MeiliId} member. The core metamodel has
      * already validated exactly-one + legal-type constraints at parse time, so this is a
      * type lookup against a guaranteed-present member — not a second validation pass.
+     *
+     * @param type entity class
+     * @return declared primary-key type
      */
     private static Class<?> lookupIdType(Class<?> type) {
         for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {

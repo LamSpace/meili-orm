@@ -5,6 +5,7 @@ import io.github.lamspace.meili.core.mapping.MeiliMappingContext;
 import io.github.lamspace.meili.core.mapping.MeiliPersistentEntity;
 import io.github.lamspace.meili.core.operations.MeiliSearchOperations;
 import io.github.lamspace.meili.repository.MeiliRepository;
+import io.github.lamspace.meili.repository.query.MeiliDerivedQueries;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -56,6 +57,7 @@ public final class MeiliRepositoryProxy implements InvocationHandler {
         Object invoke(Object[] args) throws Throwable;
     }
 
+    /** Owned instance; handlers are built exclusively through {@link #create}. */
     private MeiliRepositoryProxy() {
     }
 
@@ -99,20 +101,21 @@ public final class MeiliRepositoryProxy implements InvocationHandler {
     }
 
     /**
-     * Resolves the executor for a user-declared abstract method. This is the query layer's
-     * installation seam: the derived-query and annotated-query translators replace the body
-     * of this method, keeping bootstrap-time resolution separate from proxy plumbing.
+     * Resolves the executor for a user-declared abstract method via the derived-query
+     * resolver (bootstrap-time grammar, bridging, role pre-checks).
      *
      * @param m          user method
      * @param entity     bound domain metamodel
      * @param operations template for query execution
      * @return the method invoker
-     * @throws UnsupportedOperationException until the query layer is wired in
+     * @throws io.github.lamspace.meili.repository.exception.MeiliRepositoryConfigurationException
+     *         for grammar/shape/arity failures
+     * @throws io.github.lamspace.meili.core.exception.MeiliMappingException
+     *         for bridge and role-precheck failures
      */
     private static MethodInvoker invokerFor(Method m, MeiliPersistentEntity entity,
                                             MeiliSearchOperations operations) {
-        throw new UnsupportedOperationException("仓库自定义查询方法解析尚未接入: "
-                + m.getDeclaringClass().getSimpleName() + "." + m.getName());
+        return MeiliDerivedQueries.bootstrap(m, entity, operations)::invoke;
     }
 
     @Override
@@ -135,6 +138,13 @@ public final class MeiliRepositoryProxy implements InvocationHandler {
         }
     }
 
+    /**
+     * Locates the delegate's public implementation for an inherited API method.
+     *
+     * @param clazz       delegate class
+     * @param ifaceMethod repository interface method
+     * @return matching public method on the delegate
+     */
     private static Method delegateMethodOrThrow(Class<?> clazz, Method ifaceMethod) {
         try {
             return clazz.getMethod(ifaceMethod.getName(), ifaceMethod.getParameterTypes());
@@ -143,6 +153,15 @@ public final class MeiliRepositoryProxy implements InvocationHandler {
         }
     }
 
+    /**
+     * Reflectively invokes a delegate method, unwrapping application failures so callers
+     * observe the same exception types as with the template directly.
+     *
+     * @param target         delegate method
+     * @param targetInstance delegate instance
+     * @param args           runtime arguments
+     * @return invocation result
+     */
     private static Object invokeUnchecked(Method target, Object targetInstance, Object[] args) {
         try {
             return target.invoke(targetInstance, args);

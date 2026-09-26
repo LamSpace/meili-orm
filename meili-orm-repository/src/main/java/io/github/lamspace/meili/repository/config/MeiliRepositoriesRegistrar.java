@@ -20,6 +20,10 @@ import org.springframework.util.ClassUtils;
  */
 public class MeiliRepositoriesRegistrar implements ImportBeanDefinitionRegistrar {
 
+    /** Public no-arg constructor required by Spring's registrar instantiation. */
+    public MeiliRepositoriesRegistrar() {
+    }
+
     /**
      * Marker bean registered once per explicit {@code @EnableMeiliRepositories}. The
      * repository auto-configuration backs off when this marker is present, mirroring Spring
@@ -27,6 +31,10 @@ public class MeiliRepositoriesRegistrar implements ImportBeanDefinitionRegistrar
      * enable always wins over the fallback, regardless of bean-definition ordering.
      */
     static class EnabledConfiguration {
+
+        /** Marker holder; instantiated only as a presence flag. */
+        EnabledConfiguration() {
+        }
     }
 
     @Override

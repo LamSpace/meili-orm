@@ -18,12 +18,12 @@
 
 ## 3. 派生查询：桥接、翻译与启动预检（repository-derived-queries）
 
-- [ ] 3.1 属性解析正式化：spike 原型（`SpikeNameParser`+`SpikePropertyResolver`）落入 src/main（反射字典最长前缀切分 + `@MeiliField.name`/点路径/`@JsonIgnore` 排除/查无属性启动异常含方法名属性段类名；spike 测试类保留为哨兵）；验证：L1 黄金断言（改名、嵌套、record、未知属性、缩写错误消息含"不支持缩写"形态）
-- [ ] 3.2 翻译器：自研语法解析结果→`MeiliQuery` 关键字映射全表（Equals/In（空集合短路不发请求）/Between/LessThan 系/Before/After/True/False/Not 括号/And/Or 嵌套/Containing+Like→q+attributesToSearchOn/OrderBy/topN）；值字面量渲染共用转义器；验证：L1 每关键字 ≥1 正例黄金串断言 + 空 IN 零请求断言
-- [ ] 3.3 启动期角色预检：filter→filterable、sort→sortable、Containing→searchable，缺失 `MeiliMappingException` 消息含双修复指引；判定源=实体声明（透传不进入输入，失败消息提示透传可能）；`null` 参数属性条件启动拒绝；验证：L1——缺角色启动失败/补齐成功/透传声明仍失败三形态断言
-- [ ] 3.4 `Pageable` 与返回形态：page=pageNumber+1/hitsPerPage=pageSize、方法名 OrderBy 优先 Pageable sort 追加、`List`/`Optional`（多取首+DEBUG）/`Page`；验证：L1 换算黄金断言
-- [ ] 3.5 不支持面：StartingWith/EndingWith/Regex/Null/Empty/IgnoreCase/属性缩写/Distinct 修饰符/集合属性等值/DTO/Stream → 引导期 `IllegalArgumentException` 列方法名与支持面；验证：L1 每类一条异常形态断言（消息可定位）
-- [ ] 3.6 真机 L3：Testcontainers v1.49.0 上全注解实体——派生查询各关键字命中集合与手写 `MeiliQuery` 等价断言、Not 对缺失字段行为钉死并回写注释、Containing 中文命中；验证：`mvn -s /home/lam/repo/settings.xml -q -pl meili-orm-repository verify` 全绿
+- [x] 3.1 属性解析正式化：spike 原型（`SpikeNameParser`+`SpikePropertyResolver`）落入 src/main（反射字典最长前缀切分 + `@MeiliField.name`/点路径/`@JsonIgnore` 排除/查无属性启动异常含方法名属性段类名；spike 测试类保留为哨兵）；验证：L1 黄金断言（改名、嵌套、record、未知属性、缩写错误消息含"不支持缩写"形态）
+- [x] 3.2 翻译器：自研语法解析结果→`MeiliQuery` 关键字映射全表（Equals/In（空集合短路不发请求）/Between/LessThan 系/Before/After/True/False/Not 括号/And/Or 嵌套/Containing+Like→q+attributesToSearchOn/OrderBy/topN）；值字面量渲染共用转义器；验证：L1 每关键字 ≥1 正例黄金串断言 + 空 IN 零请求断言
+- [x] 3.3 启动期角色预检：filter→filterable、sort→sortable、Containing→searchable，缺失 `MeiliMappingException` 消息含双修复指引；判定源=实体声明（透传不进入输入，失败消息提示透传可能）；`null` 参数属性条件启动拒绝；验证：L1——缺角色启动失败/补齐成功/透传声明仍失败三形态断言
+- [x] 3.4 `Pageable` 与返回形态：page=pageNumber+1/hitsPerPage=pageSize、方法名 OrderBy 优先 Pageable sort 追加、`List`/`Optional`（多取首+DEBUG）/`Page`；验证：L1 换算黄金断言
+- [x] 3.5 不支持面：StartingWith/EndingWith/Regex/Null/Empty/IgnoreCase/属性缩写/Distinct 修饰符/集合属性等值/DTO/Stream → 引导期 `IllegalArgumentException` 列方法名与支持面；验证：L1 每类一条异常形态断言（消息可定位）
+- [x] 3.6 真机 L3：Testcontainers v1.49.0 上全注解实体——派生查询各关键字命中集合与手写 `MeiliQuery` 等价断言、Not 对缺失字段行为钉死并回写注释、Containing 中文命中；验证：`mvn -s /home/lam/repo/settings.xml -q -pl meili-orm-repository verify` 全绿
 
 ## 4. 注解查询（repository-query-annotation）
 

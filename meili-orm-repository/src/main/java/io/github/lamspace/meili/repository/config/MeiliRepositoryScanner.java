@@ -70,7 +70,12 @@ final class MeiliRepositoryScanner {
         }
     }
 
-    /** Registers one interface (package-visible for the default auto-config path's reuse/tests). */
+    /**
+     * Registers one interface (package-visible for the default auto-config path's reuse/tests).
+     *
+     * @param repositoryInterface repository interface class
+     * @param registry            target bean definition registry
+     */
     static void register(Class<?> repositoryInterface,
                          org.springframework.beans.factory.support.BeanDefinitionRegistry registry) {
         String beanName = Introspector.decapitalize(ClassUtils.getShortName(repositoryInterface));
@@ -83,7 +88,12 @@ final class MeiliRepositoryScanner {
         registry.registerBeanDefinition(beanName, definition);
     }
 
-    /** Normalizes candidate class names (handles inner-class $ forms) and loads. */
+    /**
+     * Loads a candidate class by name.
+     *
+     * @param className binary class name
+     * @return loaded class
+     */
     private static Class<?> load(String className) {
         try {
             return Class.forName(className, false, MeiliRepositoryScanner.class.getClassLoader());
@@ -92,12 +102,5 @@ final class MeiliRepositoryScanner {
         }
     }
 
-    /** Convenience for callers holding an array form of packages. */
-    static List<String> toList(String[] packages) {
-        List<String> out = new ArrayList<>();
-        for (String p : packages) {
-            out.add(p);
-        }
-        return out;
-    }
+
 }

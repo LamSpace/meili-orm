@@ -101,6 +101,60 @@ public final class MeiliPropertyPaths {
     }
 
     /**
+     * Splits a camel-concatenated property chain (as written in a derived method name, e.g.
+     * {@code AuthorCity}) into Java property segments by longest-prefix matching against the
+     * declared field dictionary of the entity type (walking nested types as it consumes).
+     *
+     * @param domainType entity class providing the dictionary
+     * @param source     requesting method name, for error location
+     * @param rawPath    camel-concatenated chain
+     * @return Java property segments in order (e.g. {@code ["author", "city"]})
+     * @throws IllegalArgumentException when a prefix does not match any declared property —
+     *                                  abbreviations are never guessed and the message says so
+     */
+    public static List<String> splitCamel(Class<?> domainType, String source, String rawPath) {
+        List<String> chain = new ArrayList<>();
+        Class<?> current = domainType;
+        int pos = 0;
+        while (pos < rawPath.length()) {
+            String rest = rawPath.substring(pos);
+            java.lang.reflect.Field match = null;
+            for (java.lang.reflect.Field f : declared(current)) {
+                if (rest.regionMatches(true, 0, f.getName(), 0, f.getName().length())
+                        && (match == null || f.getName().length() > match.getName().length())) {
+                    match = f;
+                }
+            }
+            if (match == null) {
+                throw new IllegalArgumentException("无法解析属性段（不支持缩写）: 方法 " + source
+                        + " 的属性 " + rawPath + " 在实体 " + domainType.getSimpleName() + " 上无法匹配");
+            }
+            chain.add(match.getName());
+            pos += match.getName().length();
+            current = match.getType();
+        }
+        return chain;
+    }
+
+    /**
+     * Declared queryable fields of a type walking the hierarchy (static/synthetic skipped).
+     *
+     * @param type starting class
+     * @return candidate fields for dictionary matching
+     */
+    private static List<java.lang.reflect.Field> declared(Class<?> type) {
+        List<java.lang.reflect.Field> out = new ArrayList<>();
+        for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {
+            for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                if (!Modifier.isStatic(f.getModifiers()) && !f.isSynthetic()) {
+                    out.add(f);
+                }
+            }
+        }
+        return out;
+    }
+
+    /**
      * Returns the projected document name of the entity's primary-key property.
      *
      * @param domainType the entity class (must carry a valid {@code @MeiliId})
@@ -113,7 +167,15 @@ public final class MeiliPropertyPaths {
                 .getIdProperty().getJsonPath();
     }
 
-    /** First case-insensitive exact-name field hit along the class hierarchy. */
+    /**
+     * First case-insensitive exact-name field hit along the class hierarchy.
+     *
+     * @param type       current class in the walk
+     * @param javaName   Java property segment name
+     * @param domainType root entity for error location
+     * @param methodName requesting method for error location
+     * @return matched field
+     */
     private static Field findField(Class<?> type, String javaName, Class<?> domainType, String methodName) {
         for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {
             for (Field f : c.getDeclaredFields()) {

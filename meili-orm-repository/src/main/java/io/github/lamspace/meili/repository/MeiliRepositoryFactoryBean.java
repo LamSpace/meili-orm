@@ -41,6 +41,8 @@ public class MeiliRepositoryFactoryBean<T, ID, R extends Repository<T, ID>>
     private R repository;
 
     /**
+     * Binds the factory to one repository interface.
+     *
      * @param repositoryInterface the user repository interface; required
      */
     public MeiliRepositoryFactoryBean(Class<?> repositoryInterface) {

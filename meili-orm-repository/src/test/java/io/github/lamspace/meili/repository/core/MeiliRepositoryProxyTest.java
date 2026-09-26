@@ -91,11 +91,13 @@ class MeiliRepositoryProxyTest {
     }
 
     @Test
-    @DisplayName("未解析的自定义查询方法在构建期即失败（不拖到首调）")
-    void unresolvedCustomMethodFailsAtBootstrap() {
+    @DisplayName("自定义查询方法在构建期即完成解析：非法条件启动即错，不拖到首调")
+    void customMethodValidatedAtBootstrap() {
+        // BadRepository.findByTitle：title 无 filterable 角色 → 角色预检在 create() 期抛错
         assertThatThrownBy(() -> MeiliRepositoryProxy.create(BadRepository.class, ops, context))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessageContaining("findByTitle");
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("findByTitle")
+                .hasMessageContaining("filterable");
     }
 
     @Test

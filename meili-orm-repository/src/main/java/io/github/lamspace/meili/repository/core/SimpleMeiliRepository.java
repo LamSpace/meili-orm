@@ -196,7 +196,12 @@ public class SimpleMeiliRepository<T, ID> implements MeiliRepository<T, ID> {
         return out.toArray(new String[0]);
     }
 
-    /** WARN-declares a full-cap fetch so a caller never mistakes a capped read for "all". */
+    /**
+     * WARN-declares a full-cap fetch so a caller never mistakes a capped read for "all".
+     *
+     * @param size number of documents returned
+     * @param call calling method label for the log line
+     */
     private void warnIfAtCeiling(int size, String call) {
         if (size >= FETCH_CEILING) {
             log.warn("索引 {} 的 {} 返回 {} 条，已达 documents/fetch 上限"

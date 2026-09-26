@@ -40,4 +40,8 @@ import org.springframework.context.annotation.Import;
 @ConditionalOnMissingBean(MeiliRepositoriesRegistrar.EnabledConfiguration.class)
 @Import(MeiliDefaultRepositoriesRegistrar.class)
 public class MeiliRepositoriesAutoConfiguration {
+
+    /** Public no-arg constructor required by Boot's configuration-class instantiation. */
+    public MeiliRepositoriesAutoConfiguration() {
+    }
 }

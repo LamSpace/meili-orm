@@ -22,6 +22,10 @@ import org.springframework.core.type.AnnotationMetadata;
 public class MeiliDefaultRepositoriesRegistrar
         implements ImportBeanDefinitionRegistrar, BeanFactoryAware {
 
+    /** Public no-arg constructor required by Spring's registrar instantiation. */
+    public MeiliDefaultRepositoriesRegistrar() {
+    }
+
     /** Skip diagnostics logger. */
     private static final Logger log = LoggerFactory.getLogger(MeiliDefaultRepositoriesRegistrar.class);
 
