@@ -2,6 +2,7 @@ package io.github.lamspace.meili.core.operations;
 
 import io.github.lamspace.meili.core.event.MeiliEntityCallbacks;
 import io.github.lamspace.meili.core.exception.MeiliOrmException;
+import io.github.lamspace.meili.core.internal.MeiliAuditSupport;
 import io.github.lamspace.meili.core.internal.MeiliRawGateway;
 import io.github.lamspace.meili.core.mapping.MeiliMappingContext;
 import io.github.lamspace.meili.core.mapping.MeiliPersistentEntity;
@@ -13,6 +14,7 @@ import io.github.lamspace.meili.core.settings.MeiliSettingsProjection;
 import io.github.lamspace.meili.core.settings.ProjectedSettings;
 import io.github.lamspace.meili.core.task.MeiliTask;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +29,8 @@ import java.util.StringJoiner;
  *
  * <p>Callback choreography (fixed ordering contract):
  * <ul>
- *   <li>write: BeforeConvert → serialize → send → (await when wait-task) → AfterSave;</li>
+ *   <li>write: audit fill (when the entity declares audit fields) → BeforeConvert →
+ *       serialize → send → (await when wait-task) → AfterSave;</li>
  *   <li>read: fetch raw → AfterLoad (raw JSON still editable) → deserialize →
  *       AfterConvert.</li>
  * </ul>
@@ -85,7 +88,8 @@ public final class DefaultMeiliSearchOperations implements MeiliSearchOperations
         }
         MeiliPersistentEntity meta = context.getEntity(entity.getClass());
         String index = meta.getIndexName();
-        T converted = callbacks.onBeforeConvert(entity, index);
+        T audited = MeiliAuditSupport.audit(entity, meta, Instant.now());
+        T converted = callbacks.onBeforeConvert(audited, index);
         requireId(meta, converted);
         int taskUid = gateway.updateDocuments(index, serializer.write(converted));
         if (waitTask) {
@@ -111,7 +115,8 @@ public final class DefaultMeiliSearchOperations implements MeiliSearchOperations
                 throw new MeiliOrmException("saveAll 仅支持同一实体类型: "
                         + meta.getType().getName() + " vs " + current.getType().getName());
             }
-            T converted = callbacks.onBeforeConvert(entity, index);
+            T audited = MeiliAuditSupport.audit(entity, current, Instant.now());
+            T converted = callbacks.onBeforeConvert(audited, index);
             requireId(meta, converted);
             staged.add(converted);
         }

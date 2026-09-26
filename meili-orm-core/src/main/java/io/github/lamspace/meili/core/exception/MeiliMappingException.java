@@ -3,7 +3,8 @@ package io.github.lamspace.meili.core.exception;
 /**
  * Raised when entity metadata violates the mapping contract: a missing or duplicated
  * primary-key declaration, an unsupported primary-key type, a projection-name conflict,
- * an illegal role annotation on a container field, or a broken settings passthrough.
+ * an illegal role annotation on a container field, an audit field outside its allowed
+ * type set, or a broken settings passthrough.
  *
  * <p>This exception is a <em>startup fail-fast</em> signal: it is thrown while the
  * metamodel or the settings projection is being built, before any server request is

@@ -6,6 +6,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.lamspace.meili.core.exception.MeiliMappingException;
+import java.lang.reflect.Field;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -229,6 +234,98 @@ class MeiliPersistentEntityTest {
         assertThat(e.getProperties()).extracting(MeiliPersistentProperty::getJsonPath)
                 .containsExactly("authors", "id");
         assertThat(property(e, "authors").isFilterable()).isFalse();
+    }
+
+    @Test
+    @DisplayName("审计注解解析为元模型标记，六类许可类型全部通过")
+    void auditFlagsParsed() {
+        @MeiliDocument(indexName = "a") class Audited {
+            @MeiliId Long id;
+            @CreatedDate OffsetDateTime createdAt;
+            @LastModifiedDate long updatedAt;
+        }
+        MeiliPersistentEntity e = MeiliPersistentEntity.of(Audited.class);
+        assertThat(property(e, "createdAt").isCreatedDate()).isTrue();
+        assertThat(property(e, "createdAt").isLastModifiedDate()).isFalse();
+        assertThat(property(e, "updatedAt").isLastModifiedDate()).isTrue();
+        assertThat(property(e, "updatedAt").isCreatedDate()).isFalse();
+        assertThat(e.getCreatedDateFields()).extracting(Field::getName).containsExactly("createdAt");
+        assertThat(e.getLastModifiedDateFields()).extracting(Field::getName)
+                .containsExactly("updatedAt");
+        assertThat(e.hasAuditFields()).isTrue();
+    }
+
+    @MeiliDocument(indexName = "audit_six")
+    static class AuditSixTypes {
+        @MeiliId Long id;
+        @CreatedDate Instant a;
+        @CreatedDate OffsetDateTime b;
+        @CreatedDate ZonedDateTime c;
+        @LastModifiedDate LocalDateTime d;
+        @LastModifiedDate long e;
+        @LastModifiedDate Long f;
+    }
+
+    @Test
+    @DisplayName("许可集六类型（Instant/OffsetDateTime/ZonedDateTime/LocalDateTime/long/Long）解析成功")
+    void auditAllowedTypesParse() {
+        MeiliPersistentEntity e = MeiliPersistentEntity.of(AuditSixTypes.class);
+        assertThat(e.getProperties()).hasSize(7);
+        assertThat(property(e, "a").isCreatedDate()).isTrue();
+        assertThat(property(e, "f").isLastModifiedDate()).isTrue();
+    }
+
+    @Test
+    @DisplayName("@CreatedDate String → 解析期 fail-fast，消息含类名与字段名")
+    void auditStringTypeRejected() {
+        @MeiliDocument(indexName = "x") class Bad {
+            @MeiliId Long id;
+            @CreatedDate String createdAt;
+        }
+        assertThatThrownBy(() -> MeiliPersistentEntity.of(Bad.class))
+                .isInstanceOf(MeiliMappingException.class)
+                .hasMessageContaining(Bad.class.getName())
+                .hasMessageContaining("createdAt");
+    }
+
+    @Test
+    @DisplayName("@LastModifiedDate String → 同样 fail-fast")
+    void lastModifiedStringTypeRejected() {
+        @MeiliDocument(indexName = "x") class Bad {
+            @MeiliId Long id;
+            @LastModifiedDate String updatedAt;
+        }
+        assertThatThrownBy(() -> MeiliPersistentEntity.of(Bad.class))
+                .isInstanceOf(MeiliMappingException.class)
+                .hasMessageContaining(Bad.class.getName())
+                .hasMessageContaining("updatedAt");
+    }
+
+    @Test
+    @DisplayName("审计标记与 @MeiliField 角色标注共现互不干扰")
+    void auditCoexistsWithRoles() {
+        @MeiliDocument(indexName = "x") class Both {
+            @MeiliId Long id;
+            @MeiliField(searchable = true, filterable = true)
+            @CreatedDate OffsetDateTime createdAt;
+        }
+        MeiliPersistentEntity e = MeiliPersistentEntity.of(Both.class);
+        MeiliPersistentProperty p = property(e, "createdAt");
+        assertThat(p.isCreatedDate()).isTrue();
+        assertThat(p.isSearchable()).isTrue();
+        assertThat(p.isFilterable()).isTrue();
+        assertThat(p.getSearchableOrder()).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("无审计实体回归不变：所有属性审计标记为 false，hasAuditFields 为 false")
+    void nonAuditEntityUnaffected() {
+        MeiliPersistentEntity e = MeiliPersistentEntity.of(Book.class);
+        assertThat(e.hasAuditFields()).isFalse();
+        assertThat(e.getProperties()).allSatisfy(p -> {
+            assertThat(p.isCreatedDate()).isFalse();
+            assertThat(p.isLastModifiedDate()).isFalse();
+        });
     }
 
     private static MeiliPersistentProperty property(MeiliPersistentEntity e, String jsonPath) {

@@ -24,11 +24,14 @@ import java.util.Optional;
 public interface MeiliSearchOperations {
 
     /**
-     * Upserts one entity (same primary key overwrites).
+     * Upserts one entity (same primary key overwrites). When the entity declares
+     * {@code @CreatedDate}/{@code @LastModifiedDate} fields they are filled first:
+     * created only when empty, modified always (see the annotations' contracts).
      *
      * @param entity entity with a non-null {@code @MeiliId} value
      * @param <T>    entity type
-     * @return the entity after the write callback chain
+     * @return the entity after audit filling and the write callback chain — for a record
+     *         with audit fields this is a rebuilt instance, not the argument
      * @throws io.github.lamspace.meili.core.exception.MeiliOrmException on a null primary
      *         key or serialization failure
      * @throws MeiliIndexAccessException when the server rejects or transport fails
@@ -36,11 +39,12 @@ public interface MeiliSearchOperations {
     <T> T save(T entity);
 
     /**
-     * Upserts many same-type entities as one request (single accepted task).
+     * Upserts many same-type entities as one request (single accepted task); audit
+     * fields are filled per entity before batching, same semantics as {@link #save}.
      *
      * @param entities entities, all of one entity type; empty is a no-op
      * @param <T>      entity type
-     * @return the entities after their write callback chains
+     * @return the entities after their audit filling and write callback chains
      * @throws io.github.lamspace.meili.core.exception.MeiliOrmException on mixed types,
      *         null primary keys, or serialization failure
      */

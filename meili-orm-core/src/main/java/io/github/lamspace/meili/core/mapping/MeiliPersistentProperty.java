@@ -1,13 +1,14 @@
 package io.github.lamspace.meili.core.mapping;
 
 /**
- * An immutable leaf property of an entity: its dotted document path and the settings
- * roles declared on it. Values are derived once by {@link MeiliPersistentEntity#of(Class)}
- * and never mutated afterwards.
+ * An immutable leaf property of an entity: its dotted document path, the settings
+ * roles declared on it, and its audit markers. Values are derived once by
+ * {@link MeiliPersistentEntity#of(Class)} and never mutated afterwards.
  *
  * <p>A leaf is either a simple-typed field, or an aggregate field the flattening walk
  * stopped at (cycle guard, depth cap, or collection element opacity); role flags may be
- * declared on either, but never on a field that itself expands into children.
+ * declared on either, but never on a field that itself expands into children. Audit
+ * markers are orthogonal to role flags — a property may carry both.
  */
 public final class MeiliPersistentProperty {
 
@@ -15,6 +16,10 @@ public final class MeiliPersistentProperty {
     private final String jsonPath;
     /** Whether this property is the entity primary key. */
     private final boolean id;
+    /** Filled on save only when empty; see {@link CreatedDate}. */
+    private final boolean createdDate;
+    /** Overwritten on every save; see {@link LastModifiedDate}. */
+    private final boolean lastModifiedDate;
     /** Projected into {@code searchableAttributes}. */
     private final boolean searchable;
     /** Explicit search weight; {@code -1} when unordered. */
@@ -29,18 +34,23 @@ public final class MeiliPersistentProperty {
     /**
      * Creates a frozen property view. Called only from entity parsing.
      *
-     * @param jsonPath       dotted document path
-     * @param id             primary-key marker
-     * @param searchable     searchable role flag
-     * @param searchableOrder explicit search weight or {@code -1}
-     * @param filterable     filterable role flag
-     * @param sortable       sortable role flag
-     * @param displayed      displayed role flag
+     * @param jsonPath          dotted document path
+     * @param id                primary-key marker
+     * @param createdDate       {@code @CreatedDate} audit marker
+     * @param lastModifiedDate  {@code @LastModifiedDate} audit marker
+     * @param searchable        searchable role flag
+     * @param searchableOrder   explicit search weight or {@code -1}
+     * @param filterable        filterable role flag
+     * @param sortable          sortable role flag
+     * @param displayed         displayed role flag
      */
-    MeiliPersistentProperty(String jsonPath, boolean id, boolean searchable,
+    MeiliPersistentProperty(String jsonPath, boolean id, boolean createdDate,
+                            boolean lastModifiedDate, boolean searchable,
                             int searchableOrder, boolean filterable, boolean sortable, boolean displayed) {
         this.jsonPath = jsonPath;
         this.id = id;
+        this.createdDate = createdDate;
+        this.lastModifiedDate = lastModifiedDate;
         this.searchable = searchable;
         this.searchableOrder = searchableOrder;
         this.filterable = filterable;
@@ -64,6 +74,24 @@ public final class MeiliPersistentProperty {
      */
     public boolean isId() {
         return id;
+    }
+
+    /**
+     * Returns the {@code @CreatedDate} audit marker.
+     *
+     * @return {@code true} if the backing field carries {@link CreatedDate}
+     */
+    public boolean isCreatedDate() {
+        return createdDate;
+    }
+
+    /**
+     * Returns the {@code @LastModifiedDate} audit marker.
+     *
+     * @return {@code true} if the backing field carries {@link LastModifiedDate}
+     */
+    public boolean isLastModifiedDate() {
+        return lastModifiedDate;
     }
 
     /**

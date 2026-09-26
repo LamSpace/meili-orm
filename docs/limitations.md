@@ -148,3 +148,26 @@ v1 每条删除一个请求（每个一条任务），大批量删除成本高�
 "改了注解忘了改名"的分叉。
 
 **workaround**：注解方法请把方法名条件段删净，只保留 `OrderBy`/`Top` 后缀。
+
+---
+
+# 实体审计
+
+## 17. created 为空值填充的近似语义，不判定服务端存在性
+
+MeiliSearch 无服务端时间戳，upsert 也无"插入 vs 更新"的可判定性（同主键覆盖，无
+ETag/seq 等价物）。`@CreatedDate` 因此按"现值为空才填充"实现（对象 `null`、原始 `long`
+的 `0` 哨兵）：客户端新建但携带非空 created 值的实体，即便服务端其实是新行，该值也
+原样写入、不被改写；已带值的实体再次保存同样保留原 created
+（`DefaultMeiliSearchOperationsAuditTest` / `MeiliAuditIT` 逐条验证该语义）。
+
+**workaround**：需要严格"首次写入"语义时在业务侧构造判定（仅创建路径设置审计字段），
+或引入外部行版本号自行比对。
+
+## 18. 无 createdBy 类审计语义
+
+不提供 `@CreatedBy` / `@LastModifiedBy` / `AuditorAware` 等价物：库内没有认证上下文
+输入源，"操作人"无法在客户端写入路径内判定，不臆造。时间戳审计即 v1 审计的全部。
+
+**workaround**：应用侧在 `BeforeConvertCallback` 中填充自有操作人字段——回调执行时
+审计填充已完成，看到的是最终时间值。

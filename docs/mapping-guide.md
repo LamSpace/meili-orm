@@ -16,6 +16,8 @@ MeiliSearch 没有 per-field mapping 概念，所以"映射"的落地形态是 *
 | `@MeiliField(sortable=true)` | `sortableAttributes` | 排序声明 |
 | `@MeiliField(displayed=true)` | `displayedAttributes` | **白名单效应**：只要有任何字段声明 displayed，投影数组即只含声明字段——未声明字段将不出现在搜索命中里（主键不受限）。谨慎使用 |
 | `@MeiliSetting(settingPath)` | 完整 settings 透传 | 类级、可重复、`classpath:` 前缀（见"透传规则"） |
+| `@CreatedDate` | 无（客户端写入路径填充） | 创建时间戳，仅现值为空时填充；近似语义见下"审计字段" |
+| `@LastModifiedDate` | 无（客户端写入路径填充） | 修改时间戳，每次保存无条件覆盖 |
 | Jackson `@JsonIgnore` | 字段排除 | 不入库、不参与投影；不另造 `@MeiliTransient` |
 
 ## 语义铁律：不标注 = 不声明
@@ -100,7 +102,7 @@ MeiliSearch 没有 per-field mapping 概念，所以"映射"的落地形态是 *
 | `AfterLoadCallback<T>` | 读到原始 JSON、反序列化**前** | 入参/返回都是文档 JSON 文本 |
 | `AfterConvertCallback<T>` | 实体反序列化后 | 返回改写后的实体 |
 
-写链：`BeforeConvert → 序列化 → 写请求 →（可选等待任务）→ AfterSave`；
+写链：`（审计填充）→ BeforeConvert → 序列化 → 写请求 →（可选等待任务）→ AfterSave`；
 读链：`取回原始 JSON → AfterLoad → 反序列化 → AfterConvert`。同链多回调按注册顺序执行；
 目标实体类型按泛型实参匹配（父子类型均可命中）。
 
@@ -125,6 +127,32 @@ class BookCallbacks {
 }
 ```
 
+## 审计字段（@CreatedDate / @LastModifiedDate）
+
+客户端写入路径的时间戳审计。与角色注解**正交**（可共标、互不干扰；审计字段仍按普通
+文档字段参与投影名与序列化，未另标角色注解则不进任何角色数组）。
+
+| 注解 | 填充语义 |
+|---|---|
+| `@CreatedDate` | 仅现值为空时填当前时刻——对象类型看 `null`，原始 `long` 另把 `0` 视为未设置（哨兵值）；已有值原样保留 |
+| `@LastModifiedDate` | 每次 `save`/`saveAll` 无条件覆盖为当前时刻（首次保存与 created 同刻） |
+
+- 类型许可集六项：`Instant` / `OffsetDateTime` / `ZonedDateTime` / `LocalDateTime` /
+  `long` / `Long`。`long`/`Long` 存 epoch 毫秒；时间类型以系统时区偏移包装同一时刻。
+  许可集之外的类型在实体解析期抛 `MeiliMappingException`（消息含类名与字段名）。
+- 填充时点：`save`/`saveAll` 解析实体后、**`BeforeConvertCallback` 之前**——回调与
+  序列化看到的即最终值；填充恒先于全部用户回调，不可被用户回调重排。读路径与删除
+  操作不触碰审计字段。
+- 写回双形态：POJO 就地写字段、返回**同一实例**；record 经规范构造器重建新实例，
+  非审计组件值逐项保留。record 的 compact constructor 随重建**重新执行**——要求构造器
+  校验幂等（对合法填充值天然成立）；审计填充后重建必然再次经过该构造器。
+- 仅实体顶层字段生效；嵌套对象内的审计字段不填充。
+- 完全不含审计注解的实体，保存路径与引入本能力前一致（同一实例、零反射、无重建开销）。
+
+> ⚠️ 近似语义：MeiliSearch 无服务端时间戳，upsert 也无法区分"插入 vs 更新"，
+> `@CreatedDate` 是**空值填充**的客户端近似，不判定服务端存在性——客户端新建但携带
+> 非空 created 值的实体将原样写入。边界见[限制清单](limitations.md)第 17–18 条。
+
 ## 启动期 fail-fast 校验清单
 
 以下任一情形都在应用启动时抛 `MeiliMappingException`（消息含类名/字段名/文件名定位），
@@ -134,6 +162,7 @@ class BookCallbacks {
 - 多个实体声明同一 `indexName`；
 - `@MeiliField.name` 与 `@JsonProperty` 冲突；
 - 显式 `searchableOrder` 重复；
+- `@CreatedDate`/`@LastModifiedDate` 字段类型不在六类型许可集（见"审计字段"）；
 - 透传文件缺失、非 JSON 对象、含白名单外键；
 - 回调 bean 无法解析目标实体泛型（lambda 形态）。
 

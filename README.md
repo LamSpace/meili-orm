@@ -96,12 +96,13 @@ public interface BookRepository extends MeiliRepository<Book, Long> {
 
 | 能力 | 说明 |
 |---|---|
-| 注解映射 | `@MeiliDocument` / `@MeiliId` / `@MeiliField`（角色声明）/ `@MeiliSetting`（settings 透传），字段排除用 Jackson `@JsonIgnore` |
+| 注解映射 | `@MeiliDocument` / `@MeiliId` / `@MeiliField`（角色声明）/ `@CreatedDate` / `@LastModifiedDate`（时间戳审计，见功能表下一行）/ `@MeiliSetting`（settings 透传），字段排除用 Jackson `@JsonIgnore` |
 | Settings 投影 | "映射"的落地形态：角色注解 → searchable/filterable/sortable/displayedAttributes；铁律**不标注=不声明** |
 | 索引自动初始化 | `auto-init=none / create-if-missing / sync-settings` × `on-settings-drift=warn / apply / fail` |
 | 模板 Operations | `save / saveAll / findById / findAll / deleteById / deleteAll / count`；`search / multiSearch`；`indexExists / createIndex / deleteIndex / applySettings`；`awaitTask / getTask` |
 | 强类型查询 IR | `MeiliQuery`（filter DSL/filterGroup、sort、limit-offset 与 page-hitsPerPage 两套分页、facets、matchingStrategy、distinct、hybrid、`raw` 逃生舱），SDK 类型不泄漏进业务代码 |
 | 生命周期回调 | `BeforeConvert` / `AfterSave` / `AfterLoad` / `AfterConvert` 四件套，声明 bean 即生效 |
+| 时间戳审计 | `@CreatedDate`（空值填充近似）/ `@LastModifiedDate`（每次覆盖）；六类型许可集（`Instant`/三时间类型/`long`/`Long`）非法类型启动失败；POJO 就地写回、record 重建；填充恒先于 `BeforeConvertCallback`；边界见限制清单第 17–18 条 |
 | 可插拔序列化 | `MeiliDocumentSerializer` 接口；默认 Jackson 2 实现；Boot 4 场景可加 `meili-orm-serializer-jackson3` 模块接管 |
 | Repository 层（opt-in） | 显式引入 `meili-orm-repository` 坐标即得 `MeiliRepository`：CRUD、方法名派生查询（等值/IN/区间/比较/布尔/Not/Containing→全文/OrderBy/TopN/分页）、`@MeiliQuery` 注解查询、启动期投影名桥+角色预检 fail-fast；starter 聚合不含该坐标，`meili.repositories.enabled` 默认开 |
 | Testcontainers 集成（opt-in） | 显式引入 `meili-orm-testcontainers` 坐标即得 `MeiliSearchContainer` 类型化容器（钉版 v1.49.0、`/health` 就绪等待、镜像/密钥可覆盖）与 `@ServiceConnection` 一行注解桥接（仅产 `MeiliConnectionDetails`，用户自有 bean 时桥接退避；Boot 3.5.x/4.x 双代支持）；starter 聚合不含该坐标，详见 [Testcontainers 集成](docs/testcontainers.md) |
@@ -111,8 +112,9 @@ public interface BookRepository extends MeiliRepository<Book, Long> {
 ### 非目标（本版明确不做）
 
 响应式（MeiliSearch SDK 为同步阻塞）、`@Version` 乐观锁、per-field 类型 mapping /
-analyzer、nested 关联查询、SpEL 动态索引名、审计回调、连接/读超时配置项（SDK 硬约束，
-见限制清单）。
+analyzer、nested 关联查询、SpEL 动态索引名、审计操作人（`@CreatedBy`/`@LastModifiedBy`）
+与可插拔时钟（v1 时间戳审计为写路径系统时钟填充，见功能表）、连接/读超时配置项（SDK
+硬约束，见限制清单）。
 
 ## 配置属性
 
