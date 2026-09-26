@@ -16,6 +16,11 @@
       "name": "meili.api-key",
       "type": "java.lang.String",
       "description": "API key (master or derived); empty means unauthenticated. Keep it out of version control - inject via environment or config server."
+    },
+    {
+      "name": "meili.client-agents",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Extra User-Agent tokens applied at client construction. The SDK prefixes its own version token, so entries are appended after it, semicolon-joined. Defaults to the single token 'meili-orm'; set to an empty value to fall back to the pure SDK User-Agent."
     }
   ],
   "hints": [

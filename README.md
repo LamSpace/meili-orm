@@ -122,6 +122,7 @@ analyzer、nested 关联查询、SpEL 动态索引名、审计回调、连接/�
 | `meili.api-key` | 空 | master key 或 API key |
 | `meili.wait-task` | `false` | 写操作同步等待任务终态 |
 | `meili.wait-timeout` | `5s` | 单次任务等待上限 |
+| `meili.client-agents` | `meili-orm` | User-Agent 附加标识列表（`;` 分隔，追加在 SDK 自身版本 token 之后；配空值回退纯 SDK 默认） |
 | `meili.index.auto-init` | `create-if-missing` | 建索引/同步策略（`none` / `create-if-missing` / `sync-settings`） |
 | `meili.index.on-settings-drift` | `warn` | 漂移处置（`warn` / `apply` / `fail`；仅 `sync-settings` 会真正写入） |
 | `meili.repositories.enabled` | `true` | 引入 `meili-orm-repository` 坐标后是否自动扫描注册仓库接口 |

@@ -53,7 +53,8 @@ class MeiliStarterMetadataTest {
         root.path("properties").forEach(node -> names.add(node.path("name").asText()));
         assertThat(names).contains(
                 "meili.enabled", "meili.url", "meili.api-key", "meili.wait-task",
-                "meili.wait-timeout", "meili.index.auto-init", "meili.index.on-settings-drift");
+                "meili.wait-timeout", "meili.client-agents",
+                "meili.index.auto-init", "meili.index.on-settings-drift");
     }
 
     @Test

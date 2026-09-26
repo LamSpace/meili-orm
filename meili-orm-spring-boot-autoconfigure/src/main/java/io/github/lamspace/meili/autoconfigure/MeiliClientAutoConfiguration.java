@@ -59,14 +59,23 @@ public class MeiliClientAutoConfiguration {
     /**
      * Builds the SDK configuration and applies every {@link MeiliConfigCustomizer} to it.
      *
+     * <p>The {@code meili.client-agents} tokens are handed to the SDK {@link Config}
+     * constructor: the User-Agent header is computed during construction and the headers map is
+     * final afterwards, so construction is the only injection point. The SDK prefixes its own
+     * version token, so the starter passes just its identity tokens. Construction keeps the
+     * default JSON handler.
+     *
      * @param details     connection facts (user bean wins over the properties default)
+     * @param properties  bound {@code meili.*} values, supplying the client agents
      * @param customizers ordered stream of customization callbacks, possibly empty
      * @return the config the client and the core gateway are built from
      */
     @Bean
     @ConditionalOnMissingBean
-    Config meiliConfig(MeiliConnectionDetails details, ObjectProvider<MeiliConfigCustomizer> customizers) {
-        Config config = new Config(details.getUrl(), details.getApiKey());
+    Config meiliConfig(MeiliConnectionDetails details, MeiliProperties properties,
+                       ObjectProvider<MeiliConfigCustomizer> customizers) {
+        Config config = new Config(details.getUrl(), details.getApiKey(),
+                properties.getClientAgents().toArray(new String[0]));
         customizers.orderedStream().forEach(customizer -> customizer.customize(config));
         return config;
     }

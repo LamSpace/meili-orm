@@ -3,6 +3,7 @@ package io.github.lamspace.meili.autoconfigure;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
+import java.util.List;
 
 /**
  * Binding target for the whole {@code meili.*} configuration namespace.
@@ -37,6 +38,15 @@ public class MeiliProperties {
 
     /** Upper bound for any single task wait (explicit {@code awaitTask} or wait-task writes). */
     private Duration waitTimeout = Duration.ofSeconds(5);
+
+    /**
+     * Extra User-Agent tokens ({@code meili.client-agents}). Applied at client construction:
+     * the SDK prefixes its own version token and joins everything with {@code ;}, so the final
+     * header is {@code <sdk version token>;<entry>;<entry>...}. The default single token
+     * identifies meili-orm traffic; an explicitly empty value falls back to the pure SDK
+     * User-Agent.
+     */
+    private List<String> clientAgents = List.of("meili-orm");
 
     /** Index lifecycle settings under {@code meili.index.*}. */
     private final Index index = new Index();
@@ -136,6 +146,25 @@ public class MeiliProperties {
      */
     public void setWaitTimeout(Duration waitTimeout) {
         this.waitTimeout = waitTimeout;
+    }
+
+    /**
+     * Gets the extra User-Agent tokens.
+     *
+     * @return the configured {@code meili.client-agents} entries; never {@code null}
+     */
+    public List<String> getClientAgents() {
+        return clientAgents;
+    }
+
+    /**
+     * Sets the extra User-Agent tokens.
+     *
+     * @param clientAgents entries appended after the SDK's own version token; empty keeps the
+     *                     pure SDK User-Agent
+     */
+    public void setClientAgents(List<String> clientAgents) {
+        this.clientAgents = clientAgents;
     }
 
     /**

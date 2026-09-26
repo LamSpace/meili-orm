@@ -2,6 +2,7 @@ package io.github.lamspace.meili.autoconfigure;
 
 import com.meilisearch.sdk.Client;
 import com.meilisearch.sdk.Config;
+import com.meilisearch.sdk.Version;
 import com.meilisearch.sdk.json.GsonJsonHandler;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -128,6 +129,38 @@ class MeiliClientAutoConfigurationTest {
                     assertThat(config.getHostUrl()).isEqualTo("http://manual:9");
                     assertThat(config.getApiKey()).isEqualTo("mk");
                     assertThat(ctx).doesNotHaveBean(PropertiesMeiliConnectionDetails.class);
+                });
+    }
+
+    /**
+     * {@code meili.client-agents} contract: tokens are appended to the SDK's own User-Agent
+     * version token by the constructor chain (headers are built during Config construction, so
+     * the exposed Config bean is already the pre-build observation point). Expected prefixes
+     * come from {@link Version} dynamically — no hard-coded SDK version string.
+     */
+    @Test
+    void clientAgentsDefaultAppendsMeiliOrmToken() {
+        runner.run(ctx -> {
+            String userAgent = ctx.getBean(Config.class).getHeaders().get("User-Agent");
+            assertThat(userAgent).isEqualTo(Version.getQualifiedVersion() + ";meili-orm");
+        });
+    }
+
+    @Test
+    void clientAgentsEmptyValueFallsBackToSdkDefault() {
+        runner.withPropertyValues("meili.client-agents=")
+                .run(ctx -> {
+                    String userAgent = ctx.getBean(Config.class).getHeaders().get("User-Agent");
+                    assertThat(userAgent).isEqualTo(Version.getQualifiedVersion());
+                });
+    }
+
+    @Test
+    void clientAgentsKeepsMultiEntryOrder() {
+        runner.withPropertyValues("meili.client-agents=a,b")
+                .run(ctx -> {
+                    String userAgent = ctx.getBean(Config.class).getHeaders().get("User-Agent");
+                    assertThat(userAgent).isEqualTo(Version.getQualifiedVersion() + ";a;b");
                 });
     }
 
