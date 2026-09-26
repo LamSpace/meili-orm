@@ -9,7 +9,7 @@
     <packaging>pom</packaging>
     <name>Meili-ORM</name>
     <description>Meilisearch Spring Boot starter: annotation-driven mapping, settings projection and templated operations (compatible with Spring Boot 3.5.x and 4.x).</description>
-    <url>https://github.com/LamSpace/meili-orm</url>
+    <url>https://github.com/LamSpace/Meili-ORM</url>
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
@@ -19,9 +19,9 @@
         </license>
     </licenses>
     <scm>
-        <connection>scm:git:https://github.com/LamSpace/meili-orm.git</connection>
-        <developerConnection>scm:git:git@github.com:LamSpace/meili-orm.git</developerConnection>
-        <url>https://github.com/LamSpace/meili-orm</url>
+        <connection>scm:git:https://github.com/LamSpace/Meili-ORM.git</connection>
+        <developerConnection>scm:git:git@github.com:LamSpace/Meili-ORM.git</developerConnection>
+        <url>https://github.com/LamSpace/Meili-ORM</url>
     </scm>
     <developers>
         <developer>

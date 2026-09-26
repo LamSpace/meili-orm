@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE) [![CI](https://github.com/LamSpace/meili-orm/actions/workflows/verify.yml/badge.svg)](https://github.com/LamSpace/meili-orm/actions/workflows/verify.yml) [![Java](https://img.shields.io/badge/Java-17%2B-orange)](#-build--test) [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x%20%7C%204.x-brightgreen)](docs/boot3-to-boot4.md) [![Meilisearch](https://img.shields.io/badge/Meilisearch-v1.x-ff59a1)](https://www.meilisearch.com/docs)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE) [![CI](https://github.com/LamSpace/Meili-ORM/actions/workflows/verify.yml/badge.svg)](https://github.com/LamSpace/Meili-ORM/actions/workflows/verify.yml) [![Java](https://img.shields.io/badge/Java-17%2B-orange)](#-build--test) [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x%20%7C%204.x-brightgreen)](docs/boot3-to-boot4.md) [![Meilisearch](https://img.shields.io/badge/Meilisearch-v1.x-ff59a1)](https://www.meilisearch.com/docs)
 
 [中文](README.zh-CN.md)
 
@@ -31,8 +31,8 @@ repository layer) while staying a third-party starter with a smaller contract su
 > **Not yet published to Maven Central.** Until the first release, install from source:
 
 ```bash
-git clone https://github.com/LamSpace/meili-orm.git
-cd meili-orm
+git clone https://github.com/LamSpace/Meili-ORM.git
+cd Meili-ORM
 mvn -DskipTests install
 ```
 
@@ -175,12 +175,12 @@ delete, callbacks and the raw escape hatch — one-command flow and live curl tr
 
 ## 📁 Project Structure
 
-A multi-module Maven reactor (root `pom.xml` `<modules>`). The repo slug stays lowercase
-`meili-orm`; "Meili-ORM" is the display name. Six artifacts are published; everything else is
-build-only or tooling.
+A multi-module Maven reactor (root `pom.xml` `<modules>`). The GitHub repository is `Meili-ORM`;
+Maven artifactIds, the Java package and the config prefix keep the lowercase `meili-orm` stem.
+Six artifacts are published; everything else is build-only or tooling.
 
 ```text
-meili-orm/                                # Maven reactor root (slug lowercase; display name "Meili-ORM")
+Meili-ORM/                                # repo root · Maven reactor (coordinates/prefix keep lowercase meili-orm)
 ├── meili-orm-core/                       # published — mapping, query IR, settings, Operations (no Spring)
 ├── meili-orm-spring-boot-autoconfigure/  # published — Boot auto-config, index init & settings sync
 ├── spring-boot-starter-meili-orm/        # published — core + autoconfigure + Boot base starter

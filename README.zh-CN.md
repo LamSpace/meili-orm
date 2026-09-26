@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE) [![CI](https://github.com/LamSpace/meili-orm/actions/workflows/verify.yml/badge.svg)](https://github.com/LamSpace/meili-orm/actions/workflows/verify.yml) [![Java](https://img.shields.io/badge/Java-17%2B-orange)](#-构建与测试) [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x%20%7C%204.x-brightgreen)](docs/zh-CN/boot3-to-boot4.md) [![Meilisearch](https://img.shields.io/badge/Meilisearch-v1.x-ff59a1)](https://www.meilisearch.com/docs)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE) [![CI](https://github.com/LamSpace/Meili-ORM/actions/workflows/verify.yml/badge.svg)](https://github.com/LamSpace/Meili-ORM/actions/workflows/verify.yml) [![Java](https://img.shields.io/badge/Java-17%2B-orange)](#-构建与测试) [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x%20%7C%204.x-brightgreen)](docs/zh-CN/boot3-to-boot4.md) [![Meilisearch](https://img.shields.io/badge/Meilisearch-v1.x-ff59a1)](https://www.meilisearch.com/docs)
 
 [English](README.md)
 
@@ -29,8 +29,8 @@ repository 层），同时保持三方 starter 的更小契约面。
 > **尚未发布到 Maven Central。** 首发之前请从源码安装：
 
 ```bash
-git clone https://github.com/LamSpace/meili-orm.git
-cd meili-orm
+git clone https://github.com/LamSpace/Meili-ORM.git
+cd Meili-ORM
 mvn -DskipTests install
 ```
 
@@ -167,11 +167,11 @@ nested 关联查询、SpEL 动态索引名、审计操作人（`@CreatedBy`/`@La
 
 ## 📁 项目结构
 
-多模块 Maven reactor（根 `pom.xml` 的 `<modules>`）。仓库 slug 保持小写 `meili-orm`，
-"Meili-ORM" 为展示名。六个构件对外发布，其余为仅构建或工具目录。
+多模块 Maven reactor（根 `pom.xml` 的 `<modules>`）。GitHub 仓库名为 `Meili-ORM`；Maven
+坐标、Java 包与配置前缀保持小写 `meili-orm` 词干。六个构件对外发布，其余为仅构建或工具目录。
 
 ```text
-meili-orm/                                # 仓库根 · 多模块 Maven reactor（slug 小写；展示名 "Meili-ORM"）
+Meili-ORM/                                # 仓库根 · 多模块 Maven reactor（Maven 坐标与配置前缀仍用小写 meili-orm）
 ├── meili-orm-core/                       # 发布 — 映射、查询 IR、settings 投影、模板 Operations（零 Spring）
 ├── meili-orm-spring-boot-autoconfigure/  # 发布 — Boot 自动配置、索引初始化与 settings 同步
 ├── spring-boot-starter-meili-orm/        # 发布 — starter：core + autoconfigure + Boot base

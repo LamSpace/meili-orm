@@ -32,8 +32,9 @@ once released.
   *data* semantics are preserved; see `CONTRIBUTING.md`).
 - README install section now states the publishing truth explicitly: artifacts are not yet
   on Maven Central; install from source. Message wording is not part of the API contract.
-- Display-name convention adopted: prose and titles read "Meili-ORM" while the lowercase
-  `meili-orm` stays the repo, artifact, package and config-prefix slug. The README badge row
+- Display-name convention adopted: prose and titles read "Meili-ORM" (the GitHub repository is
+  renamed to match) while the lowercase `meili-orm` stays the artifact, package and
+  config-prefix slug. The README badge row
   moves to a centered strip under the title, and the summary heading gains a matching icon
   (English "At a Glance", Chinese "一览").
 
