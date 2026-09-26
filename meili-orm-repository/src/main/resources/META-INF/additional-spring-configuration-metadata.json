@@ -1,0 +1,10 @@
+{
+  "properties": [
+    {
+      "name": "meili.repositories.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用 MeiliRepository 接口扫描与自动注册；显式 @EnableMeiliRepositories 优先于本开关。",
+      "defaultValue": true
+    }
+  ]
+}
