@@ -1,0 +1,29 @@
+name: verify
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK (Temurin 25 LTS, Maven cache)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Full reactor verify (dual-boot matrix + Testcontainers IT)
+        run: mvn -s ci/settings.xml -B clean verify
+
+      - name: Citation gate selftest
+        run: bash scripts/check-source-citations.sh --selftest
+
+      - name: Citation gate
+        run: bash scripts/check-source-citations.sh

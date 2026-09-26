@@ -148,6 +148,8 @@ mvn -s /home/lam/repo/settings.xml clean verify
 前置：Docker 守护进程可用 + 本地存在 `getmeili/meilisearch:v1.49.0` 镜像（core/autoconfigure
 /双矩阵的集成测试经 Testcontainers 直连真实服务端；缺 Docker 时 IT 快速失败且错误可辨识）。
 全量构建同时执行 Javadoc 完整度门禁（含私有成员）与源码引用门禁。
+同一套验证已接入 CI：`.github/workflows/verify.yml` 在 master 推送与拉取请求上以带 Docker 的
+执行器跑全 reactor `clean verify`（显式 `-s ci/settings.xml`）并复跑源码引用门禁。
 
 ## 文档
 

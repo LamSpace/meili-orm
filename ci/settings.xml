@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  CI 专用最小 Maven settings：默认本地仓库、仅 Maven Central、
+  无镜像覆盖、无凭据、无任何开发机专属路径。
+  存在意义是把"mvn 必须显式指定 settings"的纪律同构延续到 CI，
+  避免 CI 隐式依赖默认配置造成环境漂移。
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+    <profiles/>
+    <activeProfiles/>
+</settings>
